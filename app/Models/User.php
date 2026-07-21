@@ -64,6 +64,27 @@ class User extends Authenticatable implements Auditable
 
     public function company()
     {
-        return $this->companies()->first();
+        return $this->belongsToMany(Company::class, 'company_user');
+    }
+
+    public function getRelationValue($key)
+    {
+        if ($key === 'company') {
+            $relation = parent::getRelationValue($key);
+            if ($relation instanceof \Illuminate\Support\Collection) {
+                return $relation->first();
+            }
+            return $relation;
+        }
+        return parent::getRelationValue($key);
+    }
+
+    public function relationsToArray()
+    {
+        $relations = parent::relationsToArray();
+        if (isset($relations['company']) && is_array($relations['company'])) {
+            $relations['company'] = reset($relations['company']) ?: null;
+        }
+        return $relations;
     }
 }
