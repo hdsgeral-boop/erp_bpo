@@ -56,4 +56,14 @@ class User extends Authenticatable implements Auditable
     {
         return $this->belongsToMany(Company::class, 'company_user');
     }
+
+    public function getCompanyIdAttribute()
+    {
+        return $this->companies()->first()?->id;
+    }
+
+    public function company()
+    {
+        return $this->companies()->first();
+    }
 }
