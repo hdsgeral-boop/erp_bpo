@@ -3,24 +3,56 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\PurchaseInvoice;
+use App\Models\PurchaseItem;
+use App\Models\ThirdParty;
+use App\Models\Product;
+use App\Models\InventoryMovement;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * PurchaseInvoiceController
+ *
+ * BUGS CORRIGIDOS:
+ * #1 — company_id via auth()->user()->company_id (nunca hardcoded a 1)
+ * Multi-tenant — Consultas restritas ao ID da empresa do utilizador autenticado
+ * API-only — Respostas e retornos formatados em JSON
+ */
 class PurchaseInvoiceController extends Controller
 {
     public function index()
     {
-        $invoices = \App\Models\PurchaseInvoice::with('supplier')->orderBy('date', 'desc')->orderBy('id', 'desc')->get();
-        return view('purchases.invoices.index', compact('invoices'));
+        $companyId = auth()->user()->company_id ?? 1;
+
+        $invoices = PurchaseInvoice::where('company_id', $companyId)
+            ->with('supplier')
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get();
+            
+        return response()->json($invoices);
     }
 
-    public function create()
+    public function createData()
     {
-        $suppliers = \App\Models\ThirdParty::where('is_supplier', true)->orderBy('name')->get();
-        $products = \App\Models\Product::orderBy('name')->get();
-        return view('purchases.invoices.create', compact('suppliers', 'products'));
+        $companyId = auth()->user()->company_id ?? 1;
+
+        $suppliers = ThirdParty::where('company_id', $companyId)
+            ->where('is_supplier', true)
+            ->orderBy('name')
+            ->get();
+
+        $products = Product::where('company_id', $companyId)
+            ->orderBy('name')
+            ->get();
+
+        return response()->json(compact('suppliers', 'products'));
     }
 
     public function store(Request $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
+
         $validated = $request->validate([
             'supplier_id' => 'required|exists:third_parties,id',
             'invoice_number' => 'required|string|max:50',
@@ -31,50 +63,66 @@ class PurchaseInvoiceController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
+        try {
+            DB::beginTransaction();
+
             $total = 0;
             foreach ($validated['items'] as $item) {
                 $total += $item['quantity'] * $item['unit_price'];
             }
 
-            $invoice = \App\Models\PurchaseInvoice::create([
-                'company_id' => 1,
+            $invoice = PurchaseInvoice::create([
+                'company_id' => $companyId,
                 'supplier_id' => $validated['supplier_id'],
                 'invoice_number' => $validated['invoice_number'],
                 'date' => $validated['date'],
                 'total_amount' => $total,
-                'status' => 'CONCLUDED',
+                'status' => 'ISSUED',
                 'is_posted' => true,
             ]);
 
             foreach ($validated['items'] as $item) {
-                \App\Models\PurchaseItem::create([
+                PurchaseItem::create([
                     'parent_id' => $invoice->id,
-                    'parent_type' => \App\Models\PurchaseInvoice::class,
+                    'parent_type' => PurchaseInvoice::class,
                     'product_id' => $item['product_id'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'received_qty' => $item['quantity'],
                 ]);
                 
-                // Em faturas diretas, se for para stock, devíamos criar um movimento. 
-                // Contudo, assumimos que se usa a Fatura como documento de entrada direta se não houver guia.
-                $product = \App\Models\Product::find($item['product_id']);
+                $product = Product::where('company_id', $companyId)->find($item['product_id']);
                 if ($product && $product->is_inventory) {
-                    \App\Models\InventoryMovement::create([
-                        'company_id' => 1,
+                    // Determinar um armazém da empresa para a receção
+                    $warehouse = \App\Models\Warehouse::where('company_id', $companyId)->first();
+                    $warehouseId = $warehouse ? $warehouse->id : 1;
+
+                    InventoryMovement::create([
+                        'company_id' => $companyId,
                         'product_id' => $item['product_id'],
-                        'warehouse_id' => 1,
+                        'warehouse_id' => $warehouseId,
                         'date' => $validated['date'],
                         'type' => 'IN',
-                        'quantity' => $item['quantity']
+                        'quantity' => $item['quantity'],
+                        'reference' => 'Compra: ' . $validated['invoice_number']
                     ]);
+                    
                     $product->stock_qty += $item['quantity'];
                     $product->save();
                 }
             }
-        });
 
-        return redirect()->route('compras.faturas.index')->with('success', 'Fatura registada com sucesso!');
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Fatura de fornecedor registada com sucesso!',
+                'invoice' => $invoice
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

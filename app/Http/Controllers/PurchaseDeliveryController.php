@@ -9,6 +9,13 @@ use App\Repositories\Contracts\PurchaseRepositoryInterface;
 use App\Services\PurchaseService;
 use Illuminate\Http\Request;
 
+/**
+ * PurchaseDeliveryController
+ *
+ * BUGS CORRIGIDOS:
+ * #1 — Utilização de company_id do utilizador autenticado
+ * API-only — Adaptado para interagir via JSON com o frontend
+ */
 class PurchaseDeliveryController extends Controller
 {
     protected $purchaseRepo;
@@ -22,34 +29,45 @@ class PurchaseDeliveryController extends Controller
 
     public function index(Request $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $search = $request->input('search');
         
         $deliveries = $this->purchaseRepo->paginateDeliveries(15, $search);
         
-        return view('purchases.deliveries.index', compact('deliveries', 'search'));
+        return response()->json($deliveries);
     }
 
-    public function create(Request $request)
+    public function createData(Request $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
+
         if (!$request->has('order_id')) {
-            return redirect()->route('compras.encomendas.index')->with('error', 'Selecione uma Nota de Encomenda para rececionar.');
+            return response()->json(['success' => false, 'message' => 'Selecione uma Nota de Encomenda para rececionar.'], 400);
         }
 
         $order = $this->purchaseRepo->findOrder((int)$request->input('order_id'));
-        $warehouses = Warehouse::orderBy('name')->get();
-
-        if ($order->status === 'COMPLETED') {
-            return redirect()->route('compras.encomendas.show', $order->id)->with('error', 'Esta encomenda já foi totalmente rececionada.');
+        if ($order->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
         }
 
-        return view('purchases.deliveries.create', compact('order', 'warehouses'));
+        if ($order->status === 'COMPLETED') {
+            return response()->json(['success' => false, 'message' => 'Esta encomenda já foi totalmente rececionada.'], 400);
+        }
+
+        $warehouses = Warehouse::where('company_id', $companyId)->orderBy('name')->get();
+
+        return response()->json(compact('order', 'warehouses'));
     }
 
     public function store(ReceivePurchaseDelivery $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $data = $request->validated();
         
         $order = $this->purchaseRepo->findOrder((int)$data['order_id']);
+        if ($order->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
         
         $response = $this->purchaseService->receiveDelivery(
             $order,
@@ -58,16 +76,18 @@ class PurchaseDeliveryController extends Controller
             auth()->id()
         );
 
-        if ($response['success']) {
-            return redirect()->route('compras.encomendas.show', $order->id)->with('success', $response['message']);
-        }
-
-        return back()->withInput()->with('error', $response['message']);
+        return response()->json($response);
     }
 
     public function show(string $id)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $delivery = $this->purchaseRepo->findDelivery((int)$id);
-        return view('purchases.deliveries.show', compact('delivery'));
+        
+        if ($delivery->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
+        return response()->json($delivery);
     }
 }

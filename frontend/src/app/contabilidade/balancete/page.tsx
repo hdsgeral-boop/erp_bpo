@@ -20,7 +20,7 @@ export default function BalancetePage() {
   const fetchTrialBalance = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/contabilidade/balancete', {
+      const response = await api.get('/contabilidade/trial-balance', {
         params: { year }
       });
       setAccounts(response.data.accounts || response.data || []);

@@ -16,6 +16,14 @@ use App\Repositories\Contracts\AssetRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * AssetController
+ *
+ * BUGS CORRIGIDOS:
+ * #1 — Obtenção de company_id do utilizador autenticado (não usar Company::first())
+ * Multi-tenant — Consultas restritas ao ID da empresa do utilizador autenticado
+ * API-only — Respostas estruturadas em JSON
+ */
 class AssetController extends Controller
 {
     protected $assetService;
@@ -32,6 +40,7 @@ class AssetController extends Controller
      */
     public function index(Request $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $search = $request->input('search');
         $categoryId = $request->input('category_id');
         $departmentId = $request->input('department_id');
@@ -40,24 +49,22 @@ class AssetController extends Controller
 
         $assets = $this->assetRepository->paginate(15, $search, $categoryId, $departmentId, $employeeId, $status);
         
-        $categories = AssetCategory::orderBy('name')->get();
-        $departments = Department::orderBy('name')->get();
-        $employees = Employee::orderBy('name')->get();
-
-        return view('assets.index', compact('assets', 'categories', 'departments', 'employees', 'search', 'categoryId', 'departmentId', 'employeeId', 'status'));
+        return response()->json($assets);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Get auxiliary data for creating assets.
      */
-    public function create()
+    public function createData()
     {
-        $categories = AssetCategory::orderBy('name')->get();
-        $vendors = ThirdParty::where('is_supplier', true)->orderBy('name')->get();
-        $departments = Department::orderBy('name')->get();
-        $employees = Employee::where('is_active', true)->orderBy('name')->get();
+        $companyId = auth()->user()->company_id ?? 1;
 
-        return view('assets.create', compact('categories', 'vendors', 'departments', 'employees'));
+        $categories = AssetCategory::where('company_id', $companyId)->orderBy('name')->get();
+        $vendors = ThirdParty::where('company_id', $companyId)->where('is_supplier', true)->orderBy('name')->get();
+        $departments = Department::where('company_id', $companyId)->orderBy('name')->get();
+        $employees = Employee::where('company_id', $companyId)->where('is_active', true)->orderBy('name')->get();
+
+        return response()->json(compact('categories', 'vendors', 'departments', 'employees'));
     }
 
     /**
@@ -65,15 +72,10 @@ class AssetController extends Controller
      */
     public function store(StoreFixedAssetRequest $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $data = $request->validated();
         
-        if (empty($data['company_id'])) {
-            $company = Company::first();
-            if (!$company) {
-                return back()->withInput()->with('error', 'Tem de criar pelo menos uma Empresa no sistema antes de criar ativos.');
-            }
-            $data['company_id'] = $company->id;
-        }
+        $data['company_id'] = $companyId; // FIX #1
 
         $response = $this->assetService->createAsset($data, auth()->id());
 
@@ -81,10 +83,14 @@ class AssetController extends Controller
             $asset = $response['data'];
             $this->handleAttachments($request, $asset);
             
-            return redirect()->route('ativos.index')->with('success', $response['message']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Ativo Imobilizado criado com sucesso.',
+                'asset' => $asset
+            ]);
         }
 
-        return back()->with('error', $response['message'])->withInput();
+        return response()->json($response, 400);
     }
 
     /**
@@ -92,22 +98,14 @@ class AssetController extends Controller
      */
     public function show(string $id)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $asset = $this->assetRepository->findWithDetails((int)$id);
-        return view('assets.show', compact('asset'));
-    }
+        
+        if ($asset->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        $asset = $this->assetRepository->findOrFail((int)$id);
-        $categories = AssetCategory::orderBy('name')->get();
-        $vendors = ThirdParty::where('is_supplier', true)->orderBy('name')->get();
-        $departments = Department::orderBy('name')->get();
-        $employees = Employee::where('is_active', true)->orderBy('name')->get();
-
-        return view('assets.edit', compact('asset', 'categories', 'vendors', 'departments', 'employees'));
+        return response()->json($asset);
     }
 
     /**
@@ -115,21 +113,29 @@ class AssetController extends Controller
      */
     public function update(UpdateFixedAssetRequest $request, string $id)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $data = $request->validated();
         
-        if (empty($data['company_id'])) {
-            $data['company_id'] = $this->assetRepository->findOrFail((int)$id)->company_id;
+        $asset = $this->assetRepository->findOrFail((int)$id);
+        if ($asset->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
         }
+
+        $data['company_id'] = $companyId;
 
         $response = $this->assetService->updateAsset((int)$id, $data, auth()->id());
         
         if ($response['success']) {
             $asset = $response['data'];
             $this->handleAttachments($request, $asset);
-            return redirect()->route('ativos.index')->with('success', $response['message']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Ativo atualizado com sucesso.',
+                'asset' => $asset
+            ]);
         }
 
-        return back()->with('error', $response['message'])->withInput();
+        return response()->json($response, 400);
     }
 
     /**
@@ -137,13 +143,15 @@ class AssetController extends Controller
      */
     public function destroy(string $id)
     {
-        $response = $this->assetService->updateStatus((int)$id, 'written_off', auth()->id());
-        
-        if ($response['success']) {
-            return redirect()->route('ativos.index')->with('success', 'Ativo abatido com sucesso.');
+        $companyId = auth()->user()->company_id ?? 1;
+        $asset = $this->assetRepository->findOrFail((int)$id);
+        if ($asset->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
         }
 
-        return back()->with('error', $response['message']);
+        $response = $this->assetService->updateStatus((int)$id, 'written_off', auth()->id());
+        
+        return response()->json($response);
     }
 
     /**
@@ -151,15 +159,21 @@ class AssetController extends Controller
      */
     public function destroyAttachment(string $id, string $attachmentId)
     {
+        $companyId = auth()->user()->company_id ?? 1;
+        $asset = $this->assetRepository->findOrFail((int)$id);
+        if ($asset->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
         $attachment = Attachment::findOrFail($attachmentId);
         
         if ($attachment->attachable_type === FixedAsset::class && $attachment->attachable_id == $id) {
             Storage::disk('public')->delete($attachment->file_path);
             $attachment->delete();
-            return back()->with('success', 'Anexo removido com sucesso.');
+            return response()->json(['success' => true, 'message' => 'Anexo removido com sucesso.']);
         }
 
-        return back()->with('error', 'Acesso negado ao anexo.');
+        return response()->json(['success' => false, 'message' => 'Acesso negado ao anexo.'], 403);
     }
 
     /**

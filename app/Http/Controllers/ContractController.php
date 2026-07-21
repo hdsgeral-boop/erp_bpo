@@ -3,24 +3,45 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Contract;
+use App\Models\Employee;
+use App\Models\Infotype;
 
+/**
+ * ContractController
+ *
+ * BUGS CORRIGIDOS:
+ * #1 — company_id dinâmico do utilizador autenticado
+ * Multi-tenant — Consultas restritas ao ID da empresa do utilizador autenticado
+ * API-only — Respostas estruturadas em JSON
+ */
 class ContractController extends Controller
 {
     public function index()
     {
-        $contracts = \App\Models\Contract::with(['employee', 'infotype'])->get();
-        return view('hr.contracts.index', compact('contracts'));
+        $companyId = auth()->user()->company_id ?? 1;
+
+        $contracts = Contract::where('company_id', $companyId)
+            ->with(['employee', 'infotype'])
+            ->get();
+            
+        return response()->json($contracts);
     }
 
-    public function create()
+    public function createData()
     {
-        $employees = \App\Models\Employee::where('is_active', true)->get();
-        $infotypes = \App\Models\Infotype::all();
-        return view('hr.contracts.create', compact('employees', 'infotypes'));
+        $companyId = auth()->user()->company_id ?? 1;
+
+        $employees = Employee::where('company_id', $companyId)->where('is_active', true)->get();
+        $infotypes = Infotype::all(); // Infotypes são tabelas de sistema de rubricas salariais gerais
+
+        return response()->json(compact('employees', 'infotypes'));
     }
 
     public function store(Request $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
+
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'infotype_id' => 'required|exists:infotypes,id',
@@ -29,29 +50,37 @@ class ContractController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
         
-        $validated['company_id'] = \App\Models\Company::first()->id ?? 1;
+        $validated['company_id'] = $companyId; // FIX #1
 
-        \App\Models\Contract::create($validated);
+        $contract = Contract::create($validated);
 
-        return redirect()->route('rh.contratos.index')->with('success', 'Contrato criado com sucesso.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Contrato de colaborador criado com sucesso.',
+            'contract' => $contract
+        ]);
     }
 
     public function show(string $id)
     {
-        //
-    }
+        $companyId = auth()->user()->company_id ?? 1;
+        $contract = Contract::findOrFail($id);
 
-    public function edit(string $id)
-    {
-        $contract = \App\Models\Contract::findOrFail($id);
-        $employees = \App\Models\Employee::where('is_active', true)->get();
-        $infotypes = \App\Models\Infotype::all();
-        return view('hr.contracts.edit', compact('contract', 'employees', 'infotypes'));
+        if ($contract->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
+        return response()->json($contract);
     }
 
     public function update(Request $request, string $id)
     {
-        $contract = \App\Models\Contract::findOrFail($id);
+        $companyId = auth()->user()->company_id ?? 1;
+        $contract = Contract::findOrFail($id);
+
+        if ($contract->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
         
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
@@ -63,14 +92,27 @@ class ContractController extends Controller
 
         $contract->update($validated);
 
-        return redirect()->route('rh.contratos.index')->with('success', 'Contrato atualizado.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Contrato atualizado com sucesso.',
+            'contract' => $contract
+        ]);
     }
 
     public function destroy(string $id)
     {
-        $contract = \App\Models\Contract::findOrFail($id);
+        $companyId = auth()->user()->company_id ?? 1;
+        $contract = Contract::findOrFail($id);
+
+        if ($contract->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
         $contract->delete();
         
-        return redirect()->route('rh.contratos.index')->with('success', 'Contrato removido.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Contrato removido com sucesso.'
+        ]);
     }
 }

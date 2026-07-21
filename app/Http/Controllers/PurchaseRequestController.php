@@ -10,6 +10,13 @@ use App\Repositories\Contracts\PurchaseRepositoryInterface;
 use App\Services\PurchaseService;
 use Illuminate\Http\Request;
 
+/**
+ * PurchaseRequestController
+ *
+ * BUGS CORRIGIDOS:
+ * #1 — Utilização de company_id do utilizador autenticado
+ * API-only — Adaptado para interagir via JSON com o frontend
+ */
 class PurchaseRequestController extends Controller
 {
     protected $purchaseRepo;
@@ -23,33 +30,33 @@ class PurchaseRequestController extends Controller
 
     public function index(Request $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $search = $request->input('search');
         $status = $request->input('status');
         
+        // Paginação com scope do repositório
         $requests = $this->purchaseRepo->paginateRequests(15, $search, $status);
         
-        return view('purchases.requests.index', compact('requests', 'search', 'status'));
+        return response()->json($requests);
     }
 
-    public function create()
+    public function createData()
     {
-        $departments = Department::orderBy('name')->get();
-        $products = Product::orderBy('name')->get();
+        $companyId = auth()->user()->company_id ?? 1;
+
+        $departments = Department::where('company_id', $companyId)->orderBy('name')->get();
+        $products = Product::where('company_id', $companyId)->orderBy('name')->get();
         
-        return view('purchases.requests.create', compact('departments', 'products'));
+        return response()->json(compact('departments', 'products'));
     }
 
     public function store(StorePurchaseRequest $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $data = $request->validated();
-        
-        $company = Company::first();
-        if (!$company) {
-            return back()->withInput()->with('error', 'Crie pelo menos uma empresa no sistema primeiro.');
-        }
 
         $headerData = [
-            'company_id' => $company->id,
+            'company_id' => $companyId, // FIX #1
             'requester_name' => $data['requester_name'],
             'department_id' => $data['department_id'],
             'date' => $data['date'],
@@ -58,34 +65,52 @@ class PurchaseRequestController extends Controller
             'notes' => $data['notes'] ?? null,
         ];
 
-        $this->purchaseRepo->createRequest($headerData, $data['items']);
+        $purchaseRequest = $this->purchaseRepo->createRequest($headerData, $data['items']);
 
-        return redirect()->route('compras.pedidos.index')->with('success', 'Pedido Interno criado com sucesso.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Pedido Interno de compra criado com sucesso.',
+            'purchase_request' => $purchaseRequest
+        ]);
     }
 
     public function show(string $id)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
-        return view('purchases.requests.show', compact('purchaseRequest'));
+        
+        if ($purchaseRequest->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
+        return response()->json($purchaseRequest);
     }
 
     public function approve(Request $request, string $id)
     {
+        $companyId = auth()->user()->company_id ?? 1;
+        $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
+
+        if ($purchaseRequest->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
         $response = $this->purchaseService->approveRequest((int)$id, auth()->id());
         
-        if ($response['success']) {
-            return back()->with('success', $response['message']);
-        }
-        return back()->with('error', $response['message']);
+        return response()->json($response);
     }
 
     public function reject(Request $request, string $id)
     {
+        $companyId = auth()->user()->company_id ?? 1;
+        $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
+
+        if ($purchaseRequest->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
         $response = $this->purchaseService->rejectRequest((int)$id, auth()->id());
         
-        if ($response['success']) {
-            return back()->with('success', $response['message']);
-        }
-        return back()->with('error', $response['message']);
+        return response()->json($response);
     }
 }

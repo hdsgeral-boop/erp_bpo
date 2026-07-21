@@ -11,6 +11,13 @@ use App\Repositories\Contracts\PurchaseRepositoryInterface;
 use App\Services\PurchaseService;
 use Illuminate\Http\Request;
 
+/**
+ * PurchaseOrderController
+ *
+ * BUGS CORRIGIDOS:
+ * #1 — Obtenção de company_id do utilizador autenticado
+ * API-only — Adaptado para interagir via JSON com o frontend
+ */
 class PurchaseOrderController extends Controller
 {
     protected $purchaseRepo;
@@ -24,39 +31,46 @@ class PurchaseOrderController extends Controller
 
     public function index(Request $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $search = $request->input('search');
         $status = $request->input('status');
         
         $orders = $this->purchaseRepo->paginateOrders(15, $search, $status);
         
-        return view('purchases.orders.index', compact('orders', 'search', 'status'));
+        return response()->json($orders);
     }
 
-    public function create(Request $request)
+    public function createData(Request $request)
     {
-        $suppliers = ThirdParty::where('type', 'supplier')->orWhere('type', 'both')->orderBy('name')->get();
-        $products = Product::orderBy('name')->get();
+        $companyId = auth()->user()->company_id ?? 1;
+        $suppliers = ThirdParty::where('company_id', $companyId)
+            ->where(function($q) {
+                $q->where('is_supplier', true)->orWhere('is_creditor', true);
+            })
+            ->orderBy('name')
+            ->get();
+
+        $products = Product::where('company_id', $companyId)->orderBy('name')->get();
         $sourceRequest = null;
         
         if ($request->has('from_request')) {
             $sourceRequest = $this->purchaseRepo->findRequest((int)$request->input('from_request'));
+            if ($sourceRequest->company_id !== $companyId) {
+                return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+            }
             if ($sourceRequest->status !== 'APPROVED') {
-                return redirect()->route('compras.pedidos.index')->with('error', 'Apenas pedidos aprovados podem ser convertidos em encomendas.');
+                return response()->json(['success' => false, 'message' => 'Apenas pedidos aprovados podem ser convertidos.'], 400);
             }
         }
         
-        return view('purchases.orders.create', compact('suppliers', 'products', 'sourceRequest'));
+        return response()->json(compact('suppliers', 'products', 'sourceRequest'));
     }
 
     public function store(StorePurchaseOrder $request)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $data = $request->validated();
         
-        $company = Company::first();
-        if (!$company) {
-            return back()->withInput()->with('error', 'Crie pelo menos uma empresa no sistema primeiro.');
-        }
-
         $totalAmount = 0;
         $totalTax = 0;
 
@@ -66,7 +80,7 @@ class PurchaseOrderController extends Controller
         }
 
         $headerData = [
-            'company_id' => $company->id,
+            'company_id' => $companyId,
             'supplier_id' => $data['supplier_id'],
             'date' => $data['date'],
             'status' => 'PENDING',
@@ -81,7 +95,7 @@ class PurchaseOrderController extends Controller
         // Se veio de um pedido interno, marcar
         if ($request->has('source_request_id')) {
             $req = PurchaseRequest::find($request->input('source_request_id'));
-            if ($req) {
+            if ($req && $req->company_id === $companyId) {
                 $req->update([
                     'status' => 'CONVERTED',
                     'converted_to_order_id' => $order->id
@@ -89,25 +103,44 @@ class PurchaseOrderController extends Controller
             }
         }
 
-        return redirect()->route('compras.encomendas.index')->with('success', 'Nota de Encomenda gerada com sucesso.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Nota de Encomenda gerada com sucesso.',
+            'order' => $order
+        ]);
     }
 
     public function show(string $id)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $order = $this->purchaseRepo->findOrder((int)$id);
-        return view('purchases.orders.show', compact('order'));
+        
+        if ($order->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
+        return response()->json($order);
     }
 
-    // Aprovação opcional da encomenda antes de enviar ao fornecedor
     public function approve(Request $request, string $id)
     {
+        $companyId = auth()->user()->company_id ?? 1;
         $order = $this->purchaseRepo->findOrder((int)$id);
+
+        if ($order->company_id !== $companyId) {
+            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+        }
+
         $order->update([
             'status' => 'APPROVED',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
         ]);
         
-        return back()->with('success', 'Nota de Encomenda aprovada para envio ao Fornecedor.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Nota de Encomenda aprovada para envio ao Fornecedor.',
+            'order' => $order
+        ]);
     }
 }

@@ -96,6 +96,7 @@ Route::prefix('v1')->group(function () {
         // ═══════════════════════════════════════════════════
         Route::prefix('compras')->group(function () {
             // Pedidos Internos
+            Route::get('/pedidos-data', [\App\Http\Controllers\PurchaseRequestController::class, 'createData']);
             Route::get('/pedidos', [\App\Http\Controllers\PurchaseRequestController::class, 'index']);
             Route::post('/pedidos', [\App\Http\Controllers\PurchaseRequestController::class, 'store']);
             Route::get('/pedidos/{id}', [\App\Http\Controllers\PurchaseRequestController::class, 'show']);
@@ -105,6 +106,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/pedidos/{id}/rejeitar', [\App\Http\Controllers\PurchaseRequestController::class, 'reject']);
 
             // Encomendas a Fornecedores
+            Route::get('/encomendas-data', [\App\Http\Controllers\PurchaseOrderController::class, 'createData']);
             Route::get('/encomendas', [\App\Http\Controllers\PurchaseOrderController::class, 'index']);
             Route::post('/encomendas', [\App\Http\Controllers\PurchaseOrderController::class, 'store']);
             Route::get('/encomendas/{id}', [\App\Http\Controllers\PurchaseOrderController::class, 'show']);
@@ -112,12 +114,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/encomendas/{id}/aprovar', [\App\Http\Controllers\PurchaseOrderController::class, 'approve']);
 
             // Receções de Mercadoria
+            Route::get('/rececoes-data', [\App\Http\Controllers\PurchaseDeliveryController::class, 'createData']);
             Route::get('/rececoes', [\App\Http\Controllers\PurchaseDeliveryController::class, 'index']);
             Route::post('/rececoes', [\App\Http\Controllers\PurchaseDeliveryController::class, 'store']);
             Route::get('/rececoes/{id}', [\App\Http\Controllers\PurchaseDeliveryController::class, 'show']);
             Route::delete('/rececoes/{id}', [\App\Http\Controllers\PurchaseDeliveryController::class, 'destroy']);
 
             // Faturas de Fornecedor
+            Route::get('/faturas-data', [\App\Http\Controllers\PurchaseInvoiceController::class, 'createData']);
             Route::get('/faturas', [\App\Http\Controllers\PurchaseInvoiceController::class, 'index']);
             Route::post('/faturas', [\App\Http\Controllers\PurchaseInvoiceController::class, 'store']);
             Route::get('/faturas/{id}', [\App\Http\Controllers\PurchaseInvoiceController::class, 'show']);
@@ -137,6 +141,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/funcionarios/{id}/anexos/{anexo}', [\App\Http\Controllers\EmployeeController::class, 'destroyAttachment']);
 
             // Contratos
+            Route::get('/contratos-data', [\App\Http\Controllers\ContractController::class, 'createData']);
             Route::apiResource('contratos', \App\Http\Controllers\ContractController::class);
 
             // Infotipos
@@ -167,6 +172,7 @@ Route::prefix('v1')->group(function () {
         // MÓDULO DE ATIVOS IMOBILIZADOS
         // ═══════════════════════════════════════════════════
         Route::prefix('ativos')->group(function () {
+            Route::get('/create-data', [\App\Http\Controllers\AssetController::class, 'createData']);
             Route::get('/', [\App\Http\Controllers\AssetController::class, 'index']);
             Route::post('/', [\App\Http\Controllers\AssetController::class, 'store']);
             Route::get('/{id}', [\App\Http\Controllers\AssetController::class, 'show']);
@@ -256,6 +262,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/dashboard', [\App\Http\Controllers\AccountingController::class, 'dashboard']);
             Route::get('/trial-balance', [\App\Http\Controllers\AccountingController::class, 'trialBalance']);
             Route::apiResource('plano-contas', \App\Http\Controllers\ChartOfAccountController::class);
+            Route::get('/diarios-data', [\App\Http\Controllers\JournalController::class, 'createData']);
             Route::apiResource('diarios', \App\Http\Controllers\JournalController::class);
             Route::apiResource('mapas', \App\Http\Controllers\AccountingMapController::class);
             Route::get('/rotinas', [\App\Http\Controllers\AccountingRoutineController::class, 'index']);
