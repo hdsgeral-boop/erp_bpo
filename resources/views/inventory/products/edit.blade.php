@@ -167,6 +167,14 @@
                         <div class="form-text">Se ativo, o sistema exigirá stock para efetuar vendas.</div>
                     </div>
 
+                    <div class="mb-3 p-3 bg-light rounded-3 border" id="stock_qty_container" style="display: none;">
+                        <label class="form-label text-dark fw-bold mb-1" for="stock_qty">
+                            <i class="fas fa-boxes text-primary me-1"></i> Unidades em Stock <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" step="0.01" min="0" name="stock_qty" id="stock_qty" class="form-control" value="{{ old('stock_qty', $product->stock_qty ?? '0') }}">
+                        <div class="form-text small text-muted">Unidades atualmente disponíveis em stock.</div>
+                    </div>
+
                     <div class="form-check form-switch mb-3">
                         <input class="form-check-input" type="checkbox" name="is_asset" id="is_asset" value="1" {{ old('is_asset', $product->is_asset) ? 'checked' : '' }}>
                         <label class="form-check-label fw-bold" for="is_asset">É Imobilizado (Ativo)</label>
@@ -209,8 +217,8 @@
 
                     <div class="mb-3">
                         <label class="form-label">Adicionar Novos Anexos</label>
-                        <input class="form-control" type="file" name="attachments[]" multiple>
-                        <div class="form-text">Máximo 10MB por ficheiro.</div>
+                        <input class="form-control" type="file" name="attachments[]" accept="image/*,.pdf" multiple>
+                        <div class="form-text">Máximo 1MB por ficheiro.</div>
                     </div>
                 </div>
             </div>
@@ -231,4 +239,24 @@
         @endforeach
     @endif
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const isInventoryCheck = document.getElementById('is_inventory');
+        const stockContainer = document.getElementById('stock_qty_container');
+        
+        function toggleStock() {
+            if (isInventoryCheck && stockContainer) {
+                stockContainer.style.display = isInventoryCheck.checked ? 'block' : 'none';
+            }
+        }
+
+        if (isInventoryCheck) {
+            isInventoryCheck.addEventListener('change', toggleStock);
+            toggleStock();
+        }
+    });
+</script>
+@endpush
 @endsection

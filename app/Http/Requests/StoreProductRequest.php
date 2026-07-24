@@ -26,12 +26,13 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50',
+            'code' => 'required|string|max:50',
             'category_id' => 'required|exists:product_categories,id',
             'price' => 'nullable|numeric|min:0',
-            'unit_price' => 'nullable|numeric|min:0',
+            'unit_price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
-            'tax_rate' => 'nullable|numeric|min:0',
+            'tax_rate' => 'required|numeric|min:0|max:100',
+            'stock_qty' => 'nullable|numeric|min:0',
             'unit' => 'nullable|string|max:20',
             'min_stock' => 'nullable|numeric|min:0',
             'max_stock' => 'nullable|numeric|min:0',
@@ -40,7 +41,7 @@ class StoreProductRequest extends FormRequest
             'is_asset' => 'nullable',
             'is_blocked' => 'nullable',
             'description' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240',
+            'attachments.*' => 'nullable|file|max:1024', // Máximo 1MB por ficheiro
         ];
     }
 }
