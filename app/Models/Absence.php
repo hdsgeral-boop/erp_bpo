@@ -16,5 +16,10 @@ class Absence extends Model implements AuditableContract
     {
         return $this->belongsTo(Employee::class);
     }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 }
 
