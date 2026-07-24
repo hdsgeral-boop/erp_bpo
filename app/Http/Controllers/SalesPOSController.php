@@ -101,7 +101,7 @@ class SalesPOSController extends Controller
         }
 
         $products = Product::where('company_id', $companyId)
-            ->where('is_active', true)
+            ->where('is_blocked', false)
             ->where('is_master_data', false)
             ->with(['tax', 'category'])
             ->get();

@@ -146,8 +146,9 @@ class CommercialDocumentController extends Controller
             ->get(['id', 'name', 'location']);
 
         $products = Product::where('company_id', $companyId)
+            ->where('is_blocked', false)
             ->orderBy('name')
-            ->get(['id', 'code', 'name', 'unit_price', 'stock_qty']);
+            ->get(['id', 'code', 'name', 'unit_price', 'tax_rate', 'stock_qty', 'is_inventory']);
 
         $taxes = Tax::where('is_active', true)
             ->orWhereNull('is_active')
