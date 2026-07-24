@@ -134,13 +134,9 @@
                         <a href="{{ route('rh.ausencias.index') }}" class="nav-item"><i class="fas fa-plane-departure"></i> <span class="nav-label">Férias & Ausências</span></a>
                         <a href="{{ route('rh.horas-extra.index') }}" class="nav-item"><i class="fas fa-stopwatch"></i> <span class="nav-label">Horas Extras</span></a>
                         <a href="{{ route('rh.beneficios.index') }}" class="nav-item"><i class="fas fa-gift"></i> <span class="nav-label">Benefícios/Deduções</span></a>
-                        @can('payroll.process')
                         <a href="{{ route('rh.salarios.wizard') }}" class="nav-item"><i class="fas fa-calculator"></i> <span class="nav-label">Processamento Salarial</span></a>
-                        @endcan
-                        @can('payroll.export')
                         <a href="{{ route('rh.reports.inss') }}" class="nav-item"><i class="fas fa-shield-alt text-primary"></i> <span class="nav-label">Mapa de INSS</span></a>
                         <a href="{{ route('rh.reports.bank') }}" class="nav-item"><i class="fas fa-university text-success"></i> <span class="nav-label">Transferência Bancária</span></a>
-                        @endcan
                         <hr class="dropdown-divider my-2 border-secondary" style="border-color: #334155;">
                         <a href="{{ route('rh.infotipos.index') }}" class="nav-item small text-muted"><i class="fas fa-list-ul"></i> <span class="nav-label">Infotipos</span></a>
                         <a href="{{ route('rh.escaloes-irt.index') }}" class="nav-item small text-muted"><i class="fas fa-layer-group"></i> <span class="nav-label">Escalões IRT</span></a>

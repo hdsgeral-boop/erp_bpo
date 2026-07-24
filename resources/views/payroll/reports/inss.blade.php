@@ -10,7 +10,7 @@
         <div class="d-flex gap-2">
             <button class="btn btn-outline-secondary btn-sm rounded-3" onclick="window.print()"><i class="fas fa-print me-1"></i> Imprimir</button>
             @if($run)
-                <a href="/api/v1/rh/salarios/{{ $run->id }}/exportar-inss" class="btn btn-success btn-sm rounded-3"><i class="fas fa-file-excel me-1"></i> Exportar Excel</a>
+                <a href="{{ route('rh.salarios.export_inss', $run->id) }}" class="btn btn-success btn-sm rounded-3"><i class="fas fa-file-excel me-1"></i> Exportar Folha INSS</a>
             @endif
         </div>
     </div>

@@ -290,7 +290,7 @@
         <div style="display: flex; flex-direction: column; height: 100%;">
             <!-- Search & Barcode -->
             <div class="mb-3 position-relative">
-                <i class="fas fa-barcode position-absolute top-50 start-0 inset-s-0 translate-middle-y ms-3 text-muted fs-5"></i>
+                <i class="fas fa-barcode position-absolute top-50 inset-s-0 translate-middle-y ms-3 text-muted fs-5"></i>
                 <input type="text" id="productSearch" class="form-control ps-5" placeholder="Pesquisar produto ou passar Código de Barras (F2)..." style="font-size: 1.05rem; padding: 12px 12px 12px 45px; border-radius: 14px;" autofocus>
             </div>
 
@@ -362,7 +362,7 @@
                 <div>
                     <label class="form-label small fw-bold text-muted mb-1">CLIENTE</label>
                     <div class="d-flex gap-2">
-                        <select id="customerId" class="form-select flex-grow-1 grow">
+                        <select id="customerId" class="form-select grow">
                             <option value="">Consumidor Final (Anónimo)</option>
                             @foreach($customers as $c)
                                 <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->nif ?? 'Sem NIF' }})</option>
