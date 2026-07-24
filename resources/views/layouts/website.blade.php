@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Consulvolt Soluções — Gestão Empresarial & Tecnologia | Angola')</title>
+    <title>@yield('title', 'Consulvolt Soluções - Gestão Empresarial & Tecnologia | Angola')</title>
     <meta name="description" content="@yield('meta_description', 'Consulvolt Soluções - 10 Anos de Experiência em Venda de Materiais Elétricos e Informáticos, Consultoria Organizacional, Desenvolvimento de Aplicações e Gestão de Projetos em Angola.')">
 
     <!-- Fonts & Icons -->
@@ -204,7 +204,7 @@
                     </div>
                     <!-- Frase curta e profissional no footer -->
                     <p class="text-slate-400 fs-7 mb-3">
-                        Consulvolt Soluções — 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
+                        Consulvolt Soluções - 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
                     </p>
                     <div class="badge-agt-cert mb-3">
                         <i class="fas fa-shield-alt"></i> Software Certificado AGT n.º 142/AGT/2019

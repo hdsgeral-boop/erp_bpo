@@ -23,7 +23,7 @@ class UserAndCompanySeeder extends Seeder
         $wstb = Company::where('name', 'like', '%WSTB%')->orWhere('nif', '5418920192')->first();
         if (!$wstb) {
             $wstb = Company::create([
-                'name' => 'WSTB — Consulvolt, Lda',
+                'name' => 'WSTB - Consulvolt, Lda',
                 'nif' => '5418920192',
                 'province' => 'Luanda',
                 'municipality' => 'Belas',
@@ -36,7 +36,7 @@ class UserAndCompanySeeder extends Seeder
         $spazio = Company::where('name', 'like', '%Spazio%')->orWhere('nif', '5419820381')->first();
         if (!$spazio) {
             $spazio = Company::create([
-                'name' => 'Spazio — Spazio Design & Serviços, Lda',
+                'name' => 'Spazio - Spazio Design & Serviços, Lda',
                 'nif' => '5419820381',
                 'province' => 'Luanda',
                 'municipality' => 'Luanda',

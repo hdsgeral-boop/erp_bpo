@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\DB;
  * PurchaseInvoiceController
  *
  * BUGS CORRIGIDOS:
- * #1 — company_id via auth()->user()->company_id (nunca hardcoded a 1)
- * Multi-tenant — Consultas restritas ao ID da empresa do utilizador autenticado
- * API-only — Respostas e retornos formatados em JSON
+ * #1 - company_id via auth()->user()->company_id (nunca hardcoded a 1)
+ * Multi-tenant - Consultas restritas ao ID da empresa do utilizador autenticado
+ * API-only - Respostas e retornos formatados em JSON
  */
 class PurchaseInvoiceController extends Controller
 {

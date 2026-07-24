@@ -13,8 +13,8 @@ use Illuminate\Http\Request;
  * PurchaseDeliveryController
  *
  * BUGS CORRIGIDOS:
- * #1 — Utilização de company_id do utilizador autenticado
- * API-only — Adaptado para interagir via JSON com o frontend
+ * #1 - Utilização de company_id do utilizador autenticado
+ * API-only - Adaptado para interagir via JSON com o frontend
  */
 class PurchaseDeliveryController extends Controller
 {

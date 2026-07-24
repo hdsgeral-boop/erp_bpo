@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
  * ReconciliationController
  *
  * BUGS CORRIGIDOS:
- * #1 — company_id via auth()->user()->company_id (nunca hardcoded a 1)
+ * #1 - company_id via auth()->user()->company_id (nunca hardcoded a 1)
  */
 class ReconciliationController extends Controller
 {

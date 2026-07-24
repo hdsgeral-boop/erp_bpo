@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contactos — Consulvolt Soluções | NIF: 5417213969</title>
+    <title>Contactos - Consulvolt Soluções | NIF: 5417213969</title>
     <meta name="description" content="Contactos da Consulvolt Soluções: Lar Patriota, Rua Ginásio Wanaka, Luanda. Telefones: (244) 923 692 943 / (244) 923 012 143. Email: hdsgeral@gmail.com. NIF: 5417213969.">
 
     <!-- Fonts & Icons -->
@@ -258,7 +258,7 @@
                         <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 48px; width: auto; object-fit: contain; background: transparent;">
                     </div>
                     <p class="text-slate-400 fs-7 mb-4">
-                        Consulvolt Soluções — 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
+                        Consulvolt Soluções - 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
                     </p>
                     <div>
                         <a href="https://wa.me/244923692943" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>

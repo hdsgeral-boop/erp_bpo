@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ERP Consulvolt — Portal de Gestão",
+  title: "ERP Consulvolt - Portal de Gestão",
   description: "Sistema Integrado de Gestão Empresarial (ERP)",
 };
 

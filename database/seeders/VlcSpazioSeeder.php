@@ -87,7 +87,7 @@ class VlcSpazioSeeder extends Seeder
         $vlc = Company::where('name', 'like', '%VLC%')->orWhere('nif', '5418920192')->first();
         if (!$vlc) {
             $vlc = Company::create([
-                'name' => 'VLC — Volt Light Consulvolt, Lda',
+                'name' => 'VLC - Volt Light Consulvolt, Lda',
                 'nif' => '5418920192',
                 'province' => 'Luanda',
                 'municipality' => 'Belas',
@@ -100,7 +100,7 @@ class VlcSpazioSeeder extends Seeder
         $spazio = Company::where('name', 'like', '%Spazio%')->orWhere('nif', '5419820381')->first();
         if (!$spazio) {
             $spazio = Company::create([
-                'name' => 'Spazio — Spazio Design & Serviços, Lda',
+                'name' => 'Spazio - Spazio Design & Serviços, Lda',
                 'nif' => '5419820381',
                 'province' => 'Luanda',
                 'municipality' => 'Luanda',

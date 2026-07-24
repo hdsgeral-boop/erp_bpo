@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulvolt Soluções — Sistema Integrado de Gestão Empresarial | Angola</title>
+    <title>Consulvolt Soluções - Sistema Integrado de Gestão Empresarial | Angola</title>
     <meta name="description" content="Consulvolt Soluções: 10 Anos de experiência em Materiais Elétricos Pesados, Equipamentos Informáticos, Consultoria Organizacional, Desenvolvimento de Aplicações e Gestão de Projetos em Angola. Faturação certificada AGT n.º 142/AGT/2019.">
 
     <!-- Fonts & Icons -->

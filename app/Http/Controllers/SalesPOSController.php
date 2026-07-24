@@ -22,9 +22,9 @@ use Carbon\Carbon;
  * SalesPOSController
  *
  * BUGS CORRIGIDOS:
- * #1 / #4 — Substituído session('company_id') por auth()->user()->company_id
- * #2 — Eliminada a race condition na numeração de faturas usando DocumentSeriesService com lockForUpdate()
- * API-only — Convertido de vistas Blade para respostas JSON robustas
+ * #1 / #4 - Substituído session('company_id') por auth()->user()->company_id
+ * #2 - Eliminada a race condition na numeração de faturas usando DocumentSeriesService com lockForUpdate()
+ * API-only - Convertido de vistas Blade para respostas JSON robustas
  */
 class SalesPOSController extends Controller
 {

@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\DB;
  * JournalController
  *
  * BUGS CORRIGIDOS:
- * #1 — company_id dinâmico via auth()->user()->company_id
- * Multi-tenant — Consultas restritas ao ID da empresa do utilizador autenticado
- * API-only — Respostas estruturadas em JSON
+ * #1 - company_id dinâmico via auth()->user()->company_id
+ * Multi-tenant - Consultas restritas ao ID da empresa do utilizador autenticado
+ * API-only - Respostas estruturadas em JSON
  */
 class JournalController extends Controller
 {

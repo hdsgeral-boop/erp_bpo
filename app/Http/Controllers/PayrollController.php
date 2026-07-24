@@ -17,8 +17,8 @@ use App\Services\PayrollEngine;
  * PayrollController
  *
  * BUGS CORRIGIDOS:
- * #1 — company_id via auth()->user()->company_id (nunca hardcoded)
- * #5 — Estorno salarial robusto associando payroll_run_id aos Receipts (evita string note fragile matching)
+ * #1 - company_id via auth()->user()->company_id (nunca hardcoded)
+ * #5 - Estorno salarial robusto associando payroll_run_id aos Receipts (evita string note fragile matching)
  */
 class PayrollController extends Controller
 {

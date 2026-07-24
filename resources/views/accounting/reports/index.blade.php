@@ -291,7 +291,7 @@
 
     function renderBalanco(data) {
         let html = `
-            <h5 class="fw-bold mb-3">Balanço Patrimonial (PGC-NIRF) — ${data.year}</h5>
+            <h5 class="fw-bold mb-3">Balanço Patrimonial (PGC-NIRF) - ${data.year}</h5>
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="p-3 bg-light rounded-4 h-100">
@@ -329,7 +329,7 @@
 
     function renderDRE(data) {
         let html = `
-            <h5 class="fw-bold mb-3">Demonstração de Resultados por Natureza (DRE) — ${data.year}</h5>
+            <h5 class="fw-bold mb-3">Demonstração de Resultados por Natureza (DRE) - ${data.year}</h5>
             <div class="row g-4">
                 <div class="col-md-6">
                     <div class="p-3 border rounded-4">
@@ -376,7 +376,7 @@
 
     function renderDFC(data) {
         let html = `
-            <h5 class="fw-bold mb-3">Demonstração dos Fluxos de Caixa (DFC) — ${data.year}</h5>
+            <h5 class="fw-bold mb-3">Demonstração dos Fluxos de Caixa (DFC) - ${data.year}</h5>
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="card bg-success bg-opacity-10 border-0 p-3 rounded-4">

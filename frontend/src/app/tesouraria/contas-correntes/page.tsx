@@ -171,13 +171,13 @@ export default function ContasCorrentesPage() {
                   {statement.map((move: any, idx: number) => (
                     <tr key={idx}>
                       <td>{new Date(move.date).toLocaleDateString('pt-AO')}</td>
-                      <td className="font-bold text-slate-900">{move.document || move.reference || '—'}</td>
+                      <td className="font-bold text-slate-900">{move.document || move.reference || '-'}</td>
                       <td>{move.description || move.notes || 'Lançamento de conta corrente'}</td>
                       <td className="text-right font-mono font-bold text-slate-900">
-                        {move.debit > 0 ? new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(move.debit) : '—'}
+                        {move.debit > 0 ? new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(move.debit) : '-'}
                       </td>
                       <td className="text-right font-mono font-bold text-slate-900">
-                        {move.credit > 0 ? new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(move.credit) : '—'}
+                        {move.credit > 0 ? new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(move.credit) : '-'}
                       </td>
                       <td className={`text-right font-mono font-extrabold ${move.balance >= 0 ? 'text-green-650' : 'text-red-655'}`}>
                         {new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(move.balance)}

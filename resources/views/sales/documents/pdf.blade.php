@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>{{ $sale->doc_number }} — ERP Consulvolt</title>
+    <title>{{ $sale->doc_number }} - ERP Consulvolt</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -195,7 +195,7 @@
     <div class="agt-mention">
         <div>{{ $printMention }}</div>
         <div>Hash Assinatura: <span class="hash-code">{{ $sale->hash ? substr($sale->hash, 0, 40) . '...' : 'Sem Hash' }}</span></div>
-        <div style="margin-top: 4px; font-weight: bold;">Software Certificado pela AGT — ERP Consulvolt</div>
+        <div style="margin-top: 4px; font-weight: bold;">Software Certificado pela AGT - ERP Consulvolt</div>
     </div>
 
 </body>

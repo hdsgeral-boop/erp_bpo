@@ -302,7 +302,7 @@ export default function PedidosCompraPage() {
                     {req.department?.name || 'Não atribuído'}
                   </td>
                   <td>{new Date(req.date).toLocaleDateString('pt-AO')}</td>
-                  <td className="truncate max-w-[200px]">{req.notes || '—'}</td>
+                  <td className="truncate max-w-[200px]">{req.notes || '-'}</td>
                   <td>
                     <span className={`enterprise-badge ${
                       req.status === 'APPROVED' || req.status === 'CONVERTED'

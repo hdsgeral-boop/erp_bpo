@@ -11,9 +11,9 @@ use App\Models\Infotype;
  * ContractController
  *
  * BUGS CORRIGIDOS:
- * #1 — company_id dinâmico do utilizador autenticado
- * Multi-tenant — Consultas restritas ao ID da empresa do utilizador autenticado
- * API-only — Respostas estruturadas em JSON
+ * #1 - company_id dinâmico do utilizador autenticado
+ * Multi-tenant - Consultas restritas ao ID da empresa do utilizador autenticado
+ * API-only - Respostas estruturadas em JSON
  */
 class ContractController extends Controller
 {

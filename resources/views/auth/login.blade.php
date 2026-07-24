@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autenticação Corporativa — ERP Consulvolt</title>
+    <title>Autenticação Corporativa - ERP Consulvolt</title>
     <!-- FontAwesome 6 & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
             display: flex;
         }
 
-        /* Lado Esquerdo (Institucional / Banner) — Fundo Branco (Desktop apenas) */
+        /* Lado Esquerdo (Institucional / Banner) - Fundo Branco (Desktop apenas) */
         .auth-banner {
             background: #ffffff;
             border-right: 1px solid #e2e8f0;
@@ -56,7 +56,7 @@
             transform: translateY(-2px);
         }
 
-        /* Lado Direito (Formulário) — Fundo Escuro */
+        /* Lado Direito (Formulário) - Fundo Escuro */
         .auth-form-wrapper {
             background: #090d16;
             display: flex;

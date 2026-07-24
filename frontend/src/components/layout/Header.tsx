@@ -163,7 +163,7 @@ export default function Header({
                 ))
               ) : (
                 <option value={user?.company?.id || 1}>
-                  🏢 {user?.company?.name || 'VLC — Volt Light Consulvolt'}
+                  🏢 {user?.company?.name || 'VLC - Volt Light Consulvolt'}
                 </option>
               )}
             </select>

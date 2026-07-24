@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Talão POS — {{ $sale->doc_number }}</title>
+    <title>Talão POS - {{ $sale->doc_number }}</title>
     <style>
         body {
             font-family: 'Courier New', Courier, monospace;

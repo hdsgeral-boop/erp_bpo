@@ -14,8 +14,8 @@ use Illuminate\Http\Request;
  * PurchaseRequestController
  *
  * BUGS CORRIGIDOS:
- * #1 — Utilização de company_id do utilizador autenticado
- * API-only — Adaptado para interagir via JSON com o frontend
+ * #1 - Utilização de company_id do utilizador autenticado
+ * API-only - Adaptado para interagir via JSON com o frontend
  */
 class PurchaseRequestController extends Controller
 {

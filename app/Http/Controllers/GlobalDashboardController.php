@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
  * GlobalDashboardController
  *
  * BUGS CORRIGIDOS:
- * #1 — Filtra todos os modelos por company_id associado ao utilizador logado
- * PGSQL — Substituída a função MONTH() MySQL por EXTRACT(MONTH FROM date) PostgreSQL
+ * #1 - Filtra todos os modelos por company_id associado ao utilizador logado
+ * PGSQL - Substituída a função MONTH() MySQL por EXTRACT(MONTH FROM date) PostgreSQL
  */
 class GlobalDashboardController extends Controller
 {

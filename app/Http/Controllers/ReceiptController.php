@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
  * ReceiptController
  *
  * BUGS CORRIGIDOS:
- * #1 / #4 — Substituído session('company_id') por auth()->user()->company_id (com fallback para compatibilidade)
+ * #1 / #4 - Substituído session('company_id') por auth()->user()->company_id (com fallback para compatibilidade)
  */
 class ReceiptController extends Controller
 {

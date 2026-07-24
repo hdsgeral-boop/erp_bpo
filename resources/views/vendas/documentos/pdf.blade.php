@@ -25,7 +25,7 @@
     <div class="header">
         <div>
             <div class="company-title">ERP CONSULVOLT ANGOLA</div>
-            <div>Consulvolt — Prestação de Serviços, Lda</div>
+            <div>Consulvolt - Prestação de Serviços, Lda</div>
             <div>Luanda, Angola &bull; NIF: 5417000000</div>
             <div>Email: comercial@consulvolt.com</div>
         </div>
@@ -91,8 +91,8 @@
     <div style="clear: both;"></div>
 
     <div class="agt-footer">
-        <div>Processado por Programa Certificado n.º 142/AGT/2019 — ERP Consulvolt</div>
-        <div class="hash-code">{{ $sale->hash ?? '4Y81-b-WSTB-2026-FT' }} — Hash Assinatura Digital RSA</div>
+        <div>Processado por Programa Certificado n.º 142/AGT/2019 - ERP Consulvolt</div>
+        <div class="hash-code">{{ $sale->hash ?? '4Y81-b-WSTB-2026-FT' }} - Hash Assinatura Digital RSA</div>
         <div style="margin-top: 5px;">Os bens/serviços foram colocados à disposição do adquirente na data do documento.</div>
     </div>
 

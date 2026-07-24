@@ -27,8 +27,8 @@
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 1rem; font-weight: 700; color: #0f172a;">Vendas a Pronto Pagamento</td>
                     <td style="padding: 1rem; color: #64748b;">Faturação POS</td>
-                    <td style="padding: 1rem; font-weight: 700; color: #2563eb;">45.1.1 — Caixas Gerais</td>
-                    <td style="padding: 1rem; font-weight: 700; color: #16a34a;">61.1.1 — Venda de Mercadorias</td>
+                    <td style="padding: 1rem; font-weight: 700; color: #2563eb;">45.1.1 - Caixas Gerais</td>
+                    <td style="padding: 1rem; font-weight: 700; color: #16a34a;">61.1.1 - Venda de Mercadorias</td>
                 </tr>
             </tbody>
         </table>

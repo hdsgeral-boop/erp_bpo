@@ -27,7 +27,7 @@
             <tbody>
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                     <td style="padding: 1rem; color: #64748b;">{{ date('d/m/Y') }}</td>
-                    <td style="padding: 1rem; font-weight: 700; color: #0f172a;">BAI — Conta Corrente Kz</td>
+                    <td style="padding: 1rem; font-weight: 700; color: #0f172a;">BAI - Conta Corrente Kz</td>
                     <td style="padding: 1rem; font-weight: 600; color: #16a34a;">Recebimento Fatura FT 2026/001</td>
                     <td style="padding: 1rem; font-weight: 700; color: #16a34a;">+ 250.000,00 Kz</td>
                     <td style="padding: 1rem; font-weight: 700; color: #0f172a;">14.250.000,00 Kz</td>

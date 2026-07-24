@@ -13,8 +13,8 @@ use Carbon\Carbon;
  * CurrentAccountController
  *
  * BUGS CORRIGIDOS:
- * #4 — Substituído session('company_id') por auth()->user()->company_id (com fallback robusto)
- * #6 — Resolvido crash do extrato de conta corrente ($t->date->timestamp em string) usando Carbon::parse()
+ * #4 - Substituído session('company_id') por auth()->user()->company_id (com fallback robusto)
+ * #6 - Resolvido crash do extrato de conta corrente ($t->date->timestamp em string) usando Carbon::parse()
  */
 class CurrentAccountController extends Controller
 {

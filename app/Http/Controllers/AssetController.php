@@ -20,9 +20,9 @@ use Illuminate\Support\Facades\Storage;
  * AssetController
  *
  * BUGS CORRIGIDOS:
- * #1 — Obtenção de company_id do utilizador autenticado (não usar Company::first())
- * Multi-tenant — Consultas restritas ao ID da empresa do utilizador autenticado
- * API-only — Respostas estruturadas em JSON
+ * #1 - Obtenção de company_id do utilizador autenticado (não usar Company::first())
+ * Multi-tenant - Consultas restritas ao ID da empresa do utilizador autenticado
+ * API-only - Respostas estruturadas em JSON
  */
 class AssetController extends Controller
 {

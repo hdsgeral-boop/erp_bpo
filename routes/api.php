@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| ERP Consulvolt — API Routes v1
+| ERP Consulvolt - API Routes v1
 |--------------------------------------------------------------------------
 | Todas as rotas usam:
 | - Autenticação: Laravel Sanctum (Bearer Token)
@@ -343,7 +343,7 @@ Route::prefix('v1')->group(function () {
 }); // fim v1
 
 // ═══════════════════════════════════════════════════════
-// ROTAS API EXTERNAS (PowerBI, Mobile — token Sanctum)
+// ROTAS API EXTERNAS (PowerBI, Mobile - token Sanctum)
 // ═══════════════════════════════════════════════════════
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('v1/external')->group(function () {
     Route::get('/third-parties', [\App\Http\Controllers\Api\ThirdPartyController::class, 'index']);

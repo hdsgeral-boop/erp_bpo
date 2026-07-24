@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobre Nós — Consulvolt Soluções (10 Anos de Experiência)</title>
-    <meta name="description" content="Consulvolt Soluções — 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.">
+    <title>Sobre Nós - Consulvolt Soluções (10 Anos de Experiência)</title>
+    <meta name="description" content="Consulvolt Soluções - 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.">
 
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -234,7 +234,7 @@
                         <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 48px; width: auto; object-fit: contain; background: transparent;">
                     </div>
                     <p class="text-slate-400 fs-7 mb-4">
-                        Consulvolt Soluções — 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
+                        Consulvolt Soluções - 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
                     </p>
                     <div>
                         <a href="https://wa.me/244923692943" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>

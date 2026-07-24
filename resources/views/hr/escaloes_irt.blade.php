@@ -8,7 +8,7 @@
                 <i class="fas fa-layer-group text-primary me-2"></i> Tabela Oficial de Escalões IRT (Angola)
             </h2>
             <p style="margin: 0; color: #64748b; font-size: 0.9rem;">
-                Imposto sobre o Rendimento do Trabalho — Código do IRT Geral.
+                Imposto sobre o Rendimento do Trabalho - Código do IRT Geral.
             </p>
         </div>
     </div>

@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Recibo de Vencimento — {{ $employee->name }}</title>
+    <title>Recibo de Vencimento - {{ $employee->name }}</title>
     <style>
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -104,7 +104,7 @@
             </tr>
             @endif
             <tr>
-                <td>Segurança Social — INSS (3% Trabalhador)</td>
+                <td>Segurança Social - INSS (3% Trabalhador)</td>
                 <td class="text-center">DESCONTO</td>
                 <td class="text-right">-</td>
                 <td class="text-right">{{ number_format($receipt->inss_employee, 2, ',', '.') }} Kz</td>
@@ -131,7 +131,7 @@
         <tr>
             <td style="width: 50%;">
                 <div>Contribuição INSS Empresa (8%): <strong>{{ number_format($receipt->inss_company, 2, ',', '.') }} Kz</strong></div>
-                <div style="font-size: 10px; color: #64748b; margin-top: 5px;">Processado por Computador — ERP Consulvolt</div>
+                <div style="font-size: 10px; color: #64748b; margin-top: 5px;">Processado por Computador - ERP Consulvolt</div>
             </td>
             <td style="width: 50%;">
                 <div class="net-salary-box">

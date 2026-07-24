@@ -20,7 +20,7 @@
                     <select name="run_id" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
                         @forelse($runs as $r)
                             <option value="{{ $r->id }}" {{ $run && $run->id == $r->id ? 'selected' : '' }}>
-                                Mês {{ $r->reference }} (v{{ $r->version }}) — {{ number_format($r->total_net, 2, ',', '.') }} Kz
+                                Mês {{ $r->reference }} (v{{ $r->version }}) - {{ number_format($r->total_net, 2, ',', '.') }} Kz
                             </option>
                         @empty
                             <option value="">Sem processamentos disponíveis</option>

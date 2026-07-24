@@ -5,7 +5,7 @@ namespace App\Helpers;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * TenantCache Helper — ERP Consulvolt Multi-tenant Isolation
+ * TenantCache Helper - ERP Consulvolt Multi-tenant Isolation
  *
  * Garante o isolamento estrito de cache Redis por Tenant no modelo SaaS.
  * É PROIBIDO utilizar chaves globais para dados pertencentes a empresas.

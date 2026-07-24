@@ -5,7 +5,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 style="margin: 0; font-weight: 800; color: #0f172a; font-size: 1.6rem; letter-spacing: -0.5px;">
-                <i class="fas fa-user-shield text-primary me-2"></i> Painel BackOffice — Gestão de Pagamentos e Licenças
+                <i class="fas fa-user-shield text-primary me-2"></i> Painel BackOffice - Gestão de Pagamentos e Licenças
             </h2>
             <p style="margin: 0; color: #64748b; font-size: 0.925rem;">
                 Validação manual de transferências bancárias, aprovação de licenças e extensão de prazos.

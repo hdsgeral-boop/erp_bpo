@@ -10,12 +10,12 @@ use App\Services\SaleService;
 use Illuminate\Support\Facades\DB;
 
 /**
- * SaleController — Fluxo unificado via SaleService
+ * SaleController - Fluxo unificado via SaleService
  *
  * BUGS CORRIGIDOS:
- * #1 — company_id via auth()->user()->company_id (nunca hardcoded)
- * #2 — Numeração com lockForUpdate() via DocumentSeries/SaleService (sem race condition)
- * #3 — Fluxo POS unificado com CommercialDocumentController via SaleService
+ * #1 - company_id via auth()->user()->company_id (nunca hardcoded)
+ * #2 - Numeração com lockForUpdate() via DocumentSeries/SaleService (sem race condition)
+ * #3 - Fluxo POS unificado com CommercialDocumentController via SaleService
  */
 class SaleController extends Controller
 {
@@ -90,8 +90,8 @@ class SaleController extends Controller
     }
 
     /**
-     * Criar venda via POS — usa SaleService (mesmo que CommercialDocumentController)
-     * FIX #2: Sem race condition — DocumentSeries usa lockForUpdate() dentro do SaleService
+     * Criar venda via POS - usa SaleService (mesmo que CommercialDocumentController)
+     * FIX #2: Sem race condition - DocumentSeries usa lockForUpdate() dentro do SaleService
      * FIX #3: Fluxo unificado via SaleService
      */
     public function store(Request $request)

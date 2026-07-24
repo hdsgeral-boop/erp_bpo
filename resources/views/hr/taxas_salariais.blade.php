@@ -8,7 +8,7 @@
                 <i class="fas fa-percent text-primary me-2"></i> Taxas Sociais de Segurança Social (INSS)
             </h2>
             <p style="margin: 0; color: #64748b; font-size: 0.9rem;">
-                Decreto Presidencial — Descontos do Trabalhador (3%) e Encargo Patronal (8%).
+                Decreto Presidencial - Descontos do Trabalhador (3%) e Encargo Patronal (8%).
             </p>
         </div>
     </div>
