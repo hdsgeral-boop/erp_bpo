@@ -427,11 +427,11 @@ class PayrollController extends Controller
         $run = PayrollRun::where('company_id', $companyId)->find((int)$id) ?? PayrollRun::findOrFail((int)$id);
         
         $exporter = new \App\Services\Exports\ReportExportService();
-        $csvData = $exporter->generateIrtCsv($run->id);
-        $fileName = "Mapa_AGT_IRT_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".csv";
+        $excelData = $exporter->generateIrtExcelFile($run->id);
+        $fileName = "Mapa_AGT_IRT_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".xlsx";
 
-        return response($csvData, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+        return response($excelData, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\""
         ]);
     }
@@ -442,11 +442,11 @@ class PayrollController extends Controller
         $run = PayrollRun::where('company_id', $companyId)->find((int)$id) ?? PayrollRun::findOrFail((int)$id);
         
         $exporter = new \App\Services\Exports\ReportExportService();
-        $csvData = $exporter->generateInssCsv($run->id);
-        $fileName = "Folha_INSS_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".csv";
+        $excelData = $exporter->generateInssExcelFile($run->id);
+        $fileName = "Folha_INSS_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".xlsx";
 
-        return response($csvData, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+        return response($excelData, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\""
         ]);
     }
