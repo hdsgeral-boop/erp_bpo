@@ -99,8 +99,8 @@
                     <h5 class="section-title">Dados Gerais</h5>
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
-                            <label class="form-label">Código Interno/Referência <span class="text-danger">*</span></label>
-                            <input type="text" name="code" class="form-control font-monospace text-uppercase" value="{{ old('code', $product->code) }}" required>
+                            <label class="form-label">Código / Referência <span class="text-muted small font-normal">(Opcional)</span></label>
+                            <input type="text" name="code" class="form-control font-monospace text-uppercase" value="{{ old('code', $product->code) }}">
                         </div>
                         <div class="col-md-8">
                             <label class="form-label">Nome do Artigo <span class="text-danger">*</span></label>

@@ -94,14 +94,14 @@
                     
                     <div class="row g-4 mb-4">
                         <div class="col-md-5">
-                            <label class="form-label">Código da Categoria <span class="text-danger">*</span></label>
+                            <label class="form-label">Código da Categoria <span class="text-muted small fw-normal">(Opcional - Gerado Automático)</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: 10px 0 0 10px;">
                                     <i class="fas fa-barcode"></i>
                                 </span>
-                                <input type="text" name="code" class="form-control border-start-0 font-monospace text-uppercase fw-bold" placeholder="Ex: CAT-CABOS" value="{{ old('code') }}" required autofocus>
+                                <input type="text" name="code" class="form-control border-start-0 font-monospace text-uppercase fw-bold" placeholder="Auto (ex: CAT-CAB-001)" value="{{ old('code') }}" autofocus>
                             </div>
-                            <div class="form-text small">Identificador único (ex: CAT01, ELEC, SERV).</div>
+                            <div class="form-text small">Deixe em branco para o sistema gerar automaticamente.</div>
                         </div>
 
                         <div class="col-md-7">

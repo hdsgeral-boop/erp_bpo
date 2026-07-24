@@ -10,16 +10,39 @@ class Product extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'unit_price' => 'decimal:2',
-        'cost_price' => 'decimal:2',
-        'tax_rate' => 'decimal:2',
-        'stock_qty' => 'integer',
-        'is_inventory' => 'boolean',
-        'is_asset' => 'boolean',
-        'is_blocked' => 'boolean',
-        'is_master_data' => 'boolean',
-    ];
+    protected static function booted()
+    {
+        static::creating(function ($product) {
+            if (empty($product->code)) {
+                $product->code = static::generateNextCode($product->company_id, $product->category_id);
+            }
+        });
+    }
+
+    public static function generateNextCode($companyId, $categoryId = null): string
+    {
+        $companyId = $companyId ?? (session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1));
+        $catPrefix = 'PRD';
+        if ($categoryId) {
+            $category = ProductCategory::find($categoryId);
+            if ($category && !empty($category->code)) {
+                $cleanCat = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $category->code));
+                if (!empty($cleanCat)) {
+                    $catPrefix = substr($cleanCat, 0, 4);
+                }
+            }
+        }
+
+        $nextNum = static::where('company_id', $companyId)->count() + 1;
+        $code = sprintf("PRD-%s-%04d", $catPrefix, $nextNum);
+
+        while (static::where('company_id', $companyId)->where('code', $code)->exists()) {
+            $nextNum++;
+            $code = sprintf("PRD-%s-%04d", $catPrefix, $nextNum);
+        }
+
+        return $code;
+    }
 
     public function getPriceAttribute()
     {

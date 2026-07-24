@@ -30,17 +30,21 @@ class ProductCategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50',
+            'code' => 'nullable|string|max:50',
             'name' => 'required|string|max:255',
         ]);
         
         $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
         $validated['company_id'] = $companyId;
 
-        // Validar unicidade por empresa
-        $exists = \App\Models\ProductCategory::where('company_id', $companyId)->where('code', $validated['code'])->exists();
-        if ($exists) {
-            return back()->withInput()->with('error', 'Já existe uma categoria com este código nesta empresa.');
+        if (empty($validated['code'])) {
+            $validated['code'] = \App\Models\ProductCategory::generateNextCode($companyId, $validated['name']);
+        } else {
+            // Validar unicidade por empresa se especificado
+            $exists = \App\Models\ProductCategory::where('company_id', $companyId)->where('code', $validated['code'])->exists();
+            if ($exists) {
+                return back()->withInput()->with('error', 'Já existe uma categoria com este código nesta empresa.');
+            }
         }
 
         \App\Models\ProductCategory::create($validated);
