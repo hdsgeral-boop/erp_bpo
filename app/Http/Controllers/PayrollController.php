@@ -32,10 +32,21 @@ class PayrollController extends Controller
     public function indexView(Request $request)
     {
         $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
-        $runs = PayrollRun::where('company_id', $companyId)->orderBy('id', 'desc')->paginate(10);
+        $selectedYear = $request->input('year', date('Y'));
+
+        $query = PayrollRun::where('company_id', $companyId);
+        if ($selectedYear && $selectedYear !== 'all') {
+            $query->where('year', (int)$selectedYear);
+        }
+
+        $runs = $query->orderBy('id', 'desc')->paginate(15)->appends($request->all());
         $employees = Employee::where('company_id', $companyId)->get();
 
-        return view('hr.payroll.index', compact('runs', 'employees'));
+        $dbYears = PayrollRun::where('company_id', $companyId)->distinct()->pluck('year')->toArray();
+        $years = array_unique(array_merge([(int)date('Y'), (int)date('Y') - 1], array_map('intval', $dbYears)));
+        rsort($years);
+
+        return view('hr.payroll.index', compact('runs', 'employees', 'years', 'selectedYear'));
     }
 
     public function simulation(Request $request)

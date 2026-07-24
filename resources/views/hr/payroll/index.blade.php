@@ -10,6 +10,7 @@
     }
     .badge-processed { background-color: #d1fae5; color: #047857; font-weight: 700; border: 1px solid #a7f3d0; }
     .badge-reversed { background-color: #fee2e2; color: #b91c1c; font-weight: 700; border: 1px solid #fca5a5; }
+    .table-responsive { overflow-x: auto; }
 </style>
 @endpush
 
@@ -47,8 +48,28 @@
         </div>
     @endif
 
+    <!-- Filter Bar (Ano de Exercício) -->
+    <div class="card card-body border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <form method="GET" action="{{ route('rh.salarios.wizard') }}" class="row g-3 align-items-center">
+            <div class="col-md-4 col-lg-3">
+                <label class="form-label small fw-bold text-muted mb-1"><i class="fas fa-calendar-alt text-primary me-1"></i> Ano de Exercício</label>
+                <select name="year" class="form-select fw-bold border-secondary-subtle" onchange="this.form.submit()" style="border-radius: 10px;">
+                    <option value="all" {{ ($selectedYear ?? '') === 'all' ? 'selected' : '' }}>Todos os Anos</option>
+                    @foreach(($years ?? [(int)date('Y')]) as $yr)
+                        <option value="{{ $yr }}" {{ (string)($selectedYear ?? date('Y')) === (string)$yr ? 'selected' : '' }}>Exercício {{ $yr }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-8 col-lg-9 d-flex align-items-end justify-content-md-end gap-2 pt-3 pt-md-0">
+                <span class="badge bg-primary-subtle text-primary border px-3 py-2 fw-bold" style="border-radius: 8px;">
+                    <i class="fas fa-filter me-1"></i> {{ ($selectedYear ?? 'all') === 'all' ? 'Todos os Anos' : 'Exercício de ' . $selectedYear }}
+                </span>
+            </div>
+        </form>
+    </div>
+
     <!-- Table Card -->
-    <div class="card-premium overflow-hidden">
+    <div class="card-premium">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
@@ -60,7 +81,7 @@
                         <th class="py-3 px-4 text-muted small text-uppercase fw-bold">TOTAL IRT</th>
                         <th class="py-3 px-4 text-muted small text-uppercase fw-bold">LÍQUIDO A PAGAR</th>
                         <th class="py-3 px-4 text-muted small text-uppercase fw-bold">ESTADO</th>
-                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold text-end">AÇÕES</th>
+                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold text-end" style="min-width: 320px;">AÇÕES / DOCUMENTOS</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -88,15 +109,17 @@
                             @endif
                         </td>
                         <td class="py-3 px-4 text-end">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-ellipsis-v me-1"></i> Opções
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow">
-                                    <li><a class="dropdown-item py-2" href="{{ route('rh.salarios.recibo', $run->id) }}" target="_blank"><i class="fas fa-file-pdf text-danger me-2"></i> Recibos PDF</a></li>
-                                    <li><a class="dropdown-item py-2" href="{{ route('rh.reports.inss', ['run_id' => $run->id]) }}"><i class="fas fa-shield-alt text-primary me-2"></i> Mapa de INSS</a></li>
-                                    <li><a class="dropdown-item py-2" href="{{ route('rh.reports.bank', ['run_id' => $run->id]) }}"><i class="fas fa-university text-success me-2"></i> Ficheiro Bancário PS2</a></li>
-                                </ul>
+                            <!-- Botões de Ações Visíveis Sempre Diretos -->
+                            <div class="d-flex align-items-center justify-content-end gap-1 flex-nowrap">
+                                <a href="{{ route('rh.salarios.recibo', $run->id) }}" target="_blank" class="btn btn-sm btn-outline-danger fw-bold px-2 py-1" title="Emissão de Recibos em PDF" style="border-radius: 8px; white-space: nowrap;">
+                                    <i class="fas fa-file-pdf me-1"></i> Recibos PDF
+                                </a>
+                                <a href="{{ route('rh.reports.inss', ['run_id' => $run->id]) }}" class="btn btn-sm btn-outline-primary fw-bold px-2 py-1" title="Mapa Oficial de INSS" style="border-radius: 8px; white-space: nowrap;">
+                                    <i class="fas fa-shield-alt me-1"></i> INSS
+                                </a>
+                                <a href="{{ route('rh.reports.bank', ['run_id' => $run->id]) }}" class="btn btn-sm btn-outline-success fw-bold px-2 py-1" title="Ficheiro Bancário PS2" style="border-radius: 8px; white-space: nowrap;">
+                                    <i class="fas fa-university me-1"></i> Banco PS2
+                                </a>
                             </div>
                         </td>
                     </tr>
@@ -104,7 +127,7 @@
                     <tr>
                         <td colspan="8" class="py-5 text-center text-muted">
                             <i class="fas fa-receipt fa-2x mb-3 text-secondary opacity-50 d-block"></i>
-                            Nenhum processamento salarial efetuado.
+                            Nenhum processamento salarial encontrado para o filtro selecionado.
                         </td>
                     </tr>
                     @endforelse
