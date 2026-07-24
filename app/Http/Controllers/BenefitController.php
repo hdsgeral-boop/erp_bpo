@@ -13,12 +13,14 @@ class BenefitController extends Controller
         $search = $request->input('search');
         $type = $request->input('type');
 
-        $query = Benefit::with('employee');
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $query = Benefit::whereHas('employee', function($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })->with('employee');
 
         if ($search) {
             $query->whereHas('employee', function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%");
+                $q->where('name', 'like', "%{$search}%");
             });
         }
 

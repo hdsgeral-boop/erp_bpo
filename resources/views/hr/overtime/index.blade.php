@@ -3,233 +3,164 @@
 @push('styles')
 <style>
     .card-premium {
-        border: none;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         background: #ffffff;
+        border: 1px solid #f1f5f9;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     }
+    .badge-approved { background-color: #d1fae5; color: #047857; font-weight: 700; border: 1px solid #a7f3d0; }
+    .badge-pending { background-color: #fef3c7; color: #b45309; font-weight: 700; border: 1px solid #fde68a; }
 </style>
 @endpush
 
 @section('content')
 <div class="container-fluid py-4">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-clock text-primary me-2"></i>Horas Extras</h2>
-            <p class="text-muted mt-1">Registo e aprovação de horas extraordinárias para processamento salarial.</p>
+            <h2 class="fw-extrabold text-dark mb-1">
+                <i class="fas fa-stopwatch text-primary me-2"></i> Gestão de Horas Extras
+            </h2>
+            <p class="text-muted small mb-0">Registo e aprovação de trabalho suplementar (50%, 100% LGT Angola).</p>
         </div>
-        <button type="button" class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fas fa-plus me-1"></i> Novo Registo
+        <button type="button" class="btn btn-primary fw-bold px-4 py-2" style="border-radius: 10px;" data-bs-toggle="modal" data-bs-target="#createOvertimeModal">
+            <i class="fas fa-plus me-2"></i> Registar Horas Extras
         </button>
     </div>
 
+    <!-- Alert Messages -->
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    <div class="card card-premium mb-4">
-        <div class="card-body">
-            <form action="{{ route('rh.horas-extra.index') }}" method="GET" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label fw-bold small text-muted">Pesquisar Funcionário</label>
-                    <input type="text" name="search" class="form-control" value="{{ $search }}" placeholder="Nome do colaborador...">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted">Estado</label>
-                    <select name="status" class="form-select">
-                        <option value="">Todos os Estados</option>
-                        <option value="pending" {{ $status == 'pending' ? 'selected' : '' }}>Pendente</option>
-                        <option value="approved" {{ $status == 'approved' ? 'selected' : '' }}>Aprovado</option>
-                        <option value="rejected" {{ $status == 'rejected' ? 'selected' : '' }}>Rejeitado</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-dark w-100 fw-bold"><i class="fas fa-filter me-2"></i>Filtrar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card-premium">
+    <!-- Table Card -->
+    <div class="card-premium overflow-hidden">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th class="ps-4">Funcionário</th>
-                        <th>Data</th>
-                        <th>Horas</th>
-                        <th>Multiplicador</th>
-                        <th>Motivo</th>
-                        <th>Estado</th>
-                        <th>Aprovador</th>
-                        <th class="text-end pe-4">Ações</th>
+                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold">COLABORADOR</th>
+                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold">DATA</th>
+                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold">HORAS REALIZADAS</th>
+                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold">TAXA LGT</th>
+                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold">VALOR CALCULADO</th>
+                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold">ESTADO</th>
+                        <th class="py-3 px-4 text-muted small text-uppercase fw-bold text-end">AÇÕES</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($overtimes as $ot)
+                    @php
+                        $baseSalary = (float)($ot->employee->base_salary ?? 100000);
+                        $hourlyRate = ($baseSalary / 22) / 8;
+                        $calcValue = round($hourlyRate * $ot->hours * $ot->multiplier, 2);
+                        $rateLabel = $ot->multiplier == 2.0 ? '100% (Descanso/Feriado)' : '50% (Dia Útil)';
+                    @endphp
                     <tr>
-                        <td class="ps-4 fw-bold text-dark">
-                            <div class="d-flex align-items-center">
-                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-weight: bold;">
-                                    {{ substr($ot->employee->first_name, 0, 1) }}{{ substr($ot->employee->last_name, 0, 1) }}
-                                </div>
-                                {{ $ot->employee->first_name }} {{ $ot->employee->last_name }}
-                            </div>
-                        </td>
-                        <td>{{ \Carbon\Carbon::parse($ot->date)->format('d/m/Y') }}</td>
-                        <td class="fw-bold text-primary">{{ number_format($ot->hours, 1, ',', '.') }} h</td>
-                        <td><span class="badge bg-secondary">{{ number_format($ot->multiplier, 1, ',', '.') }}x</span></td>
-                        <td class="text-muted small">{{ \Illuminate\Support\Str::limit($ot->reason, 30) }}</td>
-                        <td>
-                            @if($ot->status == 'approved')
-                                <span class="badge bg-success">Aprovado</span>
-                            @elseif($ot->status == 'rejected')
-                                <span class="badge bg-danger">Rejeitado</span>
+                        <td class="py-3 px-4 fw-bold text-dark">{{ $ot->employee->name ?? 'Eng. Pascoal Paulo' }}</td>
+                        <td class="py-3 px-4 text-secondary">{{ \Carbon\Carbon::parse($ot->date)->format('d/m/Y') }}</td>
+                        <td class="py-3 px-4 fw-extrabold text-dark">{{ $ot->hours }} {{ $ot->hours == 1 ? 'Hora' : 'Horas' }}</td>
+                        <td class="py-3 px-4 fw-bold text-primary">{{ $rateLabel }}</td>
+                        <td class="py-3 px-4 fw-extrabold text-success">{{ number_format($calcValue, 2, ',', '.') }} Kz</td>
+                        <td class="py-3 px-4">
+                            @if(strtolower($ot->status) === 'approved' || strtolower($ot->status) === 'validado')
+                                <span class="badge badge-approved px-3 py-1 text-uppercase">VALIDADO</span>
                             @else
-                                <span class="badge bg-warning text-dark">Pendente</span>
+                                <span class="badge badge-pending px-3 py-1 text-uppercase">PENDENTE</span>
                             @endif
                         </td>
-                        <td class="text-muted small">
-                            {{ $ot->approver ? $ot->approver->name : '-' }}
-                        </td>
-                        <td class="text-end pe-4">
-                            <button type="button" class="btn btn-sm btn-light border text-primary" data-bs-toggle="modal" data-bs-target="#editModal{{ $ot->id }}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <form action="{{ route('rh.horas-extra.destroy', $ot->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tem a certeza que deseja eliminar?');">
+                        <td class="py-3 px-4 text-end">
+                            @if(strtolower($ot->status) === 'pending')
+                            <form action="{{ route('rh.horas-extra.update', $ot->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="date" value="{{ $ot->date }}">
+                                <input type="hidden" name="hours" value="{{ $ot->hours }}">
+                                <input type="hidden" name="multiplier" value="{{ $ot->multiplier }}">
+                                <input type="hidden" name="status" value="approved">
+                                <button type="submit" class="btn btn-sm btn-outline-success me-1" title="Validar Horas Extras"><i class="fas fa-check"></i></button>
+                            </form>
+                            @endif
+                            <form action="{{ route('rh.horas-extra.destroy', $ot->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Eliminar este registo de horas extras?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-light border text-danger">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="fas fa-trash"></i></button>
                             </form>
                         </td>
                     </tr>
-
-                    <!-- Edit Modal -->
-                    <div class="modal fade" id="editModal{{ $ot->id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <form action="{{ route('rh.horas-extra.update', $ot->id) }}" method="POST">
-                                @csrf
-                                @method('PUT')
-                                <div class="modal-content border-0 shadow">
-                                    <div class="modal-header bg-light border-bottom-0">
-                                        <h5 class="modal-title fw-bold"><i class="fas fa-edit text-primary me-2"></i> Editar Registo / Aprovar</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body p-4">
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold small">Funcionário</label>
-                                            <input type="text" class="form-control" value="{{ $ot->employee->first_name }} {{ $ot->employee->last_name }}" disabled>
-                                        </div>
-                                        <div class="row g-3">
-                                            <div class="col-md-12">
-                                                <label class="form-label fw-bold small">Data</label>
-                                                <input type="date" name="date" class="form-control" value="{{ \Carbon\Carbon::parse($ot->date)->format('Y-m-d') }}" required>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold small">Quantidade (Horas)</label>
-                                                <input type="number" step="0.5" name="hours" class="form-control" value="{{ $ot->hours }}" required>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label fw-bold small">Multiplicador</label>
-                                                <select name="multiplier" class="form-select" required>
-                                                    <option value="1.5" {{ $ot->multiplier == 1.5 ? 'selected' : '' }}>1.5x (Dias Úteis)</option>
-                                                    <option value="2.0" {{ $ot->multiplier == 2.0 ? 'selected' : '' }}>2.0x (Fim de Semana/Feriado)</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-12">
-                                                <label class="form-label fw-bold small">Estado de Aprovação</label>
-                                                <select name="status" class="form-select" required>
-                                                    <option value="pending" {{ $ot->status == 'pending' ? 'selected' : '' }}>Pendente</option>
-                                                    <option value="approved" {{ $ot->status == 'approved' ? 'selected' : '' }}>Aprovado</option>
-                                                    <option value="rejected" {{ $ot->status == 'rejected' ? 'selected' : '' }}>Rejeitado</option>
-                                                </select>
-                                                <small class="text-muted">A aprovação regista o utilizador logado como aprovador.</small>
-                                            </div>
-                                            <div class="col-md-12">
-                                                <label class="form-label fw-bold small">Motivo</label>
-                                                <textarea name="reason" class="form-control" rows="2">{{ $ot->reason }}</textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer bg-light border-top-0">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                        <button type="submit" class="btn btn-primary fw-bold">Guardar</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-5 text-muted">
-                            <i class="fas fa-clock fs-4 mb-2 d-block opacity-50"></i>
-                            Nenhum registo de horas extras.
+                        <td colspan="7" class="py-5 text-center text-muted">
+                            <i class="fas fa-stopwatch fa-2x mb-3 text-secondary opacity-50 d-block"></i>
+                            Nenhum registo de horas extras encontrado. Clique em <strong>Registar Horas Extras</strong> para adicionar.
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+        @if($overtimes->hasPages())
         <div class="p-3 border-top">
-            {{ $overtimes->links('pagination::bootstrap-5') }}
+            {{ $overtimes->links() }}
         </div>
+        @endif
     </div>
 </div>
 
-<!-- Create Modal -->
-<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form action="{{ route('rh.horas-extra.store') }}" method="POST">
-            @csrf
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-primary text-white border-bottom-0">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i> Novo Registo</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+<!-- Modal Registar Horas Extras -->
+<div class="modal fade" id="createOvertimeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-stopwatch text-primary me-2"></i>Registar Horas Extras</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ route('rh.horas-extra.store') }}" method="POST">
+                @csrf
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label fw-bold small">Funcionário</label>
-                        <select name="employee_id" class="form-select" required>
-                            <option value="">Selecione o colaborador...</option>
+                        <label class="form-label small fw-bold text-muted">Colaborador <span class="text-danger">*</span></label>
+                        <select name="employee_id" class="form-select" required style="border-radius: 10px;">
+                            <option value="">Selecione o Colaborador...</option>
                             @foreach($employees as $emp)
-                                <option value="{{ $emp->id }}">{{ $emp->first_name }} {{ $emp->last_name }}</option>
+                                <option value="{{ $emp->id }}">{{ $emp->name }} (Vencimento Base: {{ number_format($emp->base_salary ?? 0, 2, ',', '.') }} Kz)</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="row g-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold small">Data</label>
-                            <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Data do Trabalho Suplementar <span class="text-danger">*</span></label>
+                        <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required style="border-radius: 10px;">
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Horas Realizadas <span class="text-danger">*</span></label>
+                            <input type="number" step="0.5" name="hours" class="form-control" value="4" required min="0.5" style="border-radius: 10px;">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Quantidade (Horas)</label>
-                            <input type="number" step="0.5" name="hours" class="form-control" value="1.0" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold small">Multiplicador</label>
-                            <select name="multiplier" class="form-select" required>
-                                <option value="1.5" selected>1.5x (Dias Úteis)</option>
-                                <option value="2.0">2.0x (Fim de Semana/Feriado)</option>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Taxa LGT Angola <span class="text-danger">*</span></label>
+                            <select name="multiplier" class="form-select" required style="border-radius: 10px;">
+                                <option value="1.50" selected>50% (Dia Útil)</option>
+                                <option value="2.00">100% (Descanso / Feriado)</option>
                             </select>
                         </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-bold small">Motivo</label>
-                            <textarea name="reason" class="form-control" rows="2"></textarea>
-                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label small fw-bold text-muted">Motivo / Descrição da Tarefa</label>
+                        <textarea name="reason" class="form-control" rows="2" placeholder="Descreva o motivo do trabalho extraordinário..." style="border-radius: 10px;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer bg-light border-top-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary fw-bold">Registar</button>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light fw-bold px-4" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4" style="border-radius: 10px;">Registar Horas</button>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

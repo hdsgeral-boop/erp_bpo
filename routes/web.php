@@ -188,10 +188,29 @@ Route::middleware(['can:hr.view'])->group(function () {
     Route::get('/rh/contratos/create', fn() => view('hr.contracts.create'))->name('rh.contratos.create');
     Route::get('/rh/contratos/{id}/edit', fn($id) => back())->name('rh.contratos.edit');
     Route::delete('/rh/contratos/{id}', [ContractController::class, 'destroy'])->name('rh.contratos.destroy');
-    Route::get('/rh/assiduidade', fn() => view('hr.assiduidade'))->name('rh.assiduidade.index');
-    Route::get('/rh/ausencias', fn() => view('hr.ausencias'))->name('rh.ausencias.index');
-    Route::get('/rh/horas-extra', fn() => view('hr.horas_extra'))->name('rh.horas-extra.index');
-    Route::get('/rh/beneficios', fn() => view('hr.beneficios'))->name('rh.beneficios.index');
+    // Assiduidade e Ponto
+    Route::get('/rh/assiduidade', [AttendanceController::class, 'index'])->name('rh.assiduidade.index');
+    Route::post('/rh/assiduidade', [AttendanceController::class, 'store'])->name('rh.assiduidade.store');
+    Route::put('/rh/assiduidade/{assiduidade}', [AttendanceController::class, 'update'])->name('rh.assiduidade.update');
+    Route::delete('/rh/assiduidade/{assiduidade}', [AttendanceController::class, 'destroy'])->name('rh.assiduidade.destroy');
+
+    // Férias & Ausências
+    Route::get('/rh/ausencias', [AbsenceController::class, 'index'])->name('rh.ausencias.index');
+    Route::post('/rh/ausencias', [AbsenceController::class, 'store'])->name('rh.ausencias.store');
+    Route::put('/rh/ausencias/{ausencia}', [AbsenceController::class, 'update'])->name('rh.ausencias.update');
+    Route::delete('/rh/ausencias/{ausencia}', [AbsenceController::class, 'destroy'])->name('rh.ausencias.destroy');
+
+    // Horas Extras
+    Route::get('/rh/horas-extra', [OvertimeController::class, 'index'])->name('rh.horas-extra.index');
+    Route::post('/rh/horas-extra', [OvertimeController::class, 'store'])->name('rh.horas-extra.store');
+    Route::put('/rh/horas-extra/{horas_extra}', [OvertimeController::class, 'update'])->name('rh.horas-extra.update');
+    Route::delete('/rh/horas-extra/{horas_extra}', [OvertimeController::class, 'destroy'])->name('rh.horas-extra.destroy');
+
+    // Benefícios e Deduções
+    Route::get('/rh/beneficios', [BenefitController::class, 'index'])->name('rh.beneficios.index');
+    Route::post('/rh/beneficios', [BenefitController::class, 'store'])->name('rh.beneficios.store');
+    Route::put('/rh/beneficios/{beneficio}', [BenefitController::class, 'update'])->name('rh.beneficios.update');
+    Route::delete('/rh/beneficios/{beneficio}', [BenefitController::class, 'destroy'])->name('rh.beneficios.destroy');
     Route::get('/rh/salarios', [PayrollController::class, 'indexView'])->name('rh.salarios.wizard');
     Route::get('/rh/salarios/simulacao', [PayrollController::class, 'simulation'])->name('rh.salarios.simulation');
     Route::get('/rh/salarios/wizard', [PayrollController::class, 'indexView'])->name('rh.salarios.wizard_step');

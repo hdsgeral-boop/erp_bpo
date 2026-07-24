@@ -14,12 +14,14 @@ class OvertimeController extends Controller
         $search = $request->input('search');
         $status = $request->input('status');
 
-        $query = Overtime::with(['employee', 'approver']);
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $query = Overtime::whereHas('employee', function($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })->with(['employee', 'approver']);
 
         if ($search) {
             $query->whereHas('employee', function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%");
+                $q->where('name', 'like', "%{$search}%");
             });
         }
 
