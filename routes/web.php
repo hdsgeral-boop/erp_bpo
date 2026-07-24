@@ -196,6 +196,7 @@ Route::middleware(['can:hr.view'])->group(function () {
     Route::get('/rh/salarios/simulacao', [PayrollController::class, 'simulation'])->name('rh.salarios.simulation');
     Route::get('/rh/salarios/wizard', [PayrollController::class, 'indexView'])->name('rh.salarios.wizard_step');
     Route::post('/rh/salarios/process', [PayrollController::class, 'calculate'])->name('rh.salarios.process');
+    Route::post('/rh/salarios/close', [PayrollController::class, 'calculate'])->name('rh.salarios.close');
     Route::get('/rh/salarios/export-agt/{id}', [PayrollController::class, 'exportAgt'])->name('rh.salarios.export_agt');
     Route::get('/rh/salarios/export-inss/{id}', [PayrollController::class, 'exportInss'])->name('rh.salarios.export_inss');
     Route::get('/rh/salarios/export-banco/{id}', [PayrollController::class, 'exportBankPs2'])->name('rh.salarios.export_banco');

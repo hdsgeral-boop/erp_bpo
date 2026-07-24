@@ -144,9 +144,13 @@
                     <i class="fas fa-arrow-left me-1"></i> Voltar aos Parâmetros
                 </a>
                 
-                <form action="{{ route('rh.salarios.close') }}" method="POST">
+                <form action="{{ route('rh.salarios.process') }}" method="POST">
                     @csrf
-                    <input type="hidden" name="payroll_data" value="{{ json_encode(['month' => $month, 'year' => $year, 'reference' => $reference, 'totals' => $totals, 'results' => $results]) }}">
+                    <input type="hidden" name="month" value="{{ $month }}">
+                    <input type="hidden" name="year" value="{{ $year }}">
+                    @foreach($employees as $emp)
+                        <input type="hidden" name="employee_ids[]" value="{{ is_array($emp) ? ($emp['id'] ?? $emp['employee_id'] ?? 1) : $emp->id }}">
+                    @endforeach
                     <button type="submit" class="btn btn-success fw-bold px-4 py-2" onclick="return confirm('Ao fechar, serão gerados documentos na Tesouraria e lançamentos na Contabilidade. Confirma o fecho do processamento?');">
                         <i class="fas fa-check-circle me-2"></i> Fechar Processamento
                     </button>
