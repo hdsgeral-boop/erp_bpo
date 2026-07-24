@@ -168,20 +168,7 @@
 </head>
 <body>
 
-    <!-- 1. TOP BAR -->
-    <div class="top-bar">
-        <div class="container d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-4">
-                <span><i class="fas fa-id-card me-1"></i> NIF: <strong>5417213969</strong></span>
-                <span><i class="fas fa-phone-alt me-2"></i> (244) 923 692 943 / (244) 923 012 143</span>
-                <span class="d-none d-md-inline"><i class="fas fa-envelope me-2"></i> hdsgeral@gmail.com</span>
-                <span class="d-none d-lg-inline"><i class="fas fa-map-marker-alt me-2"></i> Lar Patriota, Luanda</span>
-            </div>
-            <div>
-                <a href="https://wa.me/244923692943" target="_blank" class="text-white fw-bold"><i class="fab fa-whatsapp me-1"></i> WhatsApp Comercial</a>
-            </div>
-        </div>
-    </div>
+
 
     <!-- 2. NAVBAR MAIN -->
     <nav class="navbar navbar-expand-lg navbar-main">
@@ -293,10 +280,10 @@
             <div class="row g-4 mb-5">
                 <div class="col-lg-4">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 42px; width: auto; object-fit: contain; background: #ffffff; padding: 4px 10px; border-radius: 8px;">
+                        <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 48px; width: auto; object-fit: contain; background: transparent;">
                     </div>
                     <p class="text-slate-400 fs-7 mb-4">
-                        Consulvolt Soluções: 10 anos de experiência em Materiais Elétricos Pesados, Equipamentos Informáticos, Consultoria Organizacional, Gestão de Projetos e ERP Certificado pela AGT em Angola.
+                        Consulvolt Soluções — 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
                     </p>
                     <div>
                         <a href="https://wa.me/244923692943" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
