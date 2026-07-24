@@ -171,7 +171,7 @@
                         <label class="form-label text-dark fw-bold mb-1" for="stock_qty">
                             <i class="fas fa-boxes text-primary me-1"></i> Unidades em Stock <span class="text-danger">*</span>
                         </label>
-                        <input type="number" step="0.01" min="0" name="stock_qty" id="stock_qty" class="form-control" value="{{ old('stock_qty', $product->stock_qty ?? '0') }}">
+                        <input type="number" step="1" min="0" name="stock_qty" id="stock_qty" class="form-control" value="{{ old('stock_qty', (int)($product->stock_qty ?? 0)) }}">
                         <div class="form-text small text-muted">Unidades atualmente disponíveis em stock.</div>
                     </div>
 

@@ -72,7 +72,7 @@ class ProductController extends Controller
         $data['is_inventory'] = $request->has('is_inventory');
         $data['is_asset'] = $request->has('is_asset');
         $data['is_blocked'] = $request->has('is_blocked');
-        $data['stock_qty'] = $data['is_inventory'] ? max(0, floatval($request->input('stock_qty', 0))) : 0;
+        $data['stock_qty'] = $data['is_inventory'] ? max(0, intval($request->input('stock_qty', 0))) : 0;
 
         $product = $this->productRepository->create($data);
         $this->handleAttachments($request, $product);
@@ -104,7 +104,7 @@ class ProductController extends Controller
         $data['is_inventory'] = $request->has('is_inventory');
         $data['is_asset'] = $request->has('is_asset');
         $data['is_blocked'] = $request->has('is_blocked');
-        $data['stock_qty'] = $data['is_inventory'] ? max(0, floatval($request->input('stock_qty', 0))) : 0;
+        $data['stock_qty'] = $data['is_inventory'] ? max(0, intval($request->input('stock_qty', 0))) : 0;
 
         $this->productRepository->update((int)$id, $data);
         $product = $this->productRepository->findOrFail((int)$id);

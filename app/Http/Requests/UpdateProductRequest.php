@@ -32,7 +32,7 @@ class UpdateProductRequest extends FormRequest
             'unit_price' => 'required|numeric|min:0',
             'cost_price' => 'nullable|numeric|min:0',
             'tax_rate' => 'required|numeric|min:0|max:100',
-            'stock_qty' => 'nullable|numeric|min:0',
+            'stock_qty' => 'nullable|integer|min:0',
             'unit' => 'nullable|string|max:20',
             'min_stock' => 'nullable|numeric|min:0',
             'max_stock' => 'nullable|numeric|min:0',
