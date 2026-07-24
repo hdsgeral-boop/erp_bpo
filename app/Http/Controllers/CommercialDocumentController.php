@@ -420,7 +420,9 @@ class CommercialDocumentController extends Controller
         }
 
         $company = Company::find($companyId) ?? Company::first();
-        $controlCode = $sale->hash ? ($sale->hash[0] . $sale->hash[10] . $sale->hash[20] . $sale->hash[30]) : '0000';
+        $controlCode = ($sale->hash && strlen($sale->hash) >= 31) 
+            ? ($sale->hash[0] . $sale->hash[10] . $sale->hash[20] . $sale->hash[30]) 
+            : 'kMB0';
         $printMention = $this->agtSignatureService->formatPrintMention($controlCode);
 
         return response()->view('sales.documents.pdf', compact('sale', 'company', 'printMention'))
