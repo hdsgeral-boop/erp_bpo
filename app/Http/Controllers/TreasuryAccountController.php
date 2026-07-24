@@ -139,6 +139,54 @@ class TreasuryAccountController extends Controller
     }
 
     /**
+     * Exporta o Extrato de Tesouraria em PDF limpo, estilizado e oficial
+     */
+    public function exportPdf(TreasuryAccount $account, Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $company = \App\Models\Company::find($companyId) ?? \App\Models\Company::first();
+
+        $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', now()->endOfMonth()->format('Y-m-d'));
+        $docTypeFilter = $request->input('doc_type');
+
+        $query = Receipt::with('thirdParty')
+            ->where('company_id', $companyId)
+            ->where('treasury_account_id', $account->id)
+            ->whereBetween('date', [$startDate, $endDate]);
+
+        if ($docTypeFilter) {
+            if ($docTypeFilter === 'IN') {
+                $query->whereIn('doc_type', ['REC', 'RC', 'DEP']);
+            } elseif ($docTypeFilter === 'OUT') {
+                $query->whereIn('doc_type', ['PAG', 'PG', 'LEV']);
+            }
+        }
+
+        $receipts = $query->orderBy('date', 'asc')->orderBy('id', 'asc')->get();
+
+        $totalIn = 0;
+        $totalOut = 0;
+
+        foreach ($receipts as $r) {
+            if (in_array(strtoupper($r->doc_type), ['REC', 'RC', 'DEP'])) {
+                $totalIn += $r->total_amount;
+            } else {
+                $totalOut += $r->total_amount;
+            }
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('treasury.accounts.pdf_statement', compact(
+            'account', 'company', 'receipts', 'totalIn', 'totalOut', 'startDate', 'endDate', 'docTypeFilter'
+        ));
+
+        $pdf->setPaper('A4', 'portrait');
+
+        $safeName = preg_replace('/[^0-9A-Za-z]/', '_', $account->name);
+        return $pdf->stream("Extrato_Conta_{$safeName}_{$startDate}_a_{$endDate}.pdf");
+    }
+
+    /**
      * Regista um movimento direto de Depósito/Entrada ou Levantamento/Saída na conta
      */
     public function quickMovement(TreasuryAccount $account, Request $request)

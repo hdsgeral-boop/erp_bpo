@@ -251,6 +251,7 @@ Route::middleware(['can:treasury.view'])->group(function () {
     Route::put('/tesouraria/accounts/{account}', [TreasuryAccountController::class, 'update'])->name('tesouraria.accounts.update');
     Route::delete('/tesouraria/accounts/{account}', [TreasuryAccountController::class, 'destroy'])->name('tesouraria.accounts.destroy');
     Route::get('/tesouraria/accounts/{account}/statement', [TreasuryAccountController::class, 'statement'])->name('tesouraria.accounts.statement');
+    Route::get('/tesouraria/accounts/{account}/pdf', [TreasuryAccountController::class, 'exportPdf'])->name('tesouraria.accounts.pdf');
     Route::post('/tesouraria/accounts/{account}/movement', [TreasuryAccountController::class, 'quickMovement'])->name('tesouraria.accounts.movement');
     Route::get('/tesouraria/documentos/{type?}', fn($type = 'recebimentos') => view('treasury.documents', compact('type')))->name('tesouraria.documents.index');
     Route::get('/tesouraria/docs/{type?}', fn($type = 'recebimentos') => view('treasury.documents', compact('type')))->name('tesouraria.documentos.index');

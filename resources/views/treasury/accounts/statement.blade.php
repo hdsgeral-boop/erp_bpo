@@ -34,9 +34,9 @@
             <button class="btn btn-primary fw-bold px-3 py-2" data-bs-toggle="modal" data-bs-target="#quickMovementModal" style="border-radius: 10px;">
                 <i class="fas fa-plus-circle me-1"></i> Registar Movimento
             </button>
-            <button class="btn btn-outline-secondary fw-bold px-3 py-2" onclick="window.print()" style="border-radius: 10px;">
-                <i class="fas fa-print me-1"></i> Imprimir Extrato
-            </button>
+            <a href="{{ route('tesouraria.accounts.pdf', array_merge(['account' => $account->id], request()->all())) }}" target="_blank" class="btn btn-outline-secondary fw-bold px-3 py-2" style="border-radius: 10px;">
+                <i class="fas fa-file-pdf text-danger me-1"></i> Imprimir Extrato (PDF)
+            </a>
         </div>
     </div>
 
