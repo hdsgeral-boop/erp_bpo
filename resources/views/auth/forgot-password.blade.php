@@ -201,7 +201,7 @@
             <!-- Header Móvel: Apresenta o logótipo oficial em dispositivos móveis (< 992px) -->
             <div class="d-lg-none text-center mb-4">
                 <a href="{{ route('home') }}" class="d-inline-block mb-2" title="Voltar ao Website">
-                    <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 52px; width: auto; object-fit: contain; background: #ffffff; padding: 6px 14px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 52px; width: auto; object-fit: contain; background: transparent;">
                 </a>
                 <span class="d-block text-slate-400 fs-8" style="color: #94a3b8;"><a href="{{ route('home') }}" class="text-decoration-none" style="color: #60a5fa;"><i class="fas fa-arrow-left me-1"></i> Voltar ao Website</a></span>
             </div>

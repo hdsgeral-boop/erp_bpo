@@ -33,28 +33,7 @@
             overflow-x: hidden;
         }
 
-        /* Top Bar */
-        .top-bar {
-            background-color: var(--dark-navy);
-            color: #e2e8f0;
-            font-size: 0.825rem;
-            padding: 0.55rem 0;
-            font-weight: 500;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .top-bar a {
-            color: #cbd5e1;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .top-bar a:hover {
-            color: #ffffff;
-            text-decoration: underline;
-        }
-
-        /* Navbar */
+        /* Navbar Main */
         .navbar-main {
             background: #ffffff;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
@@ -64,25 +43,11 @@
             z-index: 1000;
         }
 
-        .navbar-brand .brand-logo-box {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #0058E6, #2563eb);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            font-weight: 800;
-            box-shadow: 0 8px 16px rgba(0, 88, 230, 0.3);
-        }
-
-        .navbar-brand .brand-title {
-            font-weight: 800;
-            font-size: 1.35rem;
-            color: var(--dark-navy);
-            letter-spacing: -0.5px;
+        .navbar-brand .brand-logo-img {
+            height: 48px;
+            width: auto;
+            object-fit: contain;
+            background: transparent;
         }
 
         .nav-link {
@@ -129,11 +94,11 @@
             color: #ffffff;
         }
 
-        /* Footer */
+        /* Footer Main */
         .footer-main {
             background: var(--dark-navy);
             color: #94a3b8;
-            padding: 5rem 0 2rem;
+            padding: 4rem 0 2rem;
             font-size: 0.9rem;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
@@ -192,34 +157,11 @@
 </head>
 <body>
 
-    <!-- 1. TOP BAR -->
-    <div class="top-bar">
-        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div class="d-flex flex-wrap align-items-center gap-4">
-                <span><i class="fas fa-id-card text-primary me-1"></i> NIF: <strong>5417213969</strong></span>
-                <span><i class="fas fa-phone-alt text-primary me-1"></i> (+244) 923 692 943 / 923 012 143</span>
-                <span class="d-none d-md-inline"><i class="fas fa-envelope text-primary me-1"></i> hdsgeral@gmail.com</span>
-                <span class="d-none d-lg-inline"><i class="fas fa-map-marker-alt text-primary me-1"></i> Lar Patriota, Luanda</span>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <a href="https://wa.me/244923692943" target="_blank" class="text-success fw-bold">
-                    <i class="fab fa-whatsapp me-1"></i> WhatsApp Comercial
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. NAVBAR MAIN -->
+    <!-- NAVBAR MAIN (Top Bar Eliminada conforme solicitado) -->
     <nav class="navbar navbar-expand-lg navbar-main">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('home') }}">
-                <div class="brand-logo-box">
-                    <i class="fas fa-bolt"></i>
-                </div>
-                <div>
-                    <span class="brand-title">Consulvolt <span style="color: var(--primary-blue);">Soluções</span></span>
-                    <span class="d-block text-muted" style="font-size: 0.65rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Empresa 100% Angolana</span>
-                </div>
+                <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" class="brand-logo-img">
             </a>
 
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMainContent">
@@ -252,19 +194,17 @@
         @yield('content')
     </main>
 
-    <!-- 3. FOOTER MAIN -->
+    <!-- FOOTER MAIN -->
     <footer class="footer-main">
         <div class="container">
             <div class="row g-4 mb-5">
                 <div class="col-lg-4">
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="brand-logo-box" style="width: 38px; height: 38px; font-size: 1.1rem;">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <span class="text-white fw-bold fs-5">Consulvolt <span style="color: #60a5fa;">Soluções</span></span>
+                    <div class="mb-3">
+                        <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 48px; width: auto; object-fit: contain; background: transparent;">
                     </div>
+                    <!-- Frase curta e profissional no footer -->
                     <p class="text-slate-400 fs-7 mb-3">
-                        Empresa angolana com 10 anos de experiência especializada em materiais elétricos pesados, equipamentos informáticos, consultoria organizacional, gestão de projetos e desenvolvimento de software ERP certificado pela AGT.
+                        Consulvolt Soluções — 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
                     </p>
                     <div class="badge-agt-cert mb-3">
                         <i class="fas fa-shield-alt"></i> Software Certificado AGT n.º 142/AGT/2019
