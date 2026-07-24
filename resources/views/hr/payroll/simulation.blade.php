@@ -125,14 +125,14 @@
                     <tbody class="text-end">
                         @foreach($results as $res)
                         <tr>
-                            <td class="text-start fw-bold">{{ $res['employee']['first_name'] }} {{ $res['employee']['last_name'] }}</td>
-                            <td>{{ number_format($res['base_salary'], 2, ',', '.') }}</td>
-                            <td class="text-success">+ {{ number_format($res['additions'], 2, ',', '.') }}</td>
-                            <td class="text-danger">- {{ number_format($res['other_deductions'], 2, ',', '.') }}</td>
-                            <td class="text-muted">{{ number_format($res['inss_base'], 2, ',', '.') }}</td>
-                            <td class="text-danger">- {{ number_format($res['inss_employee'], 2, ',', '.') }}</td>
-                            <td class="text-danger">- {{ number_format($res['irt'], 2, ',', '.') }}</td>
-                            <td class="fw-bold fs-6">{{ number_format($res['net_total'], 2, ',', '.') }} Kz</td>
+                            <td class="text-start fw-bold">{{ is_array($res['employee']) ? ($res['employee']['name'] ?? (($res['employee']['first_name'] ?? '') . ' ' . ($res['employee']['last_name'] ?? ''))) : ($res['employee']->name ?? 'Colaborador') }}</td>
+                            <td>{{ number_format($res['base_salary'] ?? 0, 2, ',', '.') }}</td>
+                            <td class="text-success">+ {{ number_format($res['additions'] ?? 0, 2, ',', '.') }}</td>
+                            <td class="text-danger">- {{ number_format($res['other_deductions'] ?? $res['deductions'] ?? 0, 2, ',', '.') }}</td>
+                            <td class="text-muted">{{ number_format($res['inss_base'] ?? 0, 2, ',', '.') }}</td>
+                            <td class="text-danger">- {{ number_format($res['inss_employee'] ?? 0, 2, ',', '.') }}</td>
+                            <td class="text-danger">- {{ number_format($res['irt'] ?? 0, 2, ',', '.') }}</td>
+                            <td class="fw-bold fs-6">{{ number_format($res['net_total'] ?? $res['net_salary'] ?? 0, 2, ',', '.') }} Kz</td>
                         </tr>
                         @endforeach
                     </tbody>

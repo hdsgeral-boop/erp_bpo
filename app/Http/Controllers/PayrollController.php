@@ -82,11 +82,13 @@ class PayrollController extends Controller
                 'base_salary' => $baseSalary,
                 'additions' => $subsidyMeal + $subsidyTransport,
                 'deductions' => $totalDeductions,
+                'other_deductions' => 0,
                 'inss_base' => $inssBase,
                 'inss_employee' => $inssEmp,
                 'inss_company' => $inssComp,
                 'irt' => $irt,
-                'net_salary' => $netSalary
+                'net_salary' => $netSalary,
+                'net_total' => $netSalary
             ];
 
             $totals['base'] += $baseSalary;
