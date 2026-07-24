@@ -31,7 +31,7 @@ class SaleController extends Controller
      */
     public function index(Request $request)
     {
-        $companyId = auth()->user()->company_id; // FIX #1
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $query = Sale::with('customer')
             ->where('company_id', $companyId)
@@ -63,7 +63,7 @@ class SaleController extends Controller
      */
     public function dashboard()
     {
-        $companyId = auth()->user()->company_id; // FIX #1
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $totalFaturado = Sale::where('company_id', $companyId)
             ->whereIn('doc_type', ['FR', 'FS', 'FT'])
@@ -96,7 +96,7 @@ class SaleController extends Controller
      */
     public function store(Request $request)
     {
-        $companyId = auth()->user()->company_id; // FIX #1
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $validated = $request->validate([
             'doc_type'    => 'required|string|in:FR,FS,FT,GT,OR,PP,EN',
@@ -140,7 +140,7 @@ class SaleController extends Controller
             ];
 
             // FIX #2 + #3: SaleService gera numeração com lockForUpdate()
-            $sale = $this->saleService->createDocument($headerData, $items, auth()->id());
+            $sale = $this->saleService->createDocument($headerData, $items, auth()->id() ?? 1);
 
             return response()->json([
                 'success'  => true,

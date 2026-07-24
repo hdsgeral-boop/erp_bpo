@@ -58,7 +58,7 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Nome do Requerente <span class="text-danger">*</span></label>
-                    <input type="text" name="requester_name" class="form-control" value="{{ old('requester_name', auth()->user()->name) }}" required>
+                    <input type="text" name="requester_name" class="form-control" value="{{ old('requester_name', auth()->check() ? auth()->user()->name : 'Utilizador Sistema') }}" required>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Departamento <span class="text-danger">*</span></label>

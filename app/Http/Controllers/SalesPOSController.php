@@ -35,6 +35,52 @@ class SalesPOSController extends Controller
         $this->docSeriesService = $docSeriesService;
     }
 
+    public function currentSession(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $activeSession = PosSession::where('user_id', auth()->id())
+            ->where('company_id', $companyId)
+            ->where('status', 'OPEN')
+            ->with('posRegister')
+            ->first();
+
+        if (!$activeSession) {
+            $registers = PosRegister::where('company_id', $companyId)->where('is_active', true)->get();
+            return response()->json([
+                'success' => true,
+                'session_active' => false,
+                'session' => null,
+                'registers' => $registers
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'session_active' => true,
+            'session' => $activeSession
+        ]);
+    }
+
+    public function indexView(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $activeSession = PosSession::where('user_id', auth()->id())
+            ->where('company_id', $companyId)
+            ->where('status', 'OPEN')
+            ->with('posRegister')
+            ->first();
+
+        $registers = PosRegister::where('company_id', $companyId)->where('is_active', true)->get();
+        $products = Product::where('company_id', $companyId)->get();
+        $categories = ProductCategory::where('company_id', $companyId)->get();
+        $customers = ThirdParty::where('company_id', $companyId)->get();
+        $taxes = Tax::where('company_id', $companyId)->get();
+
+        return view('sales.pos', compact('activeSession', 'registers', 'products', 'categories', 'customers', 'taxes'));
+    }
+
     public function index()
     {
         $companyId = auth()->user()->company_id ?? 1;
@@ -81,10 +127,23 @@ class SalesPOSController extends Controller
             'opening_balance' => 'required|numeric|min:0'
         ]);
 
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         // Verifica se a caixa já está aberta
-        $register = PosRegister::where('company_id', $companyId)->findOrFail($request->pos_register_id);
+        $register = PosRegister::where('company_id', $companyId)->where('id', $request->pos_register_id)->first();
+        if (!$register) {
+            $register = PosRegister::where('company_id', $companyId)->first();
+        }
+        if (!$register) {
+            $register = PosRegister::create([
+                'company_id' => $companyId,
+                'name' => 'Caixa Principal',
+                'terminal_id' => 'POS-01',
+                'status' => 'CLOSED',
+                'is_active' => true
+            ]);
+        }
+
         if ($register->status == 'OPEN') {
             return response()->json([
                 'success' => false,

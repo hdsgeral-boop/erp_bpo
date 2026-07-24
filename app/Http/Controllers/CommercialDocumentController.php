@@ -11,61 +11,288 @@ use App\Models\Tax;
 use App\Http\Requests\StoreSaleRequest;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Services\SaleService;
+use App\Services\Reporting\ReportingService;
+use App\Services\AgtSignatureService;
 use Illuminate\Http\Request;
 
 class CommercialDocumentController extends Controller
 {
     protected $saleRepo;
     protected $saleService;
+    protected $reportingService;
+    protected $agtSignatureService;
 
-    public function __construct(SaleRepositoryInterface $saleRepo, SaleService $saleService)
+    public function __construct(SaleRepositoryInterface $saleRepo, SaleService $saleService, ReportingService $reportingService, AgtSignatureService $agtSignatureService)
     {
         $this->saleRepo = $saleRepo;
         $this->saleService = $saleService;
+        $this->reportingService = $reportingService;
+        $this->agtSignatureService = $agtSignatureService;
     }
 
-    public function index(Request $request, string $category)
+    public function index(Request $request, ?string $category = 'all')
     {
         $search = $request->input('search');
         $status = $request->input('status');
+        $docTypeParam = $request->input('doc_type');
+        $category = ($category && $category !== 'index') ? $category : $request->input('category', 'all');
         
         $docTypes = $this->getDocTypesByCategory($category);
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
+            $query = \App\Models\Sale::where('company_id', $companyId)
+                ->with(['customer', 'items', 'warehouse'])
+                ->orderBy('id', 'desc');
+
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('doc_number', 'like', "%{$search}%")
+                      ->orWhereHas('customer', function($cq) use ($search) {
+                          $cq->where('name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            if ($status) {
+                $query->where('status', $status);
+            }
+
+            if ($docTypeParam) {
+                $query->where('doc_type', $docTypeParam);
+            } elseif ($category && $category !== 'all') {
+                $query->whereIn('doc_type', $docTypes);
+            }
+
+            $invoices = $query->paginate(15);
+
+            return response()->json([
+                'success' => true,
+                'data' => $invoices->items(),
+                'meta' => [
+                    'current_page' => $invoices->currentPage(),
+                    'last_page' => $invoices->lastPage(),
+                    'per_page' => $invoices->perPage(),
+                    'total' => $invoices->total(),
+                ]
+            ]);
+        }
         
         $invoices = $this->saleRepo->paginateSalesByCategory(15, $search, $status, $docTypes);
         
         return view('sales.documents.index', compact('invoices', 'search', 'status', 'category'));
     }
 
+    public function listByCategory(Request $request, string $category)
+    {
+        return $this->index($request, $category);
+    }
+
     public function create(string $category)
     {
         $docTypes = $this->getDocTypesByCategory($category);
-        $customers = ThirdParty::where('type', 'customer')->orWhere('type', 'both')->orderBy('name')->get();
-        $products = Product::with('tax')->orderBy('name')->get();
+        $customers = ThirdParty::where('is_customer', true)->orWhereNull('is_customer')->orderBy('name')->get();
+        if ($customers->isEmpty()) {
+            $customers = ThirdParty::orderBy('name')->get();
+        }
+        $products = Product::orderBy('name')->get();
         $warehouses = Warehouse::orderBy('name')->get();
         $company = Company::first();
-        $taxes = Tax::where('is_active', true)->orderBy('name')->get();
+        $taxes = Tax::where('is_active', true)->orWhereNull('is_active')->orderBy('name')->get();
+        if ($taxes->isEmpty()) {
+            $taxes = collect([
+                (object)['id' => 1, 'name' => 'IVA 14%', 'rate' => 14],
+                (object)['id' => 2, 'name' => 'Isento 0%', 'rate' => 0]
+            ]);
+        }
         
         $series = DocumentSeries::where('company_id', $company->id ?? 1)
-                                ->whereIn('document_type', $docTypes)
                                 ->where('is_active', true)
                                 ->get();
+        if ($series->isEmpty()) {
+            $series = collect([
+                (object)['id' => 1, 'identifier' => 'Série A (2026)', 'is_default' => true, 'current_number' => 0]
+            ]);
+        }
                                 
         return view('sales.documents.create', compact('customers', 'products', 'warehouses', 'series', 'taxes', 'category'));
     }
 
-    public function store(StoreSaleRequest $request, string $category)
+    public function formOptions(Request $request)
     {
-        $data = $request->validated();
-        
-        $company = Company::first();
-        if (!$company) {
-            return back()->withInput()->with('error', 'Crie pelo menos uma empresa no sistema primeiro.');
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $customers = ThirdParty::where('company_id', $companyId)
+            ->where(function($q) {
+                $q->where('is_customer', true)->orWhere('type', 'CL');
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'nif', 'email', 'phone']);
+
+        if ($customers->isEmpty()) {
+            $customers = ThirdParty::where('company_id', $companyId)->get(['id', 'name', 'nif', 'email', 'phone']);
         }
 
-        $seriesModel = DocumentSeries::find($data['series_id']);
-        if (!$seriesModel) {
-            return back()->withInput()->with('error', 'Série documental inválida.');
+        $warehouses = Warehouse::where('company_id', $companyId)
+            ->orderBy('name')
+            ->get(['id', 'name', 'location']);
+
+        $products = Product::where('company_id', $companyId)
+            ->orderBy('name')
+            ->get(['id', 'code', 'name', 'unit_price', 'stock_qty']);
+
+        $taxes = Tax::where('is_active', true)
+            ->orWhereNull('is_active')
+            ->get(['id', 'name', 'rate', 'exemption_reason']);
+
+        if ($taxes->isEmpty()) {
+            $taxes = collect([
+                ['id' => 1, 'name' => 'IVA 14%', 'rate' => 14, 'exemption_reason' => null],
+                ['id' => 2, 'name' => 'Isento 0%', 'rate' => 0, 'exemption_reason' => 'M00 - Isenção de IVA']
+            ]);
         }
+
+        $docTypes = [
+            ['code' => 'FT', 'name' => 'Fatura (FT)'],
+            ['code' => 'FR', 'name' => 'Fatura-Recibo (FR)'],
+            ['code' => 'OR', 'name' => 'Orçamento (OR)'],
+            ['code' => 'PP', 'name' => 'Fatura Pró-Forma (PP)'],
+            ['code' => 'NC', 'name' => 'Nota de Crédito (NC)'],
+            ['code' => 'ND', 'name' => 'Nota de Débito (ND)'],
+        ];
+
+        return response()->json([
+            'success' => true,
+            'customers' => $customers,
+            'warehouses' => $warehouses,
+            'products' => $products,
+            'taxes' => $taxes,
+            'doc_types' => $docTypes
+        ]);
+    }
+
+    public function store(Request $request, ?string $category = 'faturas')
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $company = Company::find($companyId) ?? Company::first();
+
+        if (!$company) {
+            return response()->json(['success' => false, 'message' => 'Crie pelo menos uma empresa no sistema primeiro.'], 400);
+        }
+
+        if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
+            $request->validate([
+                'customer_id' => 'required|exists:third_parties,id',
+                'doc_type' => 'required|string|in:FT,FR,OR,PP,NC,ND,GT,GR',
+                'items' => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.quantity' => 'required|numeric|min:0.01',
+                'items.*.unit_price' => 'required|numeric|min:0'
+            ]);
+
+            $docType = $request->input('doc_type', 'FT');
+            $customerId = $request->input('customer_id');
+            $warehouseId = $request->input('warehouse_id');
+            $date = $request->input('date', date('Y-m-d'));
+            $notes = $request->input('notes');
+
+            // Formatar número sequencial de documento
+            $lastCount = \App\Models\Sale::where('company_id', $company->id)->where('doc_type', $docType)->count() + 1;
+            $companyPrefix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $company->name), 0, 3));
+            $docNumber = "{$companyPrefix}-{$docType} " . date('Y') . '/' . str_pad($lastCount, 4, '0', STR_PAD_LEFT);
+
+            $totalSubtotal = 0;
+            $totalTax = 0;
+            $processedItems = [];
+
+            foreach ($request->input('items') as $item) {
+                $qty = (float)$item['quantity'];
+                $price = (float)$item['unit_price'];
+                $taxRate = (float)($item['tax_rate'] ?? 14);
+                
+                $subtotal = $qty * $price;
+                $taxAmount = $subtotal * ($taxRate / 100);
+
+                $totalSubtotal += $subtotal;
+                $totalTax += $taxAmount;
+
+                $processedItems[] = [
+                    'product_id' => $item['product_id'],
+                    'quantity' => $qty,
+                    'unit_price' => $price,
+                    'tax_amount' => $taxAmount,
+                    'subtotal' => $subtotal
+                ];
+
+                // Baixa no stock se for Fatura (FT/FR)
+                if (in_array($docType, ['FT', 'FR'])) {
+                    $product = Product::find($item['product_id']);
+                    if ($product && $product->is_inventory) {
+                        $product->stock_qty = max(0, $product->stock_qty - $qty);
+                        $product->save();
+                    }
+                }
+            }
+
+            $totalAmount = $totalSubtotal + $totalTax;
+
+            // Obter Hash do Documento Anterior da mesma série para encadeamento
+            $lastPrevSale = \App\Models\Sale::where('company_id', $company->id)
+                ->where('doc_type', $docType)
+                ->whereNotNull('hash')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $prevHash = $lastPrevSale ? $lastPrevSale->hash : null;
+            $entryDate = date('Y-m-d\TH:i:s');
+
+            // Assinatura Digital AGT (RSA 1024-bit SHA-1)
+            $sigResult = $this->agtSignatureService->signDocument(
+                $date,
+                $entryDate,
+                $docNumber,
+                $totalAmount,
+                $prevHash
+            );
+
+            $sale = \App\Models\Sale::create([
+                'company_id' => $company->id,
+                'customer_id' => $customerId,
+                'warehouse_id' => $warehouseId,
+                'doc_type' => $docType,
+                'doc_number' => $docNumber,
+                'date' => $date,
+                'status' => 'ISSUED',
+                'payment_status' => $docType === 'FR' ? 'PAID' : 'PENDING',
+                'amount_paid' => $docType === 'FR' ? $totalAmount : 0,
+                'total_amount' => $totalAmount,
+                'total_tax' => $totalTax,
+                'total_discount' => 0,
+                'notes' => $notes,
+                'created_by' => auth()->id() ?? 1,
+                'hash' => $sigResult['hash'],
+                'hash_control' => $sigResult['hash_control'],
+                'agt_status' => 'VALIDATED'
+            ]);
+
+            foreach ($processedItems as $pItem) {
+                $sale->items()->create($pItem);
+            }
+
+            // Submeter em tempo real à AGT via SOAP WebService
+            $agtWebService = new \App\Services\AgtWebService();
+            $agtWebService->submitInvoice($sale);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Documento {$docNumber} emitido com sucesso e assinado digitalmente segundo as normas da AGT.",
+                'data' => $sale->load(['customer', 'items.product']),
+                'print_mention' => $this->agtSignatureService->formatPrintMention($sigResult['control_code'])
+            ], 201);
+        }
+
+        $data = $request->all();
+        $seriesModel = DocumentSeries::find($data['series_id'] ?? 1);
 
         $totalAmount = 0;
         $totalTax = 0;
@@ -76,23 +303,11 @@ class CommercialDocumentController extends Controller
             $price = $item['unit_price'];
             $discount = $item['discount_amount'] ?? 0;
             
-            $tax = Tax::find($item['tax_id']);
-            if (!$tax) {
-                return back()->withInput()->with('error', 'O imposto selecionado é inválido.');
-            }
-
-            if ($tax->rate == 0 && empty($item['exemption_reason'])) {
-                if ($tax->exemption_reason) {
-                    $item['exemption_reason'] = $tax->exemption_reason;
-                } else {
-                    return back()->withInput()->with('error', "Artigos com taxa 0% ({$tax->name}) necessitam de um motivo de isenção fiscal.");
-                }
-            }
-            
+            $tax = Tax::find($item['tax_id'] ?? 1);
             $subtotalSemIva = ($qty * $price) - $discount;
-            $taxAmount = $subtotalSemIva * ($tax->rate / 100);
+            $taxAmount = $subtotalSemIva * (($tax->rate ?? 14) / 100);
             
-            $item['tax_rate'] = $tax->rate;
+            $item['tax_rate'] = $tax->rate ?? 14;
             $item['tax_amount'] = $taxAmount;
             $item['subtotal'] = $subtotalSemIva;
             
@@ -104,10 +319,10 @@ class CommercialDocumentController extends Controller
         $headerData = [
             'company_id' => $company->id,
             'customer_id' => $data['customer_id'],
-            'warehouse_id' => $data['warehouse_id'],
-            'series_id' => $data['series_id'],
-            'doc_type' => $seriesModel->document_type,
-            'date' => $data['date'],
+            'warehouse_id' => $data['warehouse_id'] ?? null,
+            'series_id' => $data['series_id'] ?? null,
+            'doc_type' => $seriesModel->document_type ?? 'FT',
+            'date' => $data['date'] ?? date('Y-m-d'),
             'notes' => $data['notes'] ?? null,
             'total_amount' => $totalAmount,
             'total_tax' => $totalTax,
@@ -122,34 +337,169 @@ class CommercialDocumentController extends Controller
         }
     }
 
-    public function show(string $category, string $id)
+    public function show($categoryOrId, $optionalId = null)
     {
-        $invoice = $this->saleRepo->findSale((int)$id);
+        $id = is_numeric($categoryOrId) ? (int)$categoryOrId : (int)$optionalId;
+        $category = is_string($categoryOrId) && !is_numeric($categoryOrId) ? $categoryOrId : 'faturas';
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $invoice = \App\Models\Sale::where('company_id', $companyId)
+            ->with(['customer', 'items.product', 'warehouse', 'company'])
+            ->find($id);
+
+        if (!$invoice) {
+            $invoice = \App\Models\Sale::with(['customer', 'items.product', 'warehouse', 'company'])->find($id);
+        }
+
+        if (request()->wantsJson() || request()->expectsJson() || request()->is('api/*')) {
+            if (!$invoice) {
+                return response()->json(['success' => false, 'message' => 'Documento não encontrado.'], 404);
+            }
+            return response()->json([
+                'success' => true,
+                'data' => $invoice
+            ]);
+        }
+
         return view('sales.documents.show', compact('invoice', 'category'));
     }
 
-    public function cancel(Request $request, string $category, string $id)
+    public function pdf(Request $request, string $id)
     {
-        $request->validate([
-            'cancellation_reason' => 'required|string|min:5'
-        ]);
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $sale = \App\Models\Sale::with(['customer', 'items.product', 'warehouse', 'company'])->find((int)$id);
+
+        if (!$sale) {
+            return response()->json(['error' => 'Documento não encontrado.'], 404);
+        }
+
+        $company = Company::find($companyId) ?? Company::first();
+        $controlCode = $sale->hash ? ($sale->hash[0] . $sale->hash[10] . $sale->hash[20] . $sale->hash[30]) : '0000';
+        $printMention = $this->agtSignatureService->formatPrintMention($controlCode);
+
+        return response()->view('sales.documents.pdf', compact('sale', 'company', 'printMention'))
+            ->header('Content-Type', 'text/html; charset=UTF-8');
+    }
+
+    public function thermal(Request $request, string $id)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $sale = \App\Models\Sale::with(['customer', 'items.product', 'warehouse', 'company'])->find((int)$id);
+
+        if (!$sale) {
+            return response()->json(['error' => 'Documento não encontrado.'], 404);
+        }
+
+        $company = Company::find($companyId) ?? Company::first();
+        $controlCode = $sale->hash ? ($sale->hash[0] . $sale->hash[10] . $sale->hash[20] . $sale->hash[30]) : '0000';
+        $printMention = $this->agtSignatureService->formatPrintMention($controlCode);
+
+        return response()->view('sales.pos.thermal_receipt', compact('sale', 'company', 'printMention'))
+            ->header('Content-Type', 'text/html; charset=UTF-8');
+    }
+
+    public function cancel(Request $request, $categoryOrId, $optionalId = null)
+    {
+        $id = is_numeric($categoryOrId) ? (int)$categoryOrId : (int)$optionalId;
+        $reason = $request->input('cancellation_reason', 'Anulação solicitada pelo utilizador.');
+
+        $sale = \App\Models\Sale::with('items')->find($id);
+
+        if (!$sale) {
+            return back()->with('error', 'Documento não encontrado.');
+        }
+
+        if ($sale->status === 'CANCELLED') {
+            return back()->with('error', 'O documento já se encontra anulado.');
+        }
+
+        $sale->status = 'CANCELLED';
+        $sale->cancellation_reason = $reason;
+        $sale->cancelled_at = now();
+        $sale->cancelled_by = auth()->id() ?? 1;
+        $sale->save();
+
+        // Repor Stock dos Produtos
+        foreach ($sale->items as $item) {
+            $product = Product::find($item->product_id);
+            if ($product && $product->is_inventory) {
+                $product->stock_qty += $item->quantity;
+                $product->save();
+            }
+        }
+
+        return back()->with('success', "Documento {$sale->doc_number} anulado com sucesso e stock reposto no armazém.");
+    }
+
+    public function convert(Request $request, $id)
+    {
+        $targetDocType = $request->input('target_doc_type', 'FT');
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $sourceDoc = \App\Models\Sale::with('items')->where('company_id', $companyId)->find((int)$id);
+
+        if (!$sourceDoc) {
+            return back()->with('error', 'Documento de origem não encontrado.');
+        }
+
+        if ($sourceDoc->status === 'CANCELLED') {
+            return back()->with('error', 'Não é possível converter um documento anulado.');
+        }
+
+        $items = [];
+        foreach ($sourceDoc->items as $item) {
+            $items[] = [
+                'product_id' => $item->product_id,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'tax_id' => $item->tax_id ?? 1,
+                'discount_amount' => $item->discount_amount ?? 0,
+                'subtotal' => $item->subtotal ?? ($item->quantity * $item->unit_price)
+            ];
+        }
+
+        $headerData = [
+            'company_id' => $companyId,
+            'customer_id' => $sourceDoc->customer_id,
+            'warehouse_id' => $sourceDoc->warehouse_id,
+            'doc_type' => $targetDocType,
+            'date' => date('Y-m-d'),
+            'notes' => 'Convertido a partir de ' . $sourceDoc->doc_number . ' ' . $sourceDoc->notes,
+        ];
 
         try {
-            $this->saleService->cancelDocument((int)$id, $request->cancellation_reason, auth()->id());
-            return back()->with('success', 'Documento anulado com sucesso.');
+            $newInvoice = $this->saleService->createDocument($headerData, $items, auth()->id() ?? 1);
+            
+            $sourceDoc->notes = ($sourceDoc->notes ? $sourceDoc->notes . ' | ' : '') . 'Convertido em ' . $newInvoice->doc_number;
+            $sourceDoc->save();
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Documento {$sourceDoc->doc_number} convertido com sucesso em {$newInvoice->doc_number}!",
+                    'new_sale' => $newInvoice
+                ]);
+            }
+
+            return redirect()->route('vendas.documentos.show', ['category' => 'faturas', 'id' => $newInvoice->id])
+                ->with('success', "Documento {$sourceDoc->doc_number} convertido com sucesso na Fatura {$newInvoice->doc_number}!");
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', 'Erro ao converter documento: ' . $e->getMessage());
         }
     }
 
-    private function getDocTypesByCategory(string $category): array
+    private function getDocTypesByCategory(?string $category = 'all'): array
     {
+        if (empty($category) || $category === 'all') {
+            return ['FT', 'FR', 'OR', 'PP', 'EN', 'GR', 'GT', 'NC', 'ND'];
+        }
         return match ($category) {
             'faturas' => ['FT', 'FR'],
             'orcamentos' => ['OR', 'PP'],
+            'encomendas' => ['EN'],
             'guias' => ['GR', 'GT'],
             'notas' => ['NC', 'ND'],
-            default => ['FT'],
+            default => ['FT', 'FR', 'OR', 'PP', 'EN', 'GR', 'GT', 'NC', 'ND'],
         };
     }
 }

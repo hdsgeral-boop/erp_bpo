@@ -27,11 +27,11 @@ class StockService extends BaseService
             // Obter ou criar registo de stock no armazém
             $warehouseStock = WarehouseStock::firstOrCreate(
                 ['warehouse_id' => $warehouseId, 'product_id' => $productId],
-                ['stock_qty' => 0]
+                ['quantity' => 0]
             );
 
             // Atualizar stock no armazém
-            $warehouseStock->stock_qty += $quantity;
+            $warehouseStock->quantity += $quantity;
             $warehouseStock->save();
 
             // Atualizar stock global do produto
@@ -46,7 +46,7 @@ class StockService extends BaseService
                 'to_warehouse_id' => $warehouseId,
                 'quantity' => $quantity,
                 'unit_of_measure' => $options['unit_of_measure'] ?? 'UN',
-                'balance_after' => $warehouseStock->stock_qty,
+                'balance_after' => $warehouseStock->quantity,
                 'reference_type' => $options['reference_type'] ?? null,
                 'reference_id' => $options['reference_id'] ?? null,
                 'notes' => $options['notes'] ?? 'Entrada de stock.',
@@ -80,13 +80,13 @@ class StockService extends BaseService
                                             ->where('product_id', $productId)
                                             ->first();
 
-            if (!$warehouseStock || $warehouseStock->stock_qty < $quantity) {
+            if (!$warehouseStock || ($warehouseStock->quantity - ($warehouseStock->reserved_quantity ?? 0)) < $quantity) {
                 DB::rollBack();
-                return $this->response(false, "Stock insuficiente no armazém selecionado.");
+                return $this->response(false, "Stock disponível insuficiente no armazém selecionado.");
             }
 
             // Atualizar stock no armazém
-            $warehouseStock->stock_qty -= $quantity;
+            $warehouseStock->quantity -= $quantity;
             $warehouseStock->save();
 
             // Atualizar stock global do produto
@@ -101,7 +101,7 @@ class StockService extends BaseService
                 'from_warehouse_id' => $warehouseId,
                 'quantity' => $quantity,
                 'unit_of_measure' => $options['unit_of_measure'] ?? 'UN',
-                'balance_after' => $warehouseStock->stock_qty,
+                'balance_after' => $warehouseStock->quantity,
                 'reference_type' => $options['reference_type'] ?? null,
                 'reference_id' => $options['reference_id'] ?? null,
                 'notes' => $options['notes'] ?? 'Saída de stock.',
@@ -159,6 +159,77 @@ class StockService extends BaseService
             DB::rollBack();
             Log::error("Erro na transferência de stock: " . $e->getMessage());
             return $this->response(false, "Falha na transferência de stock.", $e->getMessage());
+        }
+    }
+
+    /**
+     * Reserva stock para encomendas de clientes
+     */
+    public function reserveStock(int $productId, int $warehouseId, float $quantity, array $options = [])
+    {
+        if ($quantity <= 0) {
+            return $this->response(false, "A quantidade a cativar deve ser maior que zero.");
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $warehouseStock = WarehouseStock::where('warehouse_id', $warehouseId)
+                                            ->where('product_id', $productId)
+                                            ->first();
+
+            // Stock disponível = quantity - reserved_quantity
+            $available = $warehouseStock ? ($warehouseStock->quantity - ($warehouseStock->reserved_quantity ?? 0)) : 0;
+
+            if (!$warehouseStock || $available < $quantity) {
+                DB::rollBack();
+                return $this->response(false, "Stock disponível insuficiente para reserva no armazém selecionado.");
+            }
+
+            $warehouseStock->reserved_quantity = ($warehouseStock->reserved_quantity ?? 0) + $quantity;
+            $warehouseStock->save();
+
+            DB::commit();
+            return $this->response(true, "Stock cativado com sucesso.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Erro ao cativar stock: " . $e->getMessage());
+            return $this->response(false, "Falha ao cativar stock.", $e->getMessage());
+        }
+    }
+
+    /**
+     * Liberta stock reservado (Ex: ao faturar a encomenda ou cancelar)
+     */
+    public function releaseStock(int $productId, int $warehouseId, float $quantity, array $options = [])
+    {
+        if ($quantity <= 0) {
+            return $this->response(false, "A quantidade a libertar deve ser maior que zero.");
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $warehouseStock = WarehouseStock::where('warehouse_id', $warehouseId)
+                                            ->where('product_id', $productId)
+                                            ->first();
+
+            if (!$warehouseStock || ($warehouseStock->reserved_quantity ?? 0) < $quantity) {
+                DB::rollBack();
+                return $this->response(false, "Não há stock cativado suficiente para libertar.");
+            }
+
+            $warehouseStock->reserved_quantity -= $quantity;
+            $warehouseStock->save();
+
+            DB::commit();
+            return $this->response(true, "Stock cativo libertado com sucesso.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Erro ao libertar stock cativo: " . $e->getMessage());
+            return $this->response(false, "Falha ao libertar stock cativo.", $e->getMessage());
         }
     }
 

@@ -41,9 +41,15 @@
     <!-- TAB: Restauro e Importação -->
     <div id="tab-import" class="settings-tab">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-0 pt-4 pb-0">
-                <h5 class="fw-bold"><i class="fas fa-upload text-primary"></i> Restauro Seguro de Base de Dados</h5>
-                <p class="text-muted small">Faça download do template XML/Excel rigoroso. Ao carregar, o sistema irá validar linha a linha. Como selecionou a regra, <strong>linhas com duplicados (ex: NIF existente) serão sumariamente ignoradas</strong>.</p>
+            <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="fw-bold"><i class="fas fa-upload text-primary"></i> Restauro e Backup de Base de Dados</h5>
+                    <p class="text-muted small">Faça download do template XML/Excel rigoroso ou crie um dump completo da BD.</p>
+                </div>
+                <form action="{{ route('admin.settings.backup') }}" method="POST" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-warning shadow-sm"><i class="fas fa-database"></i> Executar Backup BD (pg_dump)</button>
+                </form>
             </div>
             <div class="card-body">
                 <div class="row">

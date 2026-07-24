@@ -67,11 +67,15 @@ class PurchaseRequestController extends Controller
 
         $purchaseRequest = $this->purchaseRepo->createRequest($headerData, $data['items']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Pedido Interno de compra criado com sucesso.',
-            'purchase_request' => $purchaseRequest
-        ]);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pedido Interno de compra criado com sucesso.',
+                'purchase_request' => $purchaseRequest
+            ]);
+        }
+
+        return redirect()->route('compras.pedidos.index')->with('success', 'Pedido Interno de compra criado com sucesso.');
     }
 
     public function show(string $id)
@@ -80,10 +84,17 @@ class PurchaseRequestController extends Controller
         $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
         
         if ($purchaseRequest->company_id !== $companyId) {
-            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+            if (request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+            }
+            return back()->with('error', 'Não autorizado.');
         }
 
-        return response()->json($purchaseRequest);
+        if (request()->wantsJson()) {
+            return response()->json($purchaseRequest);
+        }
+
+        return view('purchases.requests.show', compact('purchaseRequest'));
     }
 
     public function approve(Request $request, string $id)
@@ -92,12 +103,19 @@ class PurchaseRequestController extends Controller
         $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
 
         if ($purchaseRequest->company_id !== $companyId) {
-            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+            }
+            return back()->with('error', 'Não autorizado.');
         }
 
         $response = $this->purchaseService->approveRequest((int)$id, auth()->id());
         
-        return response()->json($response);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json($response);
+        }
+
+        return back()->with('success', 'Pedido de compra aprovado com sucesso.');
     }
 
     public function reject(Request $request, string $id)
@@ -106,11 +124,18 @@ class PurchaseRequestController extends Controller
         $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
 
         if ($purchaseRequest->company_id !== $companyId) {
-            return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
+            }
+            return back()->with('error', 'Não autorizado.');
         }
 
         $response = $this->purchaseService->rejectRequest((int)$id, auth()->id());
         
-        return response()->json($response);
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json($response);
+        }
+
+        return back()->with('success', 'Pedido de compra recusado.');
     }
 }

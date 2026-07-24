@@ -33,7 +33,29 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
 
         // ─── Utilizador atual ────────────────────────────
-        Route::get('/me', fn(Request $request) => response()->json($request->user()->load('company', 'roles')));
+        Route::get('/me', function(Request $request) {
+            $user = $request->user();
+            $companies = $user->hasRole('Super Admin') 
+                ? \App\Models\Company::where('name', 'not like', '%SISTEMA%')->get() 
+                : $user->companies()->where('name', 'not like', '%SISTEMA%')->get();
+            if ($companies->isEmpty() && $user->company) {
+                $companies = collect([$user->company]);
+            }
+            $user->load('company', 'roles');
+            $user->setRelation('companies', $companies);
+            return response()->json($user);
+        });
+        Route::get('/user/companies', function(Request $request) {
+            $user = $request->user();
+            $companies = $user->hasRole('Super Admin') 
+                ? \App\Models\Company::where('name', 'not like', '%SISTEMA%')->get() 
+                : $user->companies()->where('name', 'not like', '%SISTEMA%')->get();
+            if ($companies->isEmpty() && $user->company) {
+                $companies = collect([$user->company]);
+            }
+            return response()->json(['success' => true, 'data' => $companies]);
+        });
+        Route::post('/switch-company', [\App\Http\Controllers\CompanyController::class, 'switchCompany']);
         Route::post('/logout', [\App\Http\Controllers\AuthController::class, 'logout']);
         Route::post('/change-password', [\App\Http\Controllers\SettingsController::class, 'updatePassword']);
         Route::post('/generate-api-token', [\App\Http\Controllers\SettingsController::class, 'generateToken']);
@@ -43,7 +65,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\GlobalDashboardController::class, 'index']);
 
         // ─── Business Intelligence ────────────────────────
-        Route::get('/bi/dataset', [\App\Http\Controllers\BiController::class, 'dataset']);
+        Route::get('/bi/dashboard', [\App\Http\Controllers\BiController::class, 'index'])->name('bi.dashboard');
+        Route::get('/bi/dataset', [\App\Http\Controllers\BiController::class, 'dataset'])->name('bi.dataset');
 
         // ─── AI Agent ─────────────────────────────────────
         Route::post('/ai/process', [\App\Http\Controllers\AiAgentController::class, 'process']);
@@ -73,12 +96,17 @@ Route::prefix('v1')->group(function () {
         // ═══════════════════════════════════════════════════
         Route::prefix('vendas')->group(function () {
             // Documentos Comerciais (FT, FR, OR, PP, NC, ND, GT, GR)
+            Route::get('/documentos-options', [\App\Http\Controllers\CommercialDocumentController::class, 'formOptions']);
             Route::get('/documentos', [\App\Http\Controllers\CommercialDocumentController::class, 'index']);
+            Route::get('/documentos/detalhes/{id}', [\App\Http\Controllers\CommercialDocumentController::class, 'show']);
             Route::get('/documentos/{category}', [\App\Http\Controllers\CommercialDocumentController::class, 'listByCategory']);
             Route::post('/documentos', [\App\Http\Controllers\CommercialDocumentController::class, 'store']);
             Route::get('/documentos/show/{id}', [\App\Http\Controllers\CommercialDocumentController::class, 'show']);
             Route::post('/documentos/{id}/anular', [\App\Http\Controllers\CommercialDocumentController::class, 'cancel']);
             Route::get('/documentos/{id}/pdf', [\App\Http\Controllers\CommercialDocumentController::class, 'pdf']);
+
+            // Terminais POS (Caixas e Impressoras)
+            Route::apiResource('pos-registers', \App\Http\Controllers\PosRegisterController::class);
 
             // POS
             Route::get('/pos/session', [\App\Http\Controllers\SalesPOSController::class, 'currentSession']);
@@ -161,6 +189,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/salarios/{id}/fechar', [\App\Http\Controllers\PayrollController::class, 'close']);
             Route::post('/salarios/{id}/estornar', [\App\Http\Controllers\PayrollController::class, 'reverse']);
             Route::get('/salarios/{id}/exportar-agt', [\App\Http\Controllers\PayrollController::class, 'exportAgt']);
+            Route::get('/salarios/{id}/exportar-inss', [\App\Http\Controllers\PayrollController::class, 'exportInss']);
             Route::get('/recibos/{id}/pdf', [\App\Http\Controllers\PayrollController::class, 'downloadReceipt']);
 
             // Configurações Fiscais
@@ -240,9 +269,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/documentos/{category}/{id}', [\App\Http\Controllers\ReceiptController::class, 'show']);
             Route::post('/documentos/{category}/{id}/anular', [\App\Http\Controllers\ReceiptController::class, 'cancel']);
 
-            // Contas Correntes
+            // Contas Correntes & Aging
             Route::get('/contas-correntes', [\App\Http\Controllers\CurrentAccountController::class, 'index']);
             Route::get('/contas-correntes/{id}', [\App\Http\Controllers\CurrentAccountController::class, 'show']);
+            Route::get('/aging', [\App\Http\Controllers\CurrentAccountController::class, 'agingReport']);
 
             // Extratos Bancários
             Route::apiResource('bank-statements', \App\Http\Controllers\BankStatementController::class);
@@ -260,7 +290,14 @@ Route::prefix('v1')->group(function () {
         // ═══════════════════════════════════════════════════
         Route::prefix('contabilidade')->group(function () {
             Route::get('/dashboard', [\App\Http\Controllers\AccountingController::class, 'dashboard']);
+            Route::get('/reports', [\App\Http\Controllers\AccountingController::class, 'reportsIndex']);
             Route::get('/trial-balance', [\App\Http\Controllers\AccountingController::class, 'trialBalance']);
+            Route::get('/balance-sheet', [\App\Http\Controllers\AccountingController::class, 'balanceSheet']);
+            Route::get('/balance-sheet/pdf', [\App\Http\Controllers\AccountingController::class, 'balanceSheetPdf']);
+            Route::get('/income-statement', [\App\Http\Controllers\AccountingController::class, 'incomeStatement']);
+            Route::get('/income-statement/pdf', [\App\Http\Controllers\AccountingController::class, 'incomeStatementPdf']);
+            Route::get('/cash-flow', [\App\Http\Controllers\AccountingController::class, 'cashFlowStatement']);
+            Route::get('/ledger', [\App\Http\Controllers\AccountingController::class, 'accountLedger']);
             Route::apiResource('plano-contas', \App\Http\Controllers\ChartOfAccountController::class);
             Route::get('/diarios-data', [\App\Http\Controllers\JournalController::class, 'createData']);
             Route::apiResource('diarios', \App\Http\Controllers\JournalController::class);
@@ -286,8 +323,13 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('document-series', \App\Http\Controllers\DocumentSeriesController::class)
                 ->parameters(['document-series' => 'documentSeries']);
             Route::apiResource('taxes', \App\Http\Controllers\TaxController::class);
+            Route::get('/pos-settings', [\App\Http\Controllers\Admin\PosSettingsController::class, 'index']);
+            Route::post('/pos-settings', [\App\Http\Controllers\Admin\PosSettingsController::class, 'store']);
+            Route::put('/pos-settings/{id}', [\App\Http\Controllers\Admin\PosSettingsController::class, 'update']);
+            Route::delete('/pos-settings/{id}', [\App\Http\Controllers\Admin\PosSettingsController::class, 'destroy']);
             Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index']);
             Route::put('/settings/bulk', [\App\Http\Controllers\SettingController::class, 'updateBulk']);
+            Route::post('/settings/backup', [\App\Http\Controllers\SettingController::class, 'backup'])->name('admin.settings.backup');
             Route::get('/logs', [\App\Http\Controllers\SystemLogController::class, 'index']);
             Route::get('/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index']);
 
@@ -311,4 +353,23 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('v1/external')->gro
     Route::get('/hr/payroll/items', [\App\Http\Controllers\Api\V1\PayrollApiController::class, 'getPayrollItems']);
     Route::get('/hr/employees/{id}/receipts', [\App\Http\Controllers\Api\V1\PayrollApiController::class, 'getEmployeeReceipts']);
     Route::post('/hr/attendance', [\App\Http\Controllers\Api\HrController::class, 'storeAttendance']);
+
+    // Feeds PowerBI
+    Route::get('/powerbi/sales', [\App\Http\Controllers\IntegrationController::class, 'powerbiSales']);
+    Route::get('/powerbi/financials', [\App\Http\Controllers\IntegrationController::class, 'powerbiFinancials']);
+    Route::get('/powerbi/hr', [\App\Http\Controllers\IntegrationController::class, 'powerbiHr']);
+});
+
+// ═══════════════════════════════════════════════════════
+// ROTAS AGT (Webhooks sem Sanctum, usam autenticação/validação própria)
+// ═══════════════════════════════════════════════════════
+Route::prefix('v1/external/agt')->group(function () {
+    Route::post('/webhook', [\App\Http\Controllers\AgtWebhookController::class, 'handle']);
+});
+
+// ═══════════════════════════════════════════════════════
+// ROTAS WEBHOOKS DE PAGAMENTO SAAS (Sem Sanctum, usa signature HMAC)
+// ═══════════════════════════════════════════════════════
+Route::prefix('v1/external/payments')->group(function () {
+    Route::post('/webhook', [\App\Http\Controllers\Api\PaymentWebhookController::class, 'handle']);
 });

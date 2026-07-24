@@ -11,6 +11,8 @@ import {
   FileText, 
   Download 
 } from 'lucide-react';
+import CreateDocumentModal from '@/components/vendas/CreateDocumentModal';
+import DocumentDetailModal from '@/components/vendas/DocumentDetailModal';
 
 export default function DocumentosPage() {
   const [documents, setDocuments] = useState<any[]>([]);
@@ -19,6 +21,10 @@ export default function DocumentosPage() {
   const [search, setSearch] = useState('');
   const [docType, setDocType] = useState('');
   const [status, setStatus] = useState('');
+
+  // Modals state
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [selectedDetailId, setSelectedDetailId] = useState<number | null>(null);
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -45,6 +51,27 @@ export default function DocumentosPage() {
     fetchDocuments();
   };
 
+  const handleDownloadPdf = (docId: number) => {
+    window.open(`${api.defaults.baseURL}/vendas/documentos/${docId}/pdf`, '_blank');
+  };
+
+  const formatStatus = (st: string) => {
+    switch (st) {
+      case 'ISSUED':
+        return 'Emitido';
+      case 'CANCELLED':
+        return 'Cancelado';
+      case 'DRAFT':
+        return 'Rascunho';
+      case 'PAID':
+        return 'Pago';
+      case 'PENDING':
+        return 'Pendente';
+      default:
+        return st;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -53,7 +80,10 @@ export default function DocumentosPage() {
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Documentos de Vendas</h1>
           <p className="text-sm text-slate-500 font-medium">Consulte e crie faturas, orçamentos, notas de crédito e outros documentos comerciais.</p>
         </div>
-        <button className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="enterprise-btn enterprise-btn-primary flex items-center gap-2 cursor-pointer shadow-md hover:bg-blue-700 transition-colors"
+        >
           <Plus className="h-4 w-4" />
           <span>Novo Documento</span>
         </button>
@@ -158,15 +188,23 @@ export default function DocumentosPage() {
                         ? 'badge-danger'
                         : 'badge-warning'
                     }`}>
-                      {doc.status}
+                      {formatStatus(doc.status)}
                     </span>
                   </td>
                   <td className="text-right">
                     <div className="inline-flex gap-2">
-                      <button className="p-1.5 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-700 transition-colors" title="Ver Detalhe">
+                      <button
+                        onClick={() => setSelectedDetailId(doc.id)}
+                        className="p-1.5 hover:bg-slate-100 rounded text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
+                        title="Ver Detalhe"
+                      >
                         <FileText className="h-4 w-4" />
                       </button>
-                      <button className="p-1.5 hover:bg-slate-100 rounded text-slate-500 hover:text-slate-700 transition-colors" title="Descarregar PDF">
+                      <button
+                        onClick={() => handleDownloadPdf(doc.id)}
+                        className="p-1.5 hover:bg-slate-100 rounded text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
+                        title="Descarregar PDF"
+                      >
                         <Download className="h-4 w-4" />
                       </button>
                     </div>
@@ -184,6 +222,18 @@ export default function DocumentosPage() {
           </table>
         )}
       </div>
+
+      {/* Modals */}
+      <CreateDocumentModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSuccess={() => fetchDocuments()}
+      />
+
+      <DocumentDetailModal
+        documentId={selectedDetailId}
+        onClose={() => setSelectedDetailId(null)}
+      />
     </div>
   );
 }

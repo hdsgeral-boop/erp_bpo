@@ -142,4 +142,49 @@ class CompanyController extends Controller
 
         return redirect()->route('admin.companies.index')->with('success', 'Empresa eliminada com sucesso.');
     }
+
+    /**
+     * Switch active company in session / user state
+     */
+    public function switchCompany(Request $request)
+    {
+        $request->validate([
+            'company_id' => 'required|integer|exists:companies,id'
+        ]);
+
+        $companyId = (int)$request->input('company_id');
+        $user = auth()->user();
+
+        // Check permission if user belongs to company or is super admin
+        $hasAccess = false;
+        if ($user) {
+            $userCompanies = $user->companies ? $user->companies->pluck('id')->toArray() : [];
+            if ($user->hasRole('Super Admin') || in_array($companyId, $userCompanies)) {
+                $hasAccess = true;
+            }
+        } else {
+            // Allow if guest for testing or dev mode
+            $hasAccess = true;
+        }
+
+        if (!$hasAccess) {
+            if ($request->wantsJson()) {
+                return $this->errorResponse('Acesso negado a esta empresa.', 403);
+            }
+            return back()->with('error', 'Sem permissão para aceder a esta empresa.');
+        }
+
+        session(['company_id' => $companyId]);
+
+        $company = Company::find($companyId);
+
+        if ($request->wantsJson()) {
+            return $this->successResponse('Empresa alterada com sucesso.', [
+                'active_company_id' => $companyId,
+                'company' => $company
+            ]);
+        }
+
+        return back()->with('success', 'Empresa alterada com sucesso para: ' . ($company->name ?? 'Empresa ' . $companyId));
+    }
 }

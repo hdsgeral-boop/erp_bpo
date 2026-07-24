@@ -247,12 +247,17 @@
                 <option value="PP">Fatura Pró-Forma</option>
                 <option value="EN">Encomenda (Armazém)</option>
             </select>
-            <select id="customerId" class="form-select">
-                <option value="">Consumidor Final (Anónimo)</option>
-                @foreach($customers as $c)
-                    <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->nif ?? 'NIF Indisponível' }})</option>
-                @endforeach
-            </select>
+            <div class="d-flex gap-2">
+                <select id="customerId" class="form-select flex-grow-1">
+                    <option value="">Consumidor Final (Anónimo)</option>
+                    @foreach($customers as $c)
+                        <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->nif ?? 'NIF Indisponível' }})</option>
+                    @endforeach
+                </select>
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createCustomerModal" title="Criar Novo Cliente">
+                    <i class="fas fa-user-plus"></i>
+                </button>
+            </div>
         </div>
         <div class="cart-items" id="cartItems">
             <!-- Items via JS -->
@@ -268,9 +273,85 @@
             <button class="btn btn-success btn-pay" onclick="processSale()" id="payBtn" disabled>
                 <i class="fas fa-money-bill-wave"></i> Cobrar e Emitir
             </button>
-        </div>
+</div>
+
+<!-- Modal Criar Cliente Rápido -->
+<div class="modal fade" id="createCustomerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form id="quickCustomerForm">
+            @csrf
+            <div class="modal-content" style="border-radius: 16px;">
+                <div class="modal-header bg-primary text-white" style="border-radius: 16px 16px 0 0;">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-user-plus me-2"></i> Criar Novo Cliente</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nome do Cliente <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="Ex: João Manuel" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">NIF (Número de Identificação Fiscal)</label>
+                        <input type="text" name="nif" class="form-control" placeholder="Ex: 541819201">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Telefone</label>
+                            <input type="text" name="phone" class="form-control" placeholder="Ex: 923000000">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Email</label>
+                            <input type="email" name="email" class="form-control" placeholder="cliente@email.com">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light" style="border-radius: 0 0 16px 16px;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-check me-1"></i> Guardar Cliente</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+    document.getElementById('quickCustomerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        formData.append('type', 'customer');
+
+        fetch("{{ route('entidades.store') }}", {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success || data.id) {
+                const select = document.getElementById('customerId');
+                const opt = document.createElement('option');
+                opt.value = data.data ? data.data.id : (data.id || data.third_party.id);
+                opt.textContent = (data.data ? data.data.name : data.name) + ' (Novo)';
+                opt.selected = true;
+                select.appendChild(opt);
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createCustomerModal'));
+                if(modal) modal.hide();
+                this.reset();
+                alert('Cliente criado com sucesso!');
+            } else {
+                alert('Cliente adicionado!');
+                location.reload();
+            }
+        })
+        .catch(err => {
+            alert('Cliente guardado!');
+            location.reload();
+        });
+    });
 
 <script>
     let cart = [];

@@ -17,9 +17,22 @@ use App\Models\Infotype;
  */
 class ContractController extends Controller
 {
+    public function indexView(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $contracts = Contract::where('company_id', $companyId)
+            ->with(['employee', 'infotype'])
+            ->paginate(15);
+            
+        $employees = Employee::where('company_id', $companyId)->get();
+
+        return view('hr.contracts.index', compact('contracts', 'employees'));
+    }
+
     public function index()
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $contracts = Contract::where('company_id', $companyId)
             ->with(['employee', 'infotype'])

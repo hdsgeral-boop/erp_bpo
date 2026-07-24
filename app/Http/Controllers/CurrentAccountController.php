@@ -186,4 +186,102 @@ class CurrentAccountController extends Controller
             'type' => $type
         ]);
     }
+
+    public function agingView(Request $request)
+    {
+        return view('treasury.aging');
+    }
+
+    public function agingReport(Request $request)
+    {
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $type = $request->query('type', 'customer');
+        $today = Carbon::today();
+
+        $entities = ThirdParty::where('company_id', $companyId)
+            ->where($type === 'customer' ? 'is_customer' : 'is_supplier', true)
+            ->get();
+
+        $report = [];
+
+        foreach ($entities as $entity) {
+            $current = 0;
+            $d1_30 = 0;
+            $d31_60 = 0;
+            $d61_90 = 0;
+            $d91_plus = 0;
+
+            if ($type === 'customer') {
+                $invoices = Sale::where('company_id', $companyId)
+                    ->where('customer_id', $entity->id)
+                    ->whereIn('doc_type', ['FT', 'FR', 'ND'])
+                    ->where('status', 'ISSUED')
+                    ->whereRaw('(total_amount + total_tax - amount_paid) > 0')
+                    ->get();
+
+                foreach ($invoices as $inv) {
+                    $pending = ($inv->total_amount + $inv->total_tax) - $inv->amount_paid;
+                    $dueDate = Carbon::parse($inv->due_date ?? $inv->date);
+                    $daysOverdue = $dueDate->diffInDays($today, false);
+
+                    if ($daysOverdue <= 0) {
+                        $current += $pending;
+                    } elseif ($daysOverdue <= 30) {
+                        $d1_30 += $pending;
+                    } elseif ($daysOverdue <= 60) {
+                        $d31_60 += $pending;
+                    } elseif ($daysOverdue <= 90) {
+                        $d61_90 += $pending;
+                    } else {
+                        $d91_plus += $pending;
+                    }
+                }
+            } else {
+                $invoices = PurchaseInvoice::where('company_id', $companyId)
+                    ->where('supplier_id', $entity->id)
+                    ->where('status', 'ISSUED')
+                    ->whereRaw('(total_amount + total_tax - amount_paid) > 0')
+                    ->get();
+
+                foreach ($invoices as $inv) {
+                    $pending = ($inv->total_amount + $inv->total_tax) - $inv->amount_paid;
+                    $dueDate = Carbon::parse($inv->due_date ?? $inv->date);
+                    $daysOverdue = $dueDate->diffInDays($today, false);
+
+                    if ($daysOverdue <= 0) {
+                        $current += $pending;
+                    } elseif ($daysOverdue <= 30) {
+                        $d1_30 += $pending;
+                    } elseif ($daysOverdue <= 60) {
+                        $d31_60 += $pending;
+                    } elseif ($daysOverdue <= 90) {
+                        $d61_90 += $pending;
+                    } else {
+                        $d91_plus += $pending;
+                    }
+                }
+            }
+
+            $totalPending = $current + $d1_30 + $d31_60 + $d61_90 + $d91_plus;
+            if ($totalPending > 0) {
+                $report[] = [
+                    'id' => $entity->id,
+                    'name' => $entity->name,
+                    'tax_id' => $entity->tax_id,
+                    'current' => $current,
+                    'd1_30' => $d1_30,
+                    'd31_60' => $d31_60,
+                    'd61_90' => $d61_90,
+                    'd91_plus' => $d91_plus,
+                    'total' => $totalPending
+                ];
+            }
+        }
+
+        return response()->json([
+            'type' => $type,
+            'report' => $report
+        ]);
+    }
 }
+

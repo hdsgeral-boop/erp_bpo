@@ -18,10 +18,19 @@ class WarehouseController extends Controller
         $this->warehouseRepository = $warehouseRepository;
     }
 
+    public function indexView(Request $request)
+    {
+        return $this->index($request);
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
-        $warehouses = $this->warehouseRepository->paginate(15, $search);
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        
+        $warehouses = Warehouse::where('company_id', $companyId)
+            ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+            ->paginate(15);
         
         return view('inventory.warehouses.index', compact('warehouses', 'search'));
     }

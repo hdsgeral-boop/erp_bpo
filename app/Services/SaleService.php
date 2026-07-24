@@ -14,11 +14,13 @@ class SaleService
 {
     protected $stockService;
     protected $docSeriesService;
+    protected $agtSignatureService;
 
-    public function __construct(StockService $stockService, DocumentSeriesService $docSeriesService)
+    public function __construct(StockService $stockService, DocumentSeriesService $docSeriesService, AgtSignatureService $agtSignatureService)
     {
         $this->stockService = $stockService;
         $this->docSeriesService = $docSeriesService;
+        $this->agtSignatureService = $agtSignatureService;
     }
 
     /**
@@ -31,34 +33,64 @@ class SaleService
             $docType = $data['doc_type'] ?? 'FT';
             
             $deductsStock = in_array($docType, ['FT', 'FR', 'GR', 'GT']);
+            $reservesStock = in_array($docType, ['EN']);
             $addsStock = in_array($docType, ['NC']);
-            $impactsStock = $deductsStock || $addsStock;
+            $impactsStock = $deductsStock || $addsStock || $reservesStock;
 
-            // 1. Validação Antecipada de Stock (apenas se for deduzir)
-            if ($deductsStock) {
+            // 1. Validação Antecipada de Stock
+            if ($deductsStock || $reservesStock) {
                 foreach ($items as $item) {
                     $stock = WarehouseStock::where('product_id', $item['product_id'])
                                            ->where('warehouse_id', $warehouseId)
                                            ->first();
                     $available = $stock ? $stock->quantity : 0;
-    
-                    if ($available < $item['quantity']) {
+                    // Para reservas, verifica se available - reserved > 0.
+                    // O StockService faz isto na hora, mas vamos fazer aqui também
+                    $reserved = $stock ? ($stock->reserved_quantity ?? 0) : 0;
+                    $availableToUse = $available - $reserved;
+
+                    if ($availableToUse < $item['quantity']) {
                         $product = Product::find($item['product_id']);
-                        throw new Exception("Stock insuficiente para o artigo '{$product->name}'. Solicitado: {$item['quantity']}, Disponível: {$available}.");
+                        throw new Exception("Stock insuficiente para o artigo '{$product->name}'. Solicitado: {$item['quantity']}, Disponível Livre: {$availableToUse}.");
                     }
                 }
             }
 
             // 2. Obter numeração da Série Documental
             $docNumber = $this->docSeriesService->getNextDocumentNumber($docType, $data['company_id'], $data['series_id'] ?? null);
+            
+            // 3. Geração de Hash SAF-T (AGT RSA)
+            // Obter o último documento assinado desta série e empresa
+            $previousDoc = Sale::where('company_id', $data['company_id'])
+                               ->where('doc_type', $docType)
+                               ->whereNotNull('hash')
+                               ->orderBy('id', 'desc')
+                               ->first();
+            $previousHash = $previousDoc ? $previousDoc->hash : '';
+            
+            // Format: YYYY-MM-DDTHH:MM:SS
+            $systemEntryDate = now()->format('Y-m-d\TH:i:s');
+            $grossTotal = number_format($data['total_amount'] + $data['total_tax'], 2, '.', '');
+            
+            $hash = $this->agtSignatureService->signDocument(
+                $data['date'], 
+                $systemEntryDate, 
+                $docNumber, 
+                $grossTotal, 
+                $previousHash
+            );
+            $hashControl = '1'; // Versão da chave
 
-            // 3. Criar Cabeçalho do Documento
+            // 4. Criar Cabeçalho do Documento
             $sale = Sale::create([
                 'company_id' => $data['company_id'],
                 'customer_id' => $data['customer_id'],
                 'warehouse_id' => $warehouseId,
                 'doc_type' => $docType,
                 'doc_number' => $docNumber,
+                'hash' => $hash,
+                'hash_control' => $hashControl,
+                'created_at' => now(), // Garante que a systemEntryDate é igual à usada no hash
                 'date' => $data['date'],
                 'status' => 'ISSUED',
                 'is_posted' => true,
@@ -113,6 +145,18 @@ class SaleService
                             'notes' => "Entrada via {$docType} {$docNumber}"
                         ]
                     );
+                } elseif ($reservesStock) {
+                    $this->stockService->reserveStock(
+                        $item['product_id'],
+                        $warehouseId,
+                        $item['quantity'],
+                        [
+                            'user_id' => $userId,
+                            'reference_type' => Sale::class,
+                            'reference_id' => $sale->id,
+                            'notes' => "Reserva via {$docType} {$docNumber}"
+                        ]
+                    );
                 }
             }
 
@@ -146,6 +190,7 @@ class SaleService
             $docType = $sale->doc_type;
             $deductsStock = in_array($docType, ['FT', 'FR', 'GR', 'GT']);
             $addsStock = in_array($docType, ['NC']);
+            $reservesStock = in_array($docType, ['EN']);
 
             // 2. Reverter stock
             foreach ($sale->items as $item) {
@@ -176,6 +221,19 @@ class SaleService
                                 'reference_type' => Sale::class,
                                 'reference_id' => $sale->id,
                                 'notes' => "Estorno por Anulação de {$docType} {$sale->doc_number}"
+                            ]
+                        );
+                    } elseif ($reservesStock) {
+                        // Libertar o stock cativado
+                        $this->stockService->releaseStock(
+                            $item->product_id,
+                            $sale->warehouse_id,
+                            $item->delivered_qty,
+                            [
+                                'user_id' => $userId,
+                                'reference_type' => Sale::class,
+                                'reference_id' => $sale->id,
+                                'notes' => "Estorno (Libertação de Cativo) por Anulação de {$docType} {$sale->doc_number}"
                             ]
                         );
                     }

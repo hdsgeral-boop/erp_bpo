@@ -27,20 +27,26 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the resource.
      */
+    public function indexView(Request $request)
+    {
+        return $this->index($request);
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
         $departmentId = $request->input('department_id');
-        $isActive = $request->input('is_active');
-        
-        if ($isActive !== null) {
-            $isActive = (bool) $isActive;
-        }
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
-        $employees = $this->employeeService->getAllPaginated(15, $search, $departmentId, $isActive);
-        $departments = Department::orderBy('name')->get();
+        $employees = Employee::where('company_id', $companyId)
+            ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%")->orWhere('nif', 'like', "%{$search}%"))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->with(['department', 'position'])
+            ->paginate(15);
+            
+        $departments = Department::where('company_id', $companyId)->orderBy('name')->get();
 
-        return view('hr.employees.index', compact('employees', 'search', 'departmentId', 'isActive', 'departments'));
+        return view('hr.employees.index', compact('employees', 'search', 'departmentId', 'departments'));
     }
 
     /**

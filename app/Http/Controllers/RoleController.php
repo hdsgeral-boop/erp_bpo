@@ -42,6 +42,7 @@ class RoleController extends Controller
     }
 
     /**
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -49,7 +50,7 @@ class RoleController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|unique:roles,name|max:255',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id',
+            'permissions.*' => 'string|exists:permissions,name',
         ]);
 
         DB::beginTransaction();
@@ -59,6 +60,9 @@ class RoleController extends Controller
             if (!empty($validated['permissions'])) {
                 $role->syncPermissions($validated['permissions']);
             }
+
+            // Limpar cache de permissões do Spatie para surtir efeito imediato
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
             
             DB::commit();
             return redirect()->route('admin.roles.index')->with('success', 'Perfil criado com sucesso.');
@@ -110,7 +114,7 @@ class RoleController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
             'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id',
+            'permissions.*' => 'string|exists:permissions,name',
         ]);
 
         DB::beginTransaction();
@@ -128,6 +132,9 @@ class RoleController extends Controller
                     $role->syncPermissions([]); // Remover todas
                 }
             }
+
+            // Limpar cache de permissões do Spatie para surtir efeito imediato
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
             
             DB::commit();
             return redirect()->route('admin.roles.index')->with('success', 'Perfil atualizado com sucesso.');

@@ -38,9 +38,38 @@ class AssetController extends Controller
     /**
      * Display a listing of the resource.
      */
+    public function indexView(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $search = $request->input('search');
+        $categoryId = $request->input('category_id');
+
+        $assets = FixedAsset::where('company_id', $companyId)
+            ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"))
+            ->when($categoryId, fn($q) => $q->where('category_id', $categoryId))
+            ->with(['category', 'department', 'employee'])
+            ->paginate(15);
+
+        $categories = AssetCategory::where('company_id', $companyId)->get();
+        $departments = \App\Models\Department::where('company_id', $companyId)->get();
+        $employees = \App\Models\Employee::where('company_id', $companyId)->get();
+
+        return view('assets.index', compact('assets', 'categories', 'departments', 'employees', 'search', 'categoryId'));
+    }
+
+    public function create()
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $categories = AssetCategory::where('company_id', $companyId)->get();
+        $departments = Department::where('company_id', $companyId)->get();
+        $employees = Employee::where('company_id', $companyId)->get();
+        $vendors = ThirdParty::where('company_id', $companyId)->get();
+        return view('assets.create', compact('categories', 'departments', 'employees', 'vendors'));
+    }
+
     public function index(Request $request)
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
         $search = $request->input('search');
         $categoryId = $request->input('category_id');
         $departmentId = $request->input('department_id');

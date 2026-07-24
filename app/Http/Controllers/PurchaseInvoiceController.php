@@ -20,9 +20,24 @@ use Illuminate\Support\Facades\DB;
  */
 class PurchaseInvoiceController extends Controller
 {
+    public function indexView(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $invoices = PurchaseInvoice::where('company_id', $companyId)
+            ->with(['supplier', 'items'])
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(15);
+            
+        $suppliers = ThirdParty::where('company_id', $companyId)->get();
+
+        return view('purchases.invoices.index', compact('invoices', 'suppliers'));
+    }
+
     public function index()
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $invoices = PurchaseInvoice::where('company_id', $companyId)
             ->with('supplier')
@@ -35,7 +50,7 @@ class PurchaseInvoiceController extends Controller
 
     public function createData()
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $suppliers = ThirdParty::where('company_id', $companyId)
             ->where('is_supplier', true)
@@ -51,7 +66,7 @@ class PurchaseInvoiceController extends Controller
 
     public function store(Request $request)
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $validated = $request->validate([
             'supplier_id' => 'required|exists:third_parties,id',

@@ -1,54 +1,5 @@
 @extends('layouts.app')
 
-@push('styles')
-<style>
-    .card-premium {
-        background: #ffffff;
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-    }
-    .form-control, .form-select {
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        border: 1px solid #cbd5e1;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-    .form-label {
-        font-weight: 600;
-        color: #475569;
-        font-size: 0.9rem;
-    }
-    .btn-save {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-        border-radius: 10px;
-        padding: 0.6rem 2rem;
-        font-weight: 600;
-        border: none;
-        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
-    }
-    .btn-cancel {
-        background: #f1f5f9;
-        color: #475569;
-        border-radius: 10px;
-        padding: 0.6rem 2rem;
-        font-weight: 600;
-        border: none;
-    }
-    .section-title {
-        font-weight: 700;
-        color: #1e293b;
-        border-bottom: 2px solid #f1f5f9;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-</style>
-@endpush
-
 @section('content')
 <div class="container-fluid py-4">
     <div class="mb-4">
@@ -68,42 +19,32 @@
         </div>
     @endif
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card-premium p-4 p-md-5">
-                <form action="{{ route('inventario.armazens.store') }}" method="POST">
-                    @csrf
-                    <h5 class="section-title">Detalhes do Local</h5>
-                    
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-4">
-                            <label class="form-label">Código Interno <span class="text-danger">*</span></label>
-                            <input type="text" name="code" class="form-control font-monospace text-uppercase" value="{{ old('code') }}" required>
-                        </div>
-                        <div class="col-md-8">
-                            <label class="form-label">Nome do Armazém <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name') }}" placeholder="Ex: Armazém Principal" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Localização Físisca / Morada</label>
-                            <input type="text" name="location" class="form-control" value="{{ old('location') }}" placeholder="Ex: Rua Central, Pavilhão B">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Estado <span class="text-danger">*</span></label>
-                            <select name="status" class="form-select" required>
-                                <option value="Ativo" {{ old('status') == 'Ativo' ? 'selected' : '' }}>Ativo</option>
-                                <option value="Inativo" {{ old('status') == 'Inativo' ? 'selected' : '' }}>Inativo</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="text-end mt-4">
-                        <a href="{{ route('inventario.armazens.index') }}" class="btn btn-cancel me-2">Cancelar</a>
-                        <button type="submit" class="btn btn-save"><i class="fas fa-save me-2"></i> Criar Armazém</button>
-                    </div>
-                </form>
+    <div class="card shadow-sm border-0" style="border-radius: 16px; background: #fff; padding: 2rem;">
+        <form action="{{ route('inventario.armazens.store') }}" method="POST">
+            @csrf
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Nome do Armazém <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" placeholder="Ex: Armazém Central Luanda" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Localização / Cidade <span class="text-danger">*</span></label>
+                    <input type="text" name="location" class="form-control" placeholder="Ex: Viana / Luanda" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Capacidade Máxima (M3)</label>
+                    <input type="number" name="capacity" class="form-control" placeholder="Ex: 5000">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Nome do Responsável</label>
+                    <input type="text" name="manager_name" class="form-control" placeholder="Ex: Manuel Silva">
+                </div>
+                <div class="col-12 mt-4 text-end">
+                    <a href="{{ route('inventario.armazens.index') }}" class="btn btn-light border me-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-save me-1"></i> Criar Armazém</button>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 @endsection

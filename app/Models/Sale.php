@@ -10,7 +10,7 @@ class Sale extends Model
     use HasAttachments;
 
     protected $fillable = [
-        'company_id', 'customer_id', 'doc_type', 'doc_number', 'date',
+        'company_id', 'customer_id', 'doc_type', 'doc_number', 'hash', 'date',
         'status', 'is_posted', 'related_doc_id', 'is_master_data',
         'warehouse_id', 'created_by', 'cancelled_by', 'cancelled_at', 'cancellation_reason',
         'total_amount', 'total_tax', 'total_discount', 'notes',

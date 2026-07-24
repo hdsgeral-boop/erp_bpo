@@ -15,6 +15,7 @@ class ThirdParty extends Model
         'is_supplier' => 'boolean',
         'is_master_data' => 'boolean',
         'is_active' => 'boolean',
+        'bank_account' => 'encrypted',
     ];
 
     public function company()

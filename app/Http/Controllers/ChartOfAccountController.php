@@ -7,9 +7,18 @@ use App\Models\ChartOfAccount;
 
 class ChartOfAccountController extends Controller
 {
-    public function index()
+    public function indexView(Request $request)
     {
-        $accounts = ChartOfAccount::orderBy('code')->get();
+        return $this->index($request);
+    }
+
+    public function index(Request $request = null)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $accounts = ChartOfAccount::where(function($q) use ($companyId) {
+            $q->where('company_id', $companyId)->orWhere('is_master_data', true);
+        })->orderBy('code')->get();
+
         return view('accounting.chart_of_accounts.index', compact('accounts'));
     }
 
@@ -27,12 +36,21 @@ class ChartOfAccountController extends Controller
             'is_master_data' => 'boolean'
         ]);
 
-        $validated['company_id'] = 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $validated['company_id'] = $companyId;
         $validated['is_master_data'] = $request->has('is_master_data');
 
         ChartOfAccount::create($validated);
 
-        return redirect()->route('contabilidade.chart_of_accounts.index')->with('success', 'Conta criada.');
+        return redirect()->route('contabilidade.chart_of_accounts.index')->with('success', 'Conta criada com sucesso.');
+    }
+
+    public function destroy(string $id)
+    {
+        $account = ChartOfAccount::findOrFail($id);
+        $account->delete();
+
+        return redirect()->route('contabilidade.chart_of_accounts.index')->with('success', 'Conta eliminada com sucesso.');
     }
 
     public function edit(string $id)

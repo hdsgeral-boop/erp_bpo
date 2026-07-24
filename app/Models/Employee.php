@@ -21,6 +21,9 @@ class Employee extends Model implements AuditableContract
         'base_salary' => 'decimal:2',
         'subsidy_meal' => 'decimal:2',
         'subsidy_transport' => 'decimal:2',
+        'nif' => 'encrypted',
+        'iban' => 'encrypted',
+        'inss' => 'encrypted',
     ];
 
     public function company()

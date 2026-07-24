@@ -9,6 +9,16 @@ use OwenIt\Auditing\Auditable;
 class Contract extends Model implements AuditableContract
 {
     use Auditable;
-    //
-}
 
+    protected $guarded = [];
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
+
+    public function infotype()
+    {
+        return $this->belongsTo(Infotype::class);
+    }
+}

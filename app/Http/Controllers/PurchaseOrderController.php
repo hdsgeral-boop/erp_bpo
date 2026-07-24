@@ -29,9 +29,26 @@ class PurchaseOrderController extends Controller
         $this->purchaseService = $purchaseService;
     }
 
+    public function indexView(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $search = $request->input('search');
+        $status = $request->input('status');
+        
+        $orders = \App\Models\PurchaseOrder::where('company_id', $companyId)
+            ->with(['supplier', 'items'])
+            ->orderBy('id', 'desc')
+            ->paginate(15);
+            
+        $suppliers = ThirdParty::where('company_id', $companyId)->get();
+        $products = Product::where('company_id', $companyId)->get();
+        
+        return view('purchases.orders.index', compact('orders', 'suppliers', 'products', 'search', 'status'));
+    }
+
     public function index(Request $request)
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
         $search = $request->input('search');
         $status = $request->input('status');
         
@@ -45,7 +62,7 @@ class PurchaseOrderController extends Controller
         $companyId = auth()->user()->company_id ?? 1;
         $suppliers = ThirdParty::where('company_id', $companyId)
             ->where(function($q) {
-                $q->where('is_supplier', true)->orWhere('is_creditor', true);
+                $q->where('is_supplier', true)->orWhere('type', 'FO');
             })
             ->orderBy('name')
             ->get();

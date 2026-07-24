@@ -113,11 +113,92 @@ class ReportingService extends BaseService
             // SOURCEDOCUMENTS
             $xml->startElement('SourceDocuments');
             $xml->startElement('SalesInvoices');
-            $xml->writeElement('NumberOfEntries', '0'); // count($invoices)
-            $xml->writeElement('TotalDebit', '0.00');
-            $xml->writeElement('TotalCredit', '0.00');
             
-            // Iterar faturas reais aqui...
+            $numberOfEntries = count($invoices);
+            $totalDebit = 0.00;
+            $totalCredit = 0.00;
+
+            foreach ($invoices as $inv) {
+                // Consideramos faturas FT, faturas-recibo FR como vendas
+                // Notas de crédito NC e ND têm lógica específica
+                if ($inv->doc_type === 'NC') {
+                    $totalDebit += ($inv->total_amount + $inv->total_tax);
+                } else {
+                    $totalCredit += ($inv->total_amount + $inv->total_tax);
+                }
+            }
+
+            $xml->writeElement('NumberOfEntries', $numberOfEntries);
+            $xml->writeElement('TotalDebit', number_format($totalDebit, 2, '.', ''));
+            $xml->writeElement('TotalCredit', number_format($totalCredit, 2, '.', ''));
+            
+            foreach ($invoices as $invoice) {
+                $xml->startElement('Invoice');
+                $xml->writeElement('InvoiceNo', $invoice->doc_number);
+                
+                // DocumentStatus
+                $xml->startElement('DocumentStatus');
+                $xml->writeElement('InvoiceStatus', $invoice->status === 'CANCELLED' ? 'A' : 'N');
+                $xml->writeElement('InvoiceStatusDate', $invoice->updated_at->format('Y-m-d\TH:i:s'));
+                $xml->writeElement('SourceID', $invoice->created_by);
+                $xml->writeElement('SourceBilling', 'P'); // P = Programa / I = Integrado
+                $xml->endElement(); // End DocumentStatus
+
+                $xml->writeElement('Hash', $invoice->hash);
+                $xml->writeElement('HashControl', $invoice->hash_control ?? '1');
+                
+                $xml->writeElement('Period', $month);
+                $xml->writeElement('InvoiceDate', $invoice->date);
+                $xml->writeElement('InvoiceType', $invoice->doc_type);
+                
+                // SpecialEntities
+                $xml->startElement('SpecialEntities');
+                $xml->writeElement('SelfBillingIndicator', '0');
+                $xml->writeElement('CashVATSchemeIndicator', '0');
+                $xml->writeElement('ThirdPartiesBillingIndicator', '0');
+                $xml->endElement();
+
+                $xml->writeElement('SourceID', $invoice->created_by);
+                $xml->writeElement('SystemEntryDate', $invoice->created_at->format('Y-m-d\TH:i:s'));
+                $xml->writeElement('CustomerID', $invoice->customer_id ?? '1'); // 1 para consumidor final genérico
+                
+                // Lines
+                // Simulando uma linha geral para simplificar a demonstração
+                $xml->startElement('Line');
+                $xml->writeElement('LineNumber', '1');
+                $xml->writeElement('ProductCode', 'Geral');
+                $xml->writeElement('ProductDescription', 'Serviços/Produtos Globais');
+                $xml->writeElement('Quantity', '1');
+                $xml->writeElement('UnitOfMeasure', 'un');
+                $xml->writeElement('UnitPrice', number_format($invoice->total_amount, 2, '.', ''));
+                $xml->writeElement('TaxPointDate', $invoice->date);
+                $xml->writeElement('Description', 'Venda Global');
+                
+                if ($invoice->doc_type === 'NC') {
+                    $xml->writeElement('DebitAmount', number_format($invoice->total_amount, 2, '.', ''));
+                } else {
+                    $xml->writeElement('CreditAmount', number_format($invoice->total_amount, 2, '.', ''));
+                }
+
+                $xml->startElement('Tax');
+                $xml->writeElement('TaxType', 'IVA');
+                $xml->writeElement('TaxCountryRegion', 'AO');
+                $xml->writeElement('TaxCode', 'NOR');
+                $xml->writeElement('TaxPercentage', '14.00'); // Simplificação
+                $xml->endElement(); // End Tax
+
+                $xml->writeElement('SettlementAmount', '0.00');
+                $xml->endElement(); // End Line
+
+                // DocumentTotals
+                $xml->startElement('DocumentTotals');
+                $xml->writeElement('TaxPayable', number_format($invoice->total_tax, 2, '.', ''));
+                $xml->writeElement('NetTotal', number_format($invoice->total_amount, 2, '.', ''));
+                $xml->writeElement('GrossTotal', number_format($invoice->total_amount + $invoice->total_tax, 2, '.', ''));
+                $xml->endElement(); // End DocumentTotals
+
+                $xml->endElement(); // End Invoice
+            }
             
             $xml->endElement(); // End SalesInvoices
             $xml->endElement(); // End SourceDocuments

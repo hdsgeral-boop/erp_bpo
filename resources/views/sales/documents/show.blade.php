@@ -48,7 +48,7 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <a href="{{ route('vendas.documentos.index', $category) }}" class="text-decoration-none text-muted mb-2 d-inline-block">
+            <a href="{{ route('vendas.documentos.index', $category ?? 'faturas') }}" class="text-decoration-none text-muted mb-2 d-inline-block">
                 <i class="fas fa-arrow-left me-1"></i> Voltar à Lista
             </a>
             <h2 class="fw-bold mb-0 text-dark">
@@ -68,6 +68,12 @@
                         <span class="badge bg-secondary ms-2 fs-6 align-middle"><i class="fas fa-hourglass-half"></i> Por Liquidar</span>
                     @endif
                 @endif
+                
+                @if($invoice->agt_status === 'VALIDATED')
+                    <span class="badge bg-success ms-2 fs-6 align-middle" title="Validado pela AGT"><i class="fas fa-check-double"></i> AGT</span>
+                @elseif($invoice->agt_status === 'REJECTED')
+                    <span class="badge bg-danger ms-2 fs-6 align-middle" title="Rejeitado pela AGT"><i class="fas fa-times-circle"></i> AGT</span>
+                @endif
             </h2>
         </div>
         <div class="d-flex gap-2">
@@ -76,7 +82,7 @@
             </button>
             @if($invoice->status === 'ISSUED')
                 @if(in_array($invoice->doc_type, ['FT', 'FR', 'ND']) && $invoice->payment_status !== 'PAID')
-                    <a href="{{ route('tesouraria.documentos.create', ['category' => 'recebimentos', 'entity_id' => $invoice->customer_id]) }}" class="btn btn-success fw-bold ms-2">
+                    <a href="{{ route('tesouraria.documentos.index', 'recebimentos') }}" class="btn btn-success fw-bold ms-2">
                         <i class="fas fa-hand-holding-usd me-1"></i> Liquidar / Emitir Recibo
                     </a>
                 @endif
@@ -209,7 +215,8 @@
                         <div class="mb-3 fst-italic">{{ $invoice->notes }}</div>
                     @endif
                     <hr>
-                    <p class="mb-0">Documento processado por programa certificado.</p>
+                    <p class="mb-0">Documento processado por programa validado nº 000/AGT/2026</p>
+                    <p class="mb-0 small text-muted">Hash: {{ substr($invoice->hash, 0, 4) }}-... | Controlo: {{ $invoice->hash_control ?? 'N/A' }}</p>
                 </div>
             </div>
         </div>

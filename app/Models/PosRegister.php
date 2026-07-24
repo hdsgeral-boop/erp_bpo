@@ -10,4 +10,9 @@ class PosRegister extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
 }

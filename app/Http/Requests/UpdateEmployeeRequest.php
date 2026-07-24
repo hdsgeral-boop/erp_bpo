@@ -38,6 +38,7 @@ class UpdateEmployeeRequest extends FormRequest
             'subsidy_transport' => 'nullable|numeric|min:0',
             'bank_name' => 'nullable|string|max:100',
             'iban' => 'nullable|string|max:100',
+            'swift' => 'nullable|string|max:50',
             'work_days' => 'nullable|integer|min:0|max:31',
             'is_active' => 'boolean',
             'is_retired' => 'boolean',

@@ -21,13 +21,30 @@ class ProductController extends Controller
         $this->productRepository = $productRepository;
     }
 
+    public function indexView(Request $request)
+    {
+        return $this->index($request);
+    }
+
+    public function categoriesView(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $categories = ProductCategory::where('company_id', $companyId)->get();
+        return view('product_categories.index', compact('categories'));
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
         $categoryId = $request->input('category_id');
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
         
-        $products = $this->productRepository->paginate(15, $search, $categoryId);
-        $categories = ProductCategory::orderBy('name')->get();
+        $products = Product::where('company_id', $companyId)
+            ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"))
+            ->when($categoryId, fn($q) => $q->where('category_id', $categoryId))
+            ->paginate(15);
+            
+        $categories = ProductCategory::where('company_id', $companyId)->orderBy('name')->get();
 
         return view('inventory.products.index', compact('products', 'categories', 'search', 'categoryId'));
     }

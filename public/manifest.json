@@ -1,0 +1,16 @@
+{
+  "name": "Kumbu ERP",
+  "short_name": "Kumbu",
+  "description": "Kumbu Cloud ERP & POS",
+  "start_url": "/api/v1/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

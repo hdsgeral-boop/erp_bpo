@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import AppLayout from "@/components/layout/AppLayout";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,7 +21,7 @@ export default function RootLayout({
   return (
     <html lang="pt" className={`${inter.variable} h-full antialiased`}>
       <body className="h-full bg-slate-100 font-sans text-slate-900">
-        {children}
+        <AppLayout>{children}</AppLayout>
       </body>
     </html>
   );

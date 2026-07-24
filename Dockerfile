@@ -33,6 +33,7 @@ RUN apk add --no-cache \
     curl \
     oniguruma-dev \
     postgresql-dev \
+    openssl \
     supervisor
 
 # PHP extensions

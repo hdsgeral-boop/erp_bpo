@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\DB;
  */
 class GlobalDashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
         $currentYear = date('Y');
         $currentMonth = date('m');
 
@@ -36,7 +36,6 @@ class GlobalDashboardController extends Controller
         ];
 
         // 2. Chart Data: Vendas mensais para o ano corrente
-        // Suporta PostgreSQL usando EXTRACT
         $dbDriver = DB::getDriverName();
         $monthSelect = $dbDriver === 'pgsql' ? 'EXTRACT(MONTH FROM date) as month' : 'MONTH(date) as month';
 
@@ -51,7 +50,6 @@ class GlobalDashboardController extends Controller
         $months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
         $salesChartData = [];
         for ($i = 1; $i <= 12; $i++) {
-            // No PostgreSQL, EXTRACT retorna float/string. Com keyBy e cast forçamos o índice
             $index = (int)$i;
             $salesChartData[] = isset($monthlySalesRaw[$index]) ? (float) $monthlySalesRaw[$index]->total : 0.0;
         }
@@ -63,7 +61,6 @@ class GlobalDashboardController extends Controller
                         ->with('supplier')
                         ->get();
         
-        // Group expenses by supplier
         $expensesByAccount = [];
         foreach($expensesRaw as $exp) {
             $accName = $exp->supplier ? $exp->supplier->name : 'Fornecedor Desconhecido';
@@ -84,13 +81,19 @@ class GlobalDashboardController extends Controller
             ->take(5)
             ->get();
 
-        return response()->json([
-            'kpis' => $kpis, 
-            'months' => $months, 
-            'salesChartData' => $salesChartData, 
-            'expenseLabels' => $expenseLabels, 
-            'expenseData' => $expenseData,
-            'recentSales' => $recentSales
-        ]);
+        if ($request->wantsJson() && !$request->hasHeader('X-PJAX')) {
+            return response()->json([
+                'kpis' => $kpis, 
+                'months' => $months, 
+                'salesChartData' => $salesChartData, 
+                'expenseLabels' => $expenseLabels, 
+                'expenseData' => $expenseData,
+                'recentSales' => $recentSales
+            ]);
+        }
+
+        return view('dashboard', compact(
+            'kpis', 'months', 'salesChartData', 'expenseLabels', 'expenseData', 'recentSales'
+        ));
     }
 }

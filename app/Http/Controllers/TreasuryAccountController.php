@@ -7,9 +7,15 @@ use Illuminate\Http\Request;
 
 class TreasuryAccountController extends Controller
 {
-    public function index()
+    public function indexView(Request $request)
     {
-        $accounts = TreasuryAccount::where('company_id', session('company_id'))->get();
+        return $this->index($request);
+    }
+
+    public function index(Request $request = null)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $accounts = TreasuryAccount::where('company_id', $companyId)->get();
         return view('treasury.accounts.index', compact('accounts'));
     }
 

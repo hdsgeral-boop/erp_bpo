@@ -43,8 +43,10 @@ class WaybillController extends Controller
         try {
             DB::beginTransaction();
 
+            $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
             $waybill = Waybill::create([
-                'company_id' => 1,
+                'company_id' => $companyId,
                 'customer_id' => $validated['customer_id'],
                 'warehouse_id' => $validated['warehouse_id'],
                 'date' => $validated['date'],
@@ -67,7 +69,7 @@ class WaybillController extends Controller
                 $product->save();
 
                 \App\Models\InventoryMovement::create([
-                    'company_id' => 1,
+                    'company_id' => $companyId,
                     'product_id' => $item['product_id'],
                     'warehouse_id' => $validated['warehouse_id'],
                     'date' => $validated['date'],

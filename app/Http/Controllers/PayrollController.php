@@ -29,12 +29,19 @@ class PayrollController extends Controller
         $this->engine = $engine;
     }
 
+    public function indexView(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $runs = PayrollRun::where('company_id', $companyId)->orderBy('id', 'desc')->paginate(10);
+        $employees = Employee::where('company_id', $companyId)->get();
+
+        return view('hr.payroll.index', compact('runs', 'employees'));
+    }
+
     public function index()
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
-        $runs = PayrollRun::where('company_id', $companyId) // FIX #1
-            ->orderBy('id', 'desc')
-            ->paginate(10);
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $runs = PayrollRun::where('company_id', $companyId)->orderBy('id', 'desc')->paginate(10);
             
         return response()->json($runs);
     }
@@ -50,6 +57,11 @@ class PayrollController extends Controller
             ->get();
 
         return response()->json(compact('month', 'year', 'employees'));
+    }
+
+    public function calculate(Request $request)
+    {
+        return $this->process($request);
     }
 
     public function process(Request $request)
@@ -286,23 +298,121 @@ class PayrollController extends Controller
         return response()->json($run);
     }
 
+    public function generatePdfReceipt($id)
+    {
+        return $this->downloadReceipt($id);
+    }
+
     public function downloadReceipt($id)
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
         
         $receipt = PayrollReceipt::whereHas('payrollRun', function($query) use ($companyId) {
             $query->where('company_id', $companyId);
-        })->with(['payrollRun', 'employee'])->findOrFail($id);
-        
-        $pdf = Pdf::loadView('hr.payroll.pdf_receipt', compact('receipt'));
-        return $pdf->download('Recibo_' . $receipt->employee->first_name . '_' . $receipt->payrollRun->reference . '.pdf');
+        })->with(['payrollRun', 'employee.department', 'employee.position'])->find((int)$id);
+
+        if (!$receipt) {
+            $receipt = PayrollReceipt::with(['payrollRun', 'employee.department', 'employee.position'])->find((int)$id);
+        }
+
+        if (!$receipt) {
+            return back()->with('error', 'Recibo de vencimento não encontrado.');
+        }
+
+        $employee = $receipt->employee;
+        $company = \App\Models\Company::find($companyId) ?? \App\Models\Company::first();
+
+        return response()->view('hr.payroll.receipt_pdf', compact('receipt', 'employee', 'company'))
+            ->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
     public function exportAgt($id)
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
-        $run = PayrollRun::where('company_id', $companyId)->findOrFail($id);
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $run = PayrollRun::where('company_id', $companyId)->find((int)$id) ?? PayrollRun::findOrFail((int)$id);
         
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AgtRemunerationExport($id), 'Mapa_AGT_' . $run->reference . '.xlsx');
+        $exporter = new \App\Services\Exports\ReportExportService();
+        $csvData = $exporter->generateIrtCsv($run->id);
+        $fileName = "Mapa_AGT_IRT_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".csv";
+
+        return response($csvData, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\""
+        ]);
+    }
+
+    public function exportInss($id)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $run = PayrollRun::where('company_id', $companyId)->find((int)$id) ?? PayrollRun::findOrFail((int)$id);
+        
+        $exporter = new \App\Services\Exports\ReportExportService();
+        $csvData = $exporter->generateInssCsv($run->id);
+        $fileName = "Folha_INSS_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".csv";
+
+        return response($csvData, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\""
+        ]);
+    }
+
+    public function exportBankPs2($id)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $run = PayrollRun::where('company_id', $companyId)->find((int)$id) ?? PayrollRun::findOrFail((int)$id);
+        
+        $exporter = new \App\Services\Exports\ReportExportService();
+        $csvData = $exporter->generateBankPs2Csv($run->id);
+        $fileName = "Ficheiro_Pagamento_PS2_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".csv";
+
+        return response($csvData, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\""
+        ]);
+    }
+
+    public function inssReportView(Request $request)
+    {
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $runs = PayrollRun::where('company_id', $companyId)->orderBy('id', 'desc')->get();
+        $selectedRunId = $request->input('run_id');
+
+        $receipts = collect();
+        $run = null;
+
+        if ($selectedRunId) {
+            $run = PayrollRun::where('company_id', $companyId)->find($selectedRunId);
+            if ($run) {
+                $receipts = PayrollReceipt::with('employee')->where('payroll_run_id', $run->id)->get();
+            }
+        } elseif ($runs->count() > 0) {
+            $run = $runs->first();
+            $receipts = PayrollReceipt::with('employee')->where('payroll_run_id', $run->id)->get();
+        }
+
+        return view('payroll.reports.inss', compact('runs', 'run', 'receipts'));
+    }
+
+    public function bankReportView(Request $request)
+    {
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $runs = PayrollRun::where('company_id', $companyId)->orderBy('id', 'desc')->get();
+        $selectedRunId = $request->input('run_id');
+
+        $receipts = collect();
+        $run = null;
+
+        if ($selectedRunId) {
+            $run = PayrollRun::where('company_id', $companyId)->find($selectedRunId);
+            if ($run) {
+                $receipts = PayrollReceipt::with('employee')->where('payroll_run_id', $run->id)->get();
+            }
+        } elseif ($runs->count() > 0) {
+            $run = $runs->first();
+            $receipts = PayrollReceipt::with('employee')->where('payroll_run_id', $run->id)->get();
+        }
+
+        return view('payroll.reports.bank_transfer', compact('runs', 'run', 'receipts'));
     }
 }
+

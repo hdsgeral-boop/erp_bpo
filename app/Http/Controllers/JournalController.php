@@ -18,9 +18,25 @@ use Illuminate\Support\Facades\DB;
  */
 class JournalController extends Controller
 {
+    public function indexView(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $lines = JournalLine::where('company_id', $companyId)
+            ->with('journal')
+            ->orderBy('entry_date', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(20);
+
+        $journals = Journal::where('company_id', $companyId)->get();
+        $accounts = ChartOfAccount::where('company_id', $companyId)->where('type', 'M')->get();
+
+        return view('accounting.journals.index', compact('lines', 'journals', 'accounts'));
+    }
+
     public function index()
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $lines = JournalLine::where('company_id', $companyId)
             ->with('journal')
