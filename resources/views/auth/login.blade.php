@@ -180,11 +180,11 @@
     <!-- Left Hero Column -->
     <div class="col-lg-6 d-none d-lg-flex auth-banner">
         <div>
-            <a href="#" class="brand-logo mb-5">
-                <div class="brand-icon">
-                    <i class="fas fa-chart-line"></i>
+            <a href="{{ route('home') }}" class="brand-logo mb-5" title="Voltar ao Website">
+                <div class="brand-icon" style="background: linear-gradient(135deg, #0058E6, #2563eb);">
+                    <i class="fas fa-bolt"></i>
                 </div>
-                <div class="brand-name">ERP <span>Consulvolt</span></div>
+                <div class="brand-name">Consulvolt <span style="color: #60a5fa;">Soluções</span></div>
             </a>
 
             <div class="mt-4">
@@ -216,8 +216,8 @@
             </div>
 
             <div class="d-flex justify-content-between align-items-center text-white-50 fs-7 mt-4 pt-3 border-top border-white-10">
-                <span>&copy; {{ date('Y') }} Consulvolt Lda. Todos os direitos reservados.</span>
-                <span>v2.5 Enterprise</span>
+                <span>&copy; {{ date('Y') }} Consulvolt Soluções. NIF: 5417213969.</span>
+                <span><a href="{{ route('home') }}" class="text-white-50 text-decoration-underline">Voltar ao Website</a></span>
             </div>
         </div>
     </div>
@@ -227,10 +227,12 @@
         <div class="auth-card">
             <!-- Mobile Brand Header -->
             <div class="d-lg-none text-center mb-4">
-                <div class="brand-icon mx-auto mb-2">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <h3 class="fw-bold text-dark mb-0">ERP <span class="text-primary">Consulvolt</span></h3>
+                <a href="{{ route('home') }}" class="text-decoration-none">
+                    <div class="brand-icon mx-auto mb-2" style="background: linear-gradient(135deg, #0058E6, #2563eb);">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3 class="fw-bold text-dark mb-0">Consulvolt <span style="color: #0058E6;">Soluções</span></h3>
+                </a>
             </div>
 
             <div class="mb-4">

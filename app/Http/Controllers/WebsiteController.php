@@ -17,6 +17,38 @@ class WebsiteController extends Controller
     }
 
     /**
+     * Exibe a página Sobre Nós (Carta de Apresentação Consulvolt Soluções)
+     */
+    public function about()
+    {
+        return view('website.about');
+    }
+
+    /**
+     * Exibe a página de Serviços & Módulos ERP
+     */
+    public function services()
+    {
+        return view('website.services');
+    }
+
+    /**
+     * Exibe a página dedicada de Contactos
+     */
+    public function contactView()
+    {
+        return view('website.contact');
+    }
+
+    /**
+     * Exibe a página de Termos, Privacidade & Certificação AGT
+     */
+    public function terms()
+    {
+        return view('website.terms');
+    }
+
+    /**
      * Processa o formulário de contacto / pedido de demonstração
      */
     public function contact(Request $request)
@@ -29,6 +61,6 @@ class WebsiteController extends Controller
             'message' => 'required|string|max:2000',
         ]);
 
-        return back()->with('success', 'Obrigado pelo seu contacto! A nossa equipa de consultoria entrará em contacto em breve.');
+        return back()->with('success', 'Obrigado pelo seu contacto! A equipa da Consulvolt Soluções entrará em contacto em breve.');
     }
 }

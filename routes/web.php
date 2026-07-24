@@ -32,9 +32,13 @@ use App\Http\Controllers\Admin\PaymentManagementController;
 // ─── Health Check ────────────────────────────────────────
 Route::get('/health', fn() => response()->json(['status' => 'ok', 'service' => 'ERP Consulvolt API']));
 
-// ─── Website Público (Landing Page) ──────────────────────
+// ─── Website Público (Consulvolt Soluções) ────────────────
 Route::get('/', [WebsiteController::class, 'index'])->name('home');
+Route::get('/sobre', [WebsiteController::class, 'about'])->name('website.about');
+Route::get('/servicos', [WebsiteController::class, 'services'])->name('website.services');
+Route::get('/contacto', [WebsiteController::class, 'contactView'])->name('website.contact');
 Route::post('/contacto', [WebsiteController::class, 'contact'])->name('contact.submit');
+Route::get('/termos', [WebsiteController::class, 'terms'])->name('website.terms');
 
 use App\Http\Controllers\GoogleAuthController;
 
