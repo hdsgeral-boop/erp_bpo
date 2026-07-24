@@ -135,12 +135,11 @@
                         <a href="{{ route('rh.horas-extra.index') }}" class="nav-item"><i class="fas fa-stopwatch"></i> <span class="nav-label">Horas Extras</span></a>
                         <a href="{{ route('rh.beneficios.index') }}" class="nav-item"><i class="fas fa-gift"></i> <span class="nav-label">Benefícios/Deduções</span></a>
                         <a href="{{ route('rh.salarios.wizard') }}" class="nav-item"><i class="fas fa-calculator"></i> <span class="nav-label">Processamento Salarial</span></a>
-                        <a href="{{ route('rh.reports.inss') }}" class="nav-item"><i class="fas fa-shield-alt text-primary"></i> <span class="nav-label">Mapa de INSS</span></a>
-                        <a href="{{ route('rh.reports.bank') }}" class="nav-item"><i class="fas fa-university text-success"></i> <span class="nav-label">Transferência Bancária</span></a>
-                        <hr class="dropdown-divider my-2 border-secondary" style="border-color: #334155;">
-                        <a href="{{ route('rh.infotipos.index') }}" class="nav-item small text-muted"><i class="fas fa-list-ul"></i> <span class="nav-label">Infotipos</span></a>
-                        <a href="{{ route('rh.escaloes-irt.index') }}" class="nav-item small text-muted"><i class="fas fa-layer-group"></i> <span class="nav-label">Escalões IRT</span></a>
-                        <a href="{{ route('rh.taxas-salariais.index') }}" class="nav-item small text-muted"><i class="fas fa-percent"></i> <span class="nav-label">Taxas (INSS)</span></a>
+                        <a href="{{ route('rh.reports.inss') }}" class="nav-item {{ request()->routeIs('rh.reports.inss') ? 'active' : '' }}"><i class="fas fa-shield-alt text-primary"></i> <span class="nav-label">Mapa de INSS</span></a>
+                        <a href="{{ route('rh.reports.bank') }}" class="nav-item {{ request()->routeIs('rh.reports.bank') ? 'active' : '' }}"><i class="fas fa-university text-success"></i> <span class="nav-label">Transferência Bancária</span></a>
+                        <a href="{{ route('rh.infotipos.index') }}" class="nav-item {{ request()->routeIs('rh.infotipos.*') ? 'active' : '' }}"><i class="fas fa-list-ul text-warning"></i> <span class="nav-label">Infotipos</span></a>
+                        <a href="{{ route('rh.escaloes-irt.index') }}" class="nav-item {{ request()->routeIs('rh.escaloes-irt.*') ? 'active' : '' }}"><i class="fas fa-layer-group text-danger"></i> <span class="nav-label">Escalões IRT</span></a>
+                        <a href="{{ route('rh.taxas-salariais.index') }}" class="nav-item {{ request()->routeIs('rh.taxas-salariais.*') ? 'active' : '' }}"><i class="fas fa-percent text-info"></i> <span class="nav-label">Taxas (INSS)</span></a>
                     </div>
                 </div>
                 @endcan
