@@ -126,32 +126,56 @@ class PayrollController extends Controller
 
     public function calculate(Request $request)
     {
-        return $this->process($request);
+        return $this->processAndClose($request);
     }
 
     public function process(Request $request)
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
-        $validated = $request->validate([
-            'month' => 'required|numeric|min:1|max:12',
-            'year' => 'required|numeric|min:2020',
-            'employee_ids' => 'required|array',
-            'employee_ids.*' => 'exists:employees,id'
-        ]);
+        return $this->processAndClose($request);
+    }
 
-        $month = $validated['month'];
-        $year = $validated['year'];
+    public function close(Request $request)
+    {
+        return $this->processAndClose($request);
+    }
+
+    protected function processAndClose(Request $request)
+    {
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+
+        $month = (int) $request->input('month', date('m'));
+        $year = (int) $request->input('year', date('Y'));
         $reference = str_pad($month, 2, '0', STR_PAD_LEFT) . '-' . $year;
 
-        // Verifica se já existe um processamento ATIVO (não estornado) para este mês nesta empresa
-        if (PayrollRun::where('company_id', $companyId)->where('reference', $reference)->where('is_reversed', false)->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Já existe um processamento ativo para o período ' . $reference . '. Efetue o estorno primeiro se pretender reprocessar.'
-            ], 422);
+        $employeeIds = $request->input('employee_ids');
+        if (is_string($employeeIds)) {
+            $employeeIds = json_decode($employeeIds, true);
         }
 
-        $employees = Employee::where('company_id', $companyId)->whereIn('id', $validated['employee_ids'])->get();
+        if (empty($employeeIds)) {
+            $employees = Employee::where('company_id', $companyId)->where('is_active', true)->get();
+        } else {
+            $employees = Employee::where('company_id', $companyId)->whereIn('id', (array)$employeeIds)->get();
+        }
+
+        if ($employees->isEmpty()) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Nenhum colaborador selecionado para processamento.'], 422);
+            }
+            return back()->with('error', 'Nenhum colaborador ativo selecionado para processamento.');
+        }
+
+        // Verifica se já existe um processamento ATIVO (não estornado) para este mês nesta empresa
+        $existingRun = PayrollRun::where('company_id', $companyId)->where('reference', $reference)->where('is_reversed', false)->first();
+        if ($existingRun) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Já existe um processamento ativo para o período ' . $reference . '. Efetue o estorno primeiro se pretender reprocessar.'
+                ], 422);
+            }
+            return redirect()->route('rh.salarios.wizard')->with('error', 'Já existe um processamento ativo para o período ' . $reference . '. Efetue o estorno na lista primeiro se pretender reprocessar.');
+        }
 
         $results = [];
         $totals = [
@@ -190,40 +214,15 @@ class PayrollController extends Controller
             $totals['net'] += $calc['net_salary'];
         }
 
-        return response()->json(compact('results', 'totals', 'month', 'year', 'reference'));
-    }
-
-    public function close(Request $request)
-    {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
-        $payload = $request->input('payroll_data');
-        if (is_string($payload)) {
-            $payload = json_decode($payload, true);
-        }
-        
-        if (!$payload) {
-            return response()->json(['success' => false, 'message' => 'Dados de folha de pagamento inválidos.'], 422);
-        }
-
-        $month = $payload['month'];
-        $year = $payload['year'];
-        $reference = $payload['reference'];
-        $totals = $payload['totals'];
-        $results = $payload['results'];
-
-        // Versão do processamento (para reprocessamentos)
+        // Versão do processamento
         $lastVersion = PayrollRun::where('company_id', $companyId)->where('reference', $reference)->max('version') ?? 0;
         $newVersion = $lastVersion + 1;
-
-        if (PayrollRun::where('company_id', $companyId)->where('reference', $reference)->where('is_reversed', false)->exists()) {
-            return response()->json(['success' => false, 'message' => 'Este mês já foi processado.'], 422);
-        }
 
         try {
             DB::beginTransaction();
 
             $run = PayrollRun::create([
-                'company_id' => $companyId, // FIX #1
+                'company_id' => $companyId,
                 'reference' => $reference,
                 'month' => $month,
                 'year' => $year,
@@ -237,17 +236,12 @@ class PayrollController extends Controller
                 'total_net_paid' => $totals['net']
             ]);
 
-            // Mapas Contabilísticos
-            $maps = AccountingPayrollMap::where('company_id', $companyId)->where('is_active', true)->get();
-
             foreach ($results as $res) {
-                // Procurar se employee tem correspondência em ThirdParty
-                // Folha de vencimento exige registo de third party para gerar recibo de pagamento
-                $employee = Employee::find($res['employee']['id']);
-                
+                $employee = $res['employee'];
+
                 PayrollReceipt::create([
                     'payroll_run_id' => $run->id,
-                    'employee_id' => $res['employee']['id'],
+                    'employee_id' => $employee->id,
                     'base_salary' => $res['base_salary'],
                     'other_additions' => $res['additions'],
                     'inss_base' => $res['inss_base'],
@@ -258,21 +252,20 @@ class PayrollController extends Controller
                     'net_total' => $res['net_total'],
                     'details' => json_encode($res['details'])
                 ]);
-                
+
                 // TESOURARIA
-                // Para associar o recibo ao funcionário, garantimos que payroll_run_id está preenchido
                 Receipt::create([
                     'doc_type' => 'PG',
-                    'doc_number' => 'VENC-' . $run->reference . '-E' . $res['employee']['id'] . '-V' . $newVersion,
+                    'doc_number' => 'VENC-' . $run->reference . '-E' . $employee->id . '-V' . $newVersion,
                     'date' => date('Y-m-d'),
-                    'third_party_id' => $employee->third_party_id ?? null, // Link com Terceiro se existir
-                    'payroll_run_id' => $run->id, // FIX #5: Associação direta via FK para estorno robusto
+                    'third_party_id' => $employee->third_party_id ?? null,
+                    'payroll_run_id' => $run->id,
                     'total_amount' => $res['net_total'],
                     'status' => 'PENDING',
                     'payment_method' => 'TRANSFER',
                     'payment_reference' => 'Proc. Vencimentos V' . $newVersion,
                     'is_master_data' => false,
-                    'company_id' => $companyId // FIX #1
+                    'company_id' => $companyId
                 ]);
             }
 
@@ -284,19 +277,29 @@ class PayrollController extends Controller
                 'total_debit' => $totals['additions'] + $totals['inss_company'],
                 'total_credit' => $totals['net'] + $totals['irt'] + ($totals['inss_employee'] + $totals['inss_company']),
                 'status' => 'APPROVED',
-                'company_id' => $companyId // FIX #1
+                'company_id' => $companyId
             ]);
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Processamento V' . $newVersion . ' fechado com sucesso.',
-                'payroll_run' => $run
-            ]);
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Processamento Salarial ' . $reference . ' (V' . $newVersion . ') concluído com sucesso.',
+                    'payroll_run' => $run,
+                    'results' => $results,
+                    'totals' => $totals
+                ]);
+            }
+
+            return redirect()->route('rh.salarios.wizard')->with('success', 'Processamento Salarial de ' . $reference . ' concluído com sucesso! Os recibos de vencimento, mapa de INSS, mapa bancário e integrações financeiras foram gerados.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Erro: ' . $e->getMessage()], 500);
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Erro ao processar: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Erro ao fechar o processamento salarial: ' . $e->getMessage());
         }
     }
 
