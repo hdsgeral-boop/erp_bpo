@@ -222,10 +222,10 @@
     <!-- Right Form Column -->
     <div class="col-lg-6 auth-form-wrapper">
         <div class="auth-card">
-            <!-- Mobile Brand Header -->
-            <div class="d-lg-none text-center mb-4">
-                <a href="{{ route('home') }}" class="text-decoration-none d-inline-block" title="Voltar ao Website">
-                    <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 50px; width: auto; object-fit: contain;">
+            <!-- Form Brand Logo Header -->
+            <div class="text-center mb-4 pb-2">
+                <a href="{{ route('home') }}" class="d-inline-block" title="Voltar ao Website">
+                    <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 65px; width: auto; object-fit: contain;">
                 </a>
             </div>
 
