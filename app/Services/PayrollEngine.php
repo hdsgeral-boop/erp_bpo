@@ -170,4 +170,52 @@ class PayrollEngine
             return 0; // Se houver erro de parsing
         }
     }
+
+    /**
+     * Calcula o IRT (Imposto sobre o Rendimento do Trabalho) de acordo com os escaloes de Angola.
+     */
+    public function calculateIrt($amount)
+    {
+        $amount = (float) $amount;
+        if ($amount <= 100000) {
+            return 0;
+        }
+
+        try {
+            $taxBrackets = TaxBracket::where('is_active', true)->orderBy('min_value')->get();
+            if ($taxBrackets->count() > 0) {
+                foreach ($taxBrackets as $bracket) {
+                    if ($amount > $bracket->min_value && ($bracket->max_value === null || $amount <= $bracket->max_value)) {
+                        $excess = max(0, $amount - $bracket->excess_of);
+                        return round(($excess * ($bracket->tax_rate / 100)) + $bracket->fixed_portion, 2);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fallback para tabela oficial padrao
+        }
+
+        // Tabela Oficial Padrao IRT (Angola)
+        if ($amount <= 150000) {
+            return round(($amount - 100000) * 0.13, 2);
+        } elseif ($amount <= 200000) {
+            return round(6500 + ($amount - 150000) * 0.16, 2);
+        } elseif ($amount <= 300000) {
+            return round(14500 + ($amount - 200000) * 0.18, 2);
+        } elseif ($amount <= 500000) {
+            return round(32500 + ($amount - 300000) * 0.19, 2);
+        } elseif ($amount <= 1000000) {
+            return round(70500 + ($amount - 500000) * 0.20, 2);
+        } elseif ($amount <= 1500000) {
+            return round(170500 + ($amount - 1000000) * 0.21, 2);
+        } elseif ($amount <= 2500000) {
+            return round(275500 + ($amount - 1500000) * 0.22, 2);
+        } elseif ($amount <= 5000000) {
+            return round(495500 + ($amount - 2500000) * 0.23, 2);
+        } elseif ($amount <= 10000000) {
+            return round(1070500 + ($amount - 5000000) * 0.24, 2);
+        } else {
+            return round(2270500 + ($amount - 10000000) * 0.25, 2);
+        }
+    }
 }
