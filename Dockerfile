@@ -21,7 +21,7 @@ RUN composer dump-autoload --optimize --no-dev
 # ─────────────────────────────────────────
 FROM php:8.3-fpm-alpine
 
-# Install System Dependencies
+# Install System Dependencies (incluindo Nginx e Supervisor)
 RUN apk add --no-cache \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -36,6 +36,7 @@ RUN apk add --no-cache \
     postgresql-dev \
     openssl \
     supervisor \
+    nginx \
     tesseract-ocr
 
 # Configure and Install PHP Extensions
@@ -63,8 +64,13 @@ COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
-# Copy Supervisor Config
+# Copy Nginx & Supervisor Config
+COPY docker/nginx/default.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy Entrypoint script
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 WORKDIR /var/www
 
@@ -72,10 +78,10 @@ WORKDIR /var/www
 COPY --from=composer_stage /app /var/www
 
 # Create Logs & Runtime Directories with Permissions
-RUN mkdir -p /var/log/php /var/log/supervisor /var/www/storage/logs \
-    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/log/php \
+RUN mkdir -p /var/log/php /var/log/supervisor /var/log/nginx /run/nginx /var/www/storage/logs \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/log/php /var/log/nginx /run/nginx \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-EXPOSE 9000
+EXPOSE 80 8080 9000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/bin/sh", "/usr/local/bin/entrypoint.sh"]
