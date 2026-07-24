@@ -25,6 +25,17 @@ class EnsureCompanyTenantScope
 
             $currentCompanyId = (int) session('company_id');
 
+            // Garantir que a role ativa do Spatie Permission corresponda à empresa selecionada na sessão
+            if (!$user->hasRole('Super Admin')) {
+                $companyPivot = $user->companies()->where('companies.id', $currentCompanyId)->first();
+                if ($companyPivot && $companyPivot->pivot->role_id) {
+                    $activeRole = \Spatie\Permission\Models\Role::find($companyPivot->pivot->role_id);
+                    if ($activeRole && !$user->hasRole($activeRole->name)) {
+                        $user->syncRoles([$activeRole]);
+                    }
+                }
+            }
+
             // Sanitização de entradas: Se a requisição enviar company_id diferente sem ser Super Admin, rejeita
             if ($request->has('company_id') && (int)$request->input('company_id') !== $currentCompanyId) {
                 if (!$user->hasRole('Super Admin')) {

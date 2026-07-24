@@ -65,17 +65,51 @@ class User extends Authenticatable implements Auditable
 
     public function companies()
     {
-        return $this->belongsToMany(Company::class, 'company_user');
+        return $this->belongsToMany(Company::class, 'company_user')
+            ->withPivot(['role_id', 'status', 'invited_by', 'joined_at'])
+            ->withTimestamps();
     }
 
     public function getCompanyIdAttribute()
     {
-        return $this->companies()->first()?->id;
+        return session('company_id') ?? $this->companies()->first()?->id;
     }
 
     public function company()
     {
-        return $this->belongsToMany(Company::class, 'company_user');
+        return $this->belongsToMany(Company::class, 'company_user')
+            ->withPivot(['role_id', 'status', 'invited_by', 'joined_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Retorna a Role Spatie associada a esta empresa específica.
+     */
+    public function roleInCompany($companyId)
+    {
+        $company = $this->companies()->where('companies.id', $companyId)->first();
+        if ($company && $company->pivot->role_id) {
+            return \Spatie\Permission\Models\Role::find($company->pivot->role_id);
+        }
+        return null;
+    }
+
+    /**
+     * Retorna o nome da Role nesta empresa.
+     */
+    public function roleNameInCompany($companyId): string
+    {
+        $role = $this->roleInCompany($companyId);
+        if ($role) {
+            return $role->name;
+        }
+
+        // Se for Super Admin
+        if ($this->hasRole('Super Admin')) {
+            return 'Super Admin';
+        }
+
+        return $this->roles->first()?->name ?? 'Utilizador';
     }
 
     public function getRelationValue($key)

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registar Novo Gestor - ERP Consulvolt</title>
+    <title>Registar Nova Empresa & Gestor - ERP Consulvolt</title>
     <!-- FontAwesome 6 & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,7 +29,6 @@
             display: flex;
         }
 
-        /* Lado Esquerdo (Institucional / Banner) - Fundo Branco (Desktop apenas) */
         .auth-banner {
             background: #ffffff;
             border-right: 1px solid #e2e8f0;
@@ -56,7 +55,6 @@
             transform: translateY(-2px);
         }
 
-        /* Lado Direito (Formulário) - Fundo Escuro */
         .auth-form-wrapper {
             background: #090d16;
             display: flex;
@@ -68,10 +66,10 @@
 
         .auth-card {
             width: 100%;
-            max-width: 440px;
+            max-width: 580px;
         }
 
-        .form-control {
+        .form-control, .form-select {
             border-radius: 12px;
             padding: 0.85rem 1.1rem;
             background-color: #1e293b;
@@ -85,7 +83,7 @@
             color: #64748b;
         }
 
-        .form-control:focus {
+        .form-control:focus, .form-select:focus {
             background-color: #1e293b;
             color: #ffffff;
             border-color: #0058E6;
@@ -101,21 +99,6 @@
 
         .input-group .form-control {
             border-radius: 0 12px 12px 0;
-        }
-
-        .form-select {
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            color: #ffffff;
-            border-radius: 0 12px 12px 0;
-            padding: 0.85rem 1.1rem;
-        }
-
-        .form-select:focus {
-            background-color: #1e293b;
-            color: #ffffff;
-            border-color: #0058E6;
-            box-shadow: 0 0 0 4px rgba(0, 88, 230, 0.25);
         }
 
         .btn-primary-custom {
@@ -137,6 +120,20 @@
             color: #fff;
         }
 
+        .section-badge {
+            background: rgba(0, 88, 230, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(0, 88, 230, 0.3);
+            border-radius: 8px;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 1rem;
+        }
+
         .badge-agt {
             background: rgba(16, 185, 129, 0.1);
             color: #059669;
@@ -150,26 +147,13 @@
             gap: 6px;
         }
 
-        /* Melhores práticas de Responsividade e Touch UI/UX */
         @media (max-width: 991px) {
             .auth-form-wrapper {
                 padding: 2.5rem 1.25rem;
             }
-            .form-control, .form-select, .input-group-text {
-                font-size: 1rem; /* Previne auto-zoom no iOS Safari */
+            .form-control, .input-group-text {
+                font-size: 1rem;
                 padding: 0.9rem 1rem;
-            }
-            .btn-primary-custom {
-                padding: 1rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .auth-form-wrapper {
-                padding: 2rem 1rem;
-            }
-            .auth-card {
-                padding: 0 0.5rem;
             }
         }
     </style>
@@ -177,53 +161,50 @@
 <body>
 
 <div class="auth-container row g-0">
-    <!-- LADO ESQUERDO: Fundo Branco com o Logótipo Oficial (Visível apenas em Desktop >= 992px) -->
-    <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-between auth-banner">
+    <!-- LADO ESQUERDO: Banner Institucional (Desktop) -->
+    <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-between auth-banner">
         <div>
-            <!-- Logótipo Oficial no lado esquerdo -->
             <a href="{{ route('home') }}" class="d-inline-block mb-5" title="Voltar ao Website">
                 <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 60px; width: auto; object-fit: contain;">
             </a>
 
             <div class="mt-4">
                 <span class="badge-agt mb-3"><i class="fas fa-shield-alt"></i> Certificado AGT Angola n.º 142/AGT/2019</span>
-                <h1 class="text-dark fw-bold display-5 mb-3" style="line-height: 1.2;">Registo de Gestor de Empresa</h1>
-                <p class="text-secondary lead fs-6 mb-5">Crie a sua conta de administrador e associe a sua organização ao ecossistema de gestão empresarial líder em Angola.</p>
+                <h1 class="text-dark fw-bold display-6 mb-3" style="line-height: 1.2;">Registe a sua Empresa no ERP Consulvolt</h1>
+                <p class="text-secondary lead fs-6 mb-5">Crie simultaneamente a sua organização e a conta de Administrador para aceder à plataforma líder em Angola.</p>
             </div>
         </div>
 
         <div>
             <div class="banner-feature-card">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="text-primary fs-3" style="color: #0058E6 !important;"><i class="fas fa-users-cog"></i></div>
+                    <div class="text-primary fs-3" style="color: #0058E6 !important;"><i class="fas fa-building"></i></div>
                     <div>
-                        <h6 class="text-dark fw-bold mb-1">Controlo de Acessos & Perfis Spatie</h6>
-                        <small class="text-muted">Defina permissões por utilizador e departamento com registo completo de auditoria.</small>
+                        <h6 class="text-dark fw-bold mb-1">Gestão Multi-Empresa Nativa</h6>
+                        <small class="text-muted">Isolamento total de dados e licença por empresa com permissões detalhadas.</small>
                     </div>
                 </div>
             </div>
 
             <div class="d-flex justify-content-between align-items-center text-muted fs-7 mt-4 pt-3 border-top">
                 <span>&copy; {{ date('Y') }} Consulvolt Soluções. NIF: 5417213969.</span>
-                <span><a href="{{ route('home') }}" class="text-primary fw-bold text-decoration-none"><i class="fas fa-globe me-1"></i> Voltar ao Website</a></span>
+                <span><a href="{{ route('home') }}" class="text-primary fw-bold text-decoration-none"><i class="fas fa-globe me-1"></i> Website</a></span>
             </div>
         </div>
     </div>
 
-    <!-- LADO DIREITO: Formulário com Fundo Escuro -->
-    <div class="col-lg-6 col-12 auth-form-wrapper">
+    <!-- LADO DIREITO: Formulário de Registo -->
+    <div class="col-lg-7 col-12 auth-form-wrapper">
         <div class="auth-card">
-            <!-- Header Móvel: Apresenta o logótipo oficial em dispositivos móveis (< 992px) -->
             <div class="d-lg-none text-center mb-4">
                 <a href="{{ route('home') }}" class="d-inline-block mb-2" title="Voltar ao Website">
-                    <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 52px; width: auto; object-fit: contain; background: transparent;">
+                    <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 52px; width: auto; object-fit: contain;">
                 </a>
-                <span class="d-block text-slate-400 fs-8" style="color: #94a3b8;"><a href="{{ route('home') }}" class="text-decoration-none" style="color: #60a5fa;"><i class="fas fa-arrow-left me-1"></i> Voltar ao Website</a></span>
             </div>
 
             <div class="mb-4 text-center text-lg-start">
-                <h3 class="fw-bold text-white mb-1">Registar Novo Gestor</h3>
-                <p class="text-slate-400" style="color: #94a3b8;">Preencha os campos para criar a sua credencial de acesso.</p>
+                <h3 class="fw-bold text-white mb-1">Registar Empresa e Conta de Gestor</h3>
+                <p class="text-slate-400" style="color: #94a3b8;">Preencha os dados da sua organização e do utilizador principal.</p>
             </div>
 
             @if($errors->any())
@@ -243,23 +224,80 @@
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                <span>Registar com o Google</span>
+                <span>Registar Empresa com o Google</span>
             </a>
 
             <div class="d-flex align-items-center my-3">
                 <hr class="border-secondary opacity-25 m-0" style="flex-grow: 1;">
-                <span class="px-3 text-slate-400 small fw-semibold" style="color: #94a3b8;">ou criar conta manual</span>
+                <span class="px-3 text-slate-400 small fw-semibold" style="color: #94a3b8;">ou preencher formulário</span>
                 <hr class="border-secondary opacity-25 m-0" style="flex-grow: 1;">
             </div>
 
             <form action="{{ route('register.post') }}" method="POST">
                 @csrf
                 
-                <div class="mb-3">
-                    <label for="name" class="form-label fw-semibold text-white">Nome Completo <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                        <input type="text" id="name" name="name" class="form-control" value="{{ old('name') }}" required placeholder="Ex: Pascoal Paulo">
+                <!-- SECÇÃO 1: EMPRESA -->
+                <div class="section-badge"><i class="fas fa-building me-1"></i> DADOS DA EMPRESA</div>
+                
+                <div class="row">
+                    <div class="col-md-7 mb-3">
+                        <label for="company_name" class="form-label fw-semibold text-white">Nome da Empresa <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-building"></i></span>
+                            <input type="text" id="company_name" name="company_name" class="form-control" value="{{ old('company_name') }}" required placeholder="Ex: Consulvolt Lda">
+                        </div>
+                    </div>
+
+                    <div class="col-md-5 mb-3">
+                        <label for="company_nif" class="form-label fw-semibold text-white">NIF da Empresa <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                            <input type="text" id="company_nif" name="company_nif" class="form-control" value="{{ old('company_nif') }}" required placeholder="5417XXXXXX">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="company_email" class="form-label fw-semibold text-white">E-mail da Empresa</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-at"></i></span>
+                            <input type="email" id="company_email" name="company_email" class="form-control" value="{{ old('company_email') }}" placeholder="geral@empresa.co.ao">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="company_phone" class="form-label fw-semibold text-white">Telefone da Empresa</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone-alt"></i></span>
+                            <input type="text" id="company_phone" name="company_phone" class="form-control" value="{{ old('company_phone') }}" placeholder="+244 923 000 000">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="company_address" class="form-label fw-semibold text-white">Morada / Endereço</label>
+                    <input type="text" id="company_address" name="company_address" class="form-control" value="{{ old('company_address') }}" placeholder="Rua / Avenida, Bairro, Luanda">
+                </div>
+
+                <!-- SECÇÃO 2: UTILIZADOR -->
+                <div class="section-badge"><i class="fas fa-user-shield me-1"></i> DADOS DO UTILIZADOR (ADMINISTRADOR)</div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label fw-semibold text-white">Nome Completo <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" id="name" name="name" class="form-control" value="{{ old('name') }}" required placeholder="Ex: Pascoal Paulo">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="phone" class="form-label fw-semibold text-white">Telefone Pessoal <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
+                            <input type="text" id="phone" name="phone" class="form-control" value="{{ old('phone') }}" required placeholder="+244 9XX XXX XXX">
+                        </div>
                     </div>
                 </div>
 
@@ -267,43 +305,30 @@
                     <label for="email" class="form-label fw-semibold text-white">Endereço de E-mail <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                        <input type="email" id="email" name="email" class="form-control" value="{{ old('email') }}" required placeholder="gestor@empresa.com">
+                        <input type="email" id="email" name="email" class="form-control" value="{{ old('email') }}" required placeholder="gestor@empresa.co.ao">
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="company_id" class="form-label fw-semibold text-white">Empresa a Associar <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-building"></i></span>
-                        <select id="company_id" name="company_id" class="form-select" required>
-                            <option value="">Selecione a Empresa...</option>
-                            @foreach($companies as $c)
-                                <option value="{{ $c->id }}" {{ old('company_id') == $c->id ? 'selected' : '' }}>
-                                    {{ $c->name }} (NIF: {{ $c->nif ?? 'N/A' }})
-                                </option>
-                            @endforeach
-                        </select>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label fw-semibold text-white">Palavra-passe <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" id="password" name="password" class="form-control" required placeholder="Mínimo 8 caracteres">
+                        </div>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label for="password" class="form-label fw-semibold text-white">Palavra-passe <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input type="password" id="password" name="password" class="form-control" required placeholder="Mínimo 8 caracteres">
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <label for="password_confirmation" class="form-label fw-semibold text-white">Confirmar Palavra-passe <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-check-double"></i></span>
-                        <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" required placeholder="Repita a palavra-passe">
+                    <div class="col-md-6 mb-4">
+                        <label for="password_confirmation" class="form-label fw-semibold text-white">Confirmar Palavra-passe <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-check-double"></i></span>
+                            <input type="password" id="password_confirmation" name="password_confirmation" class="form-control" required placeholder="Repita a palavra-passe">
+                        </div>
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary-custom w-100 mb-4">
-                    Criar Conta de Gestor <i class="fas fa-user-plus ms-2"></i>
+                    Criar Empresa e Registar Administrador <i class="fas fa-arrow-right ms-2"></i>
                 </button>
             </form>
 

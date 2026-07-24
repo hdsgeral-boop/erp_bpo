@@ -48,6 +48,7 @@ Route::get('/modulos/tesouraria-bancos', [WebsiteController::class, 'moduleTesou
 Route::get('/modulos/powerbi-direct', [WebsiteController::class, 'modulePowerbiDirect'])->name('website.modules.powerbi-direct');
 
 use App\Http\Controllers\GoogleAuthController;
+use App\Http\Controllers\CompanySelectionController;
 
 // ─── Web Auth Routes (Login / Register / Logout) ─────────
 Route::get('/login', [\App\Http\Controllers\AuthController::class, 'showLoginForm'])->name('login');
@@ -59,9 +60,17 @@ Route::post('/forgot-password', fn(\Illuminate\Http\Request $request) => back()-
 Route::post('/logout', [\App\Http\Controllers\AuthController::class, 'logoutWeb'])->name('logout');
 
 // ─── Google OAuth 2.0 / OpenID Connect Routes ───────────
-Route::middleware(['guest', 'throttle:10,1'])->group(function () {
+Route::middleware(['throttle:10,1'])->group(function () {
     Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+    Route::get('/auth/google/onboarding', [GoogleAuthController::class, 'showOnboardingForm'])->name('auth.google.onboarding');
+    Route::post('/auth/google/onboarding', [GoogleAuthController::class, 'processOnboarding'])->name('auth.google.onboarding.submit');
+});
+
+// ─── Seleção de Empresa no Login ──────────────────────────
+Route::middleware(['auth'])->group(function () {
+    Route::get('/select-company', [CompanySelectionController::class, 'showSelectForm'])->name('company.select');
+    Route::post('/select-company', [CompanySelectionController::class, 'selectCompany'])->name('company.select.post');
 });
 
 // ─── Switch Company ──────────────────────────────────────

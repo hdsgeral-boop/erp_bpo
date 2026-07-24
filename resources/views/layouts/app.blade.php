@@ -282,7 +282,11 @@
                     </button>
 
                     @php
-                        $opCompanies = \App\Models\Company::where('name', 'not like', '%SISTEMA%')->get();
+                        $userObj = auth()->user();
+                        $opCompanies = $userObj ? ($userObj->hasRole('Super Admin') ? \App\Models\Company::all() : $userObj->companies) : collect([]);
+                        if ($opCompanies->isEmpty()) {
+                            $opCompanies = \App\Models\Company::where('name', 'not like', '%SISTEMA%')->get();
+                        }
                         $activeCompanyId = session('company_id') ?? ($opCompanies->first()?->id ?? 1);
                         $activeCompany = \App\Models\Company::find($activeCompanyId) ?? $opCompanies->first();
                         $daysRemaining = $activeCompany ? $activeCompany->remaining_days : 30;
@@ -293,10 +297,10 @@
                     <div class="d-flex align-items-center gap-2">
                         <form id="company-switch-form" method="POST" action="{{ route('company.switch') }}" class="m-0">
                             @csrf
-                            <select name="company_id" onchange="this.form.submit()" class="form-select border shadow-sm fw-bold text-truncate" style="background: #f8fafc; border-color: #cbd5e1; font-size: 0.85rem; border-radius: 10px; cursor: pointer; max-width: 180px;">
+                            <select name="company_id" onchange="this.form.submit()" class="form-select border shadow-sm fw-bold text-truncate" style="background: #f8fafc; border-color: #cbd5e1; font-size: 0.85rem; border-radius: 10px; cursor: pointer; max-width: 220px;" title="Alternar Organização Ativa">
                                 @foreach($opCompanies as $comp)
                                     <option value="{{ $comp->id }}" {{ $comp->id == $activeCompanyId ? 'selected' : '' }}>
-                                        {{ $comp->name }}
+                                        🏢 {{ $comp->name }}
                                     </option>
                                 @endforeach
                             </select>

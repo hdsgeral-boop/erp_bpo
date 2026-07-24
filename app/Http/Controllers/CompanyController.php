@@ -7,6 +7,7 @@ use App\Http\Requests\StoreCompanyRequest;
 use App\Http\Requests\UpdateCompanyRequest;
 use App\Repositories\Contracts\CompanyRepositoryInterface;
 use App\Services\CompanyService;
+use App\Services\TenantContextService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Traits\ApiResponse;
@@ -144,9 +145,9 @@ class CompanyController extends Controller
     }
 
     /**
-     * Switch active company in session / user state
+     * Switch active company in session / user state with full context activation and cache invalidation.
      */
-    public function switchCompany(Request $request)
+    public function switchCompany(Request $request, TenantContextService $contextService)
     {
         $request->validate([
             'company_id' => 'required|integer|exists:companies,id'
@@ -155,36 +156,28 @@ class CompanyController extends Controller
         $companyId = (int)$request->input('company_id');
         $user = auth()->user();
 
-        // Check permission if user belongs to company or is super admin
-        $hasAccess = false;
-        if ($user) {
-            $userCompanies = $user->companies ? $user->companies->pluck('id')->toArray() : [];
-            if ($user->hasRole('Super Admin') || in_array($companyId, $userCompanies)) {
-                $hasAccess = true;
-            }
-        } else {
-            // Allow if guest for testing or dev mode
-            $hasAccess = true;
+        if (!$user) {
+            return redirect()->route('login');
         }
 
-        if (!$hasAccess) {
+        try {
+            $result = $contextService->activateCompanyContext($user, $companyId, $request);
+            $company = $result['company'];
+
             if ($request->wantsJson()) {
-                return $this->errorResponse('Acesso negado a esta empresa.', 403);
+                return $this->successResponse('Empresa alterada com sucesso.', [
+                    'active_company_id' => $companyId,
+                    'company' => $company,
+                    'role_name' => $result['role_name'],
+                ]);
             }
-            return back()->with('error', 'Sem permissão para aceder a esta empresa.');
+
+            return back()->with('success', 'Empresa alterada com sucesso para: ' . $company->name);
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return $this->errorResponse($e->getMessage(), 403);
+            }
+            return back()->with('error', $e->getMessage());
         }
-
-        session(['company_id' => $companyId]);
-
-        $company = Company::find($companyId);
-
-        if ($request->wantsJson()) {
-            return $this->successResponse('Empresa alterada com sucesso.', [
-                'active_company_id' => $companyId,
-                'company' => $company
-            ]);
-        }
-
-        return back()->with('success', 'Empresa alterada com sucesso para: ' . ($company->name ?? 'Empresa ' . $companyId));
     }
 }

@@ -23,6 +23,22 @@ class CompanyService extends BaseService
 
             $company = $this->companyRepository->create($data);
             Log::info("Nova Empresa Criada: {$company->name}");
+
+            // Se for um utilizador autenticado a criar a empresa (ex: Funcionário que cria a sua empresa)
+            if (auth()->check()) {
+                $user = auth()->user();
+                $adminRole = \Spatie\Permission\Models\Role::where('name', 'Administrador')->first()
+                          ?? \Spatie\Permission\Models\Role::first();
+
+                // Vincular o utilizador à nova empresa se ainda não estiver vinculado
+                if (!$user->companies()->where('companies.id', $company->id)->exists()) {
+                    $user->companies()->attach($company->id, [
+                        'role_id' => $adminRole?->id,
+                        'status' => 'active',
+                        'joined_at' => now(),
+                    ]);
+                }
+            }
             
             return $this->response(true, 'Empresa criada com sucesso', $company);
         } catch (\Exception $e) {

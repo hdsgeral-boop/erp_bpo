@@ -29,7 +29,9 @@ class Company extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'company_user');
+        return $this->belongsToMany(User::class, 'company_user')
+            ->withPivot(['role_id', 'status', 'invited_by', 'joined_at'])
+            ->withTimestamps();
     }
 
     public function currentPlan()

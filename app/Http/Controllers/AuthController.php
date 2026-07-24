@@ -31,11 +31,20 @@ class AuthController extends Controller
             $request->session()->regenerate();
             
             $user = Auth::user();
-            $firstCompany = $user->companies()->first() ?? Company::where('name', 'not like', '%SISTEMA%')->first();
-            
-            if ($firstCompany) {
-                session(['company_id' => $firstCompany->id]);
+            $companies = $user->hasRole('Super Admin') ? Company::all() : $user->companies;
+
+            if ($companies->isEmpty()) {
+                return redirect()->intended('/dashboard')->with('success', 'Bem-vindo de volta, ' . $user->name);
             }
+
+            // Se pertencer a mais de uma empresa, apresenta ecrã de seleção de empresa
+            if ($companies->count() > 1) {
+                return redirect()->route('company.select');
+            }
+
+            // Se tiver apenas 1 empresa, ativa o contexto completo diretamente
+            $firstCompany = $companies->first();
+            app(\App\Services\TenantContextService::class)->activateCompanyContext($user, $firstCompany->id, $request);
 
             return redirect()->intended('/dashboard')->with('success', 'Bem-vindo de volta, ' . $user->name);
         }
@@ -47,40 +56,26 @@ class AuthController extends Controller
 
     public function showRegisterForm()
     {
-        $companies = Company::where('name', 'not like', '%SISTEMA%')->get();
-        return view('auth.register', compact('companies'));
+        return view('auth.register');
     }
 
-    public function registerWeb(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'company_id' => ['required', 'exists:companies,id'],
-        ]);
+    public function registerWeb(
+        \App\Http\Requests\RegisterUserCompanyRequest $request,
+        \App\Services\UserCompanyRegistrationService $registrationService
+    ) {
+        try {
+            $result = $registrationService->registerNewCompanyAndUser($request->validated());
 
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
+            $user = $result['user'];
+            $company = $result['company'];
 
-        $company = Company::find($validated['company_id']);
-        if ($company) {
-            $user->companies()->attach($company->id);
+            Auth::login($user);
+            session(['company_id' => $company->id]);
+
+            return redirect()->route('dashboard')->with('success', 'Empresa ' . $company->name . ' e conta de Administrador criadas com sucesso!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['email' => $e->getMessage()])->withInput();
         }
-
-        // Atribuir papel padrão de Gestor se existir
-        $role = Role::where('name', 'Gestor')->first() ?? Role::first();
-        if ($role) {
-            $user->assignRole($role);
-        }
-
-        Auth::login($user);
-        session(['company_id' => $validated['company_id']]);
-
-        return redirect()->route('dashboard')->with('success', 'Conta de Gestor criada com sucesso.');
     }
 
     public function logoutWeb(Request $request)

@@ -22,11 +22,12 @@ class GoogleAuthService
      * @return User
      * @throws Exception
      */
-    public function handleGoogleUser(SocialiteUser $googleUser, ?string $ipAddress = null, ?string $userAgent = null): User
+    public function handleGoogleUser(SocialiteUser $googleUser, ?string $ipAddress = null, ?string $userAgent = null): array
     {
         $email = $googleUser->getEmail();
         $googleId = $googleUser->getId();
         $avatar = $googleUser->getAvatar();
+        $name = $googleUser->getName() ?: ($googleUser->getNickname() ?: explode('@', $email)[0]);
         $rawUser = $googleUser->getRaw();
 
         // 1. Validar email_verified no token/payload OpenID Connect
@@ -41,11 +42,11 @@ class GoogleAuthService
             throw new Exception('O seu endereço de e-mail do Google não se encontra verificado.');
         }
 
-        // 2. Pesquisa PRIMEIRO por email para evitar duplicação de utilizadores
-        $user = User::where('email', $email)->first();
+        // 2. Pesquisa por email ou google_id
+        $user = User::where('email', $email)->orWhere('google_id', $googleId)->first();
 
         if ($user) {
-            // 3. Verificar estado da conta no ERP (bloqueado/inativo/suspenso)
+            // Verificar estado da conta no ERP (bloqueado/inativo/suspenso)
             $inactiveStatuses = ['inactive', 'blocked', 'deleted', 'suspended', 'cancelled'];
             if (in_array(strtolower($user->status ?? 'active'), $inactiveStatuses)) {
                 $this->logEvent('google_account_blocked', [
@@ -58,91 +59,57 @@ class GoogleAuthService
                 throw new Exception('A sua conta encontra-se inativa ou suspensa. Contacte o administrador do sistema.');
             }
 
-            // Associação Automática da Conta Google se ainda não tiver provider associado
-            $wasLinked = false;
+            // Associação da Conta Google se necessário
             if (empty($user->google_id) || empty($user->provider)) {
                 $user->google_id = $googleId;
                 $user->google_email = $email;
                 $user->google_avatar = $avatar;
                 $user->provider = 'google';
                 $user->provider_id = $googleId;
-                
                 if (empty($user->avatar)) {
                     $user->avatar = $avatar;
                 }
-
                 if (empty($user->email_verified_at)) {
                     $user->email_verified_at = now();
                 }
-
                 $user->save();
-                $wasLinked = true;
             }
 
-            // Log de auditoria
-            if ($wasLinked) {
-                $this->logEvent('link_google_account', [
+            // Se o utilizador já possuir pelo menos uma empresa associada, pode autenticar
+            if ($user->companies()->count() > 0) {
+                $this->logEvent('login_google', [
                     'user_id' => $user->id,
                     'email' => $email,
                     'ip' => $ipAddress,
                     'user_agent' => $userAgent,
                 ]);
+
+                return [
+                    'requires_onboarding' => false,
+                    'user' => $user,
+                ];
             }
-
-            $this->logEvent('login_google', [
-                'user_id' => $user->id,
-                'email' => $email,
-                'ip' => $ipAddress,
-                'user_agent' => $userAgent,
-            ]);
-
-            return $user;
         }
 
-        // 4. Novo Registo de Utilizador via Google
-        $name = $googleUser->getName() ?: ($googleUser->getNickname() ?: explode('@', $email)[0]);
-
-        $user = User::create([
-            'name' => $name,
-            'email' => $email,
-            'password' => Hash::make(Str::random(32)),
+        // Novo utilizador ou utilizador sem empresa: Obriga a onboarding de empresa
+        $googleData = [
             'google_id' => $googleId,
-            'google_email' => $email,
-            'google_avatar' => $avatar,
+            'email' => $email,
+            'name' => $name,
             'avatar' => $avatar,
-            'provider' => 'google',
-            'provider_id' => $googleId,
-            'email_verified_at' => now(),
-            'status' => 'active',
-        ]);
+            'user_id' => $user?->id,
+        ];
 
-        // Associar à primeira empresa operacional se existir
-        $company = Company::where('name', 'not like', '%SISTEMA%')->first();
-        if ($company) {
-            $user->companies()->attach($company->id);
-        }
-
-        // Atribuir papel de Gestor por omissão
-        $role = Role::where('name', 'Gestor')->first() ?? Role::first();
-        if ($role) {
-            $user->assignRole($role);
-        }
-
-        $this->logEvent('register_google', [
-            'user_id' => $user->id,
+        $this->logEvent('google_onboarding_required', [
             'email' => $email,
+            'google_id' => $googleId,
             'ip' => $ipAddress,
-            'user_agent' => $userAgent,
         ]);
 
-        $this->logEvent('login_google', [
-            'user_id' => $user->id,
-            'email' => $email,
-            'ip' => $ipAddress,
-            'user_agent' => $userAgent,
-        ]);
-
-        return $user;
+        return [
+            'requires_onboarding' => true,
+            'google_data' => $googleData,
+        ];
     }
 
     /**
