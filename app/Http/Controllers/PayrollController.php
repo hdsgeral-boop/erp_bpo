@@ -38,6 +38,69 @@ class PayrollController extends Controller
         return view('hr.payroll.index', compact('runs', 'employees'));
     }
 
+    public function simulation(Request $request)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $month = (int)$request->input('month', date('m'));
+        $year = (int)$request->input('year', date('Y'));
+        $reference = str_pad($month, 2, '0', STR_PAD_LEFT) . '/' . $year;
+
+        $employees = Employee::where('company_id', $companyId)->where('is_active', true)->get();
+
+        $results = [];
+        $totals = [
+            'base' => 0,
+            'additions' => 0,
+            'deductions' => 0,
+            'inss_employee' => 0,
+            'inss_company' => 0,
+            'irt' => 0,
+            'net' => 0
+        ];
+
+        foreach ($employees as $emp) {
+            $baseSalary = (float)$emp->base_salary;
+            $subsidyMeal = (float)$emp->subsidy_meal;
+            $subsidyTransport = (float)$emp->subsidy_transport;
+
+            $taxableMeal = max(0, $subsidyMeal - 30000);
+            $taxableTransport = max(0, $subsidyTransport - 30000);
+
+            $inssBase = $baseSalary + $taxableMeal + $taxableTransport;
+            $inssEmp = $inssBase * 0.03;
+            $inssComp = $inssBase * 0.08;
+
+            $taxableIrtBase = max(0, $inssBase - $inssEmp);
+            $irt = $this->engine ? $this->engine->calculateIrt($taxableIrtBase) : 0;
+
+            $grossTotal = $baseSalary + $subsidyMeal + $subsidyTransport;
+            $totalDeductions = $inssEmp + $irt;
+            $netSalary = max(0, $grossTotal - $totalDeductions);
+
+            $results[] = [
+                'employee' => $emp,
+                'base_salary' => $baseSalary,
+                'additions' => $subsidyMeal + $subsidyTransport,
+                'deductions' => $totalDeductions,
+                'inss_base' => $inssBase,
+                'inss_employee' => $inssEmp,
+                'inss_company' => $inssComp,
+                'irt' => $irt,
+                'net_salary' => $netSalary
+            ];
+
+            $totals['base'] += $baseSalary;
+            $totals['additions'] += ($subsidyMeal + $subsidyTransport);
+            $totals['deductions'] += $totalDeductions;
+            $totals['inss_employee'] += $inssEmp;
+            $totals['inss_company'] += $inssComp;
+            $totals['irt'] += $irt;
+            $totals['net'] += $netSalary;
+        }
+
+        return view('hr.payroll.simulation', compact('month', 'year', 'reference', 'employees', 'results', 'totals'));
+    }
+
     public function index()
     {
         $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);

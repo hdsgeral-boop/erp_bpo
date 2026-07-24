@@ -193,7 +193,7 @@ Route::middleware(['can:hr.view'])->group(function () {
     Route::get('/rh/horas-extra', fn() => view('hr.horas_extra'))->name('rh.horas-extra.index');
     Route::get('/rh/beneficios', fn() => view('hr.beneficios'))->name('rh.beneficios.index');
     Route::get('/rh/salarios', [PayrollController::class, 'indexView'])->name('rh.salarios.wizard');
-    Route::get('/rh/salarios/simulacao', fn() => view('hr.payroll.simulation'))->name('rh.salarios.simulation');
+    Route::get('/rh/salarios/simulacao', [PayrollController::class, 'simulation'])->name('rh.salarios.simulation');
     Route::get('/rh/salarios/wizard', [PayrollController::class, 'indexView'])->name('rh.salarios.wizard_step');
     Route::post('/rh/salarios/process', [PayrollController::class, 'calculate'])->name('rh.salarios.process');
     Route::get('/rh/salarios/export-agt/{id}', [PayrollController::class, 'exportAgt'])->name('rh.salarios.export_agt');
