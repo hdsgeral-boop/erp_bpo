@@ -253,12 +253,26 @@ class PayrollController extends Controller
                     'details' => json_encode($res['details'])
                 ]);
 
+                $thirdPartyId = $employee->third_party_id ?? null;
+                if (!$thirdPartyId) {
+                    $tp = \App\Models\ThirdParty::firstOrCreate(
+                        ['company_id' => $companyId, 'name' => $employee->name],
+                        [
+                            'nif' => $employee->nif ?? '999999999',
+                            'is_customer' => false,
+                            'is_supplier' => false,
+                            'is_active' => true
+                        ]
+                    );
+                    $thirdPartyId = $tp->id;
+                }
+
                 // TESOURARIA
                 Receipt::create([
                     'doc_type' => 'PG',
                     'doc_number' => 'VENC-' . $run->reference . '-E' . $employee->id . '-V' . $newVersion,
                     'date' => date('Y-m-d'),
-                    'third_party_id' => $employee->third_party_id ?? null,
+                    'third_party_id' => $thirdPartyId,
                     'payroll_run_id' => $run->id,
                     'total_amount' => $res['net_total'],
                     'status' => 'PENDING',
