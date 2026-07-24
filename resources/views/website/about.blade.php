@@ -147,13 +147,7 @@
     <nav class="navbar navbar-expand-lg navbar-main">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('home') }}">
-                <div style="width: 40px; height: 40px; border-radius: 10px; background: #0058E6; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800;">
-                    C
-                </div>
-                <div>
-                    <span class="brand-title">Consulvolt <span style="color: #0058E6;">Soluções</span></span>
-                    <span class="d-block text-muted" style="font-size: 0.65rem; text-transform: uppercase; font-weight: 700;">10 Anos de Experiência</span>
-                </div>
+                <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 48px; width: auto; object-fit: contain;">
             </a>
 
             <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMainContent">
@@ -250,10 +244,7 @@
             <div class="row g-4 mb-5">
                 <div class="col-lg-4">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <div style="width: 36px; height: 36px; border-radius: 8px; background: #0058E6; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800;">
-                            C
-                        </div>
-                        <span class="text-white fw-bold fs-5">Consulvolt <span style="color: #60a5fa;">Soluções</span></span>
+                        <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 42px; width: auto; object-fit: contain; background: #ffffff; padding: 4px 10px; border-radius: 8px;">
                     </div>
                     <p class="text-slate-400 fs-7 mb-4">
                         Consulvolt Soluções: 10 anos de experiência em Materiais Elétricos Pesados, Equipamentos Informáticos, Consultoria Organizacional, Gestão de Projetos e ERP Certificado pela AGT em Angola.

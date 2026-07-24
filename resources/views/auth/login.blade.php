@@ -181,10 +181,7 @@
     <div class="col-lg-6 d-none d-lg-flex auth-banner">
         <div>
             <a href="{{ route('home') }}" class="brand-logo mb-5" title="Voltar ao Website">
-                <div class="brand-icon" style="background: linear-gradient(135deg, #0058E6, #2563eb);">
-                    <i class="fas fa-bolt"></i>
-                </div>
-                <div class="brand-name">Consulvolt <span style="color: #60a5fa;">Soluções</span></div>
+                <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 55px; width: auto; object-fit: contain; background: #ffffff; padding: 6px 14px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
             </a>
 
             <div class="mt-4">
@@ -227,11 +224,8 @@
         <div class="auth-card">
             <!-- Mobile Brand Header -->
             <div class="d-lg-none text-center mb-4">
-                <a href="{{ route('home') }}" class="text-decoration-none">
-                    <div class="brand-icon mx-auto mb-2" style="background: linear-gradient(135deg, #0058E6, #2563eb);">
-                        <i class="fas fa-bolt"></i>
-                    </div>
-                    <h3 class="fw-bold text-dark mb-0">Consulvolt <span style="color: #0058E6;">Soluções</span></h3>
+                <a href="{{ route('home') }}" class="text-decoration-none d-inline-block" title="Voltar ao Website">
+                    <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 50px; width: auto; object-fit: contain;">
                 </a>
             </div>
 
