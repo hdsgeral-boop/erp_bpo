@@ -1,148 +1,311 @@
-@extends('layouts.website')
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre Nós — Consulvolt Soluções (10 Anos de Experiência)</title>
+    <meta name="description" content="Consulvolt Soluções: 10 anos de experiência em Venda de Materiais Elétricos Pesados, Equipamentos Informáticos, Consultoria Organizacional, Desenvolvimento de Aplicações Tecnológicas e Gestão de Projetos em Angola.">
 
-@section('title', 'Sobre Nós — Consulvolt Soluções (10 Anos de Experiência em Angola)')
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-@section('content')
-<!-- Hero Header -->
-<section style="background: linear-gradient(135deg, #090d16 0%, #0f172a 100%); padding: 5rem 0 4rem; color: #ffffff; position: relative;">
-    <div class="container">
-        <div class="max-w-3xl">
-            <span class="badge bg-primary text-white fw-bold text-uppercase px-3 py-2 rounded-pill mb-3" style="background-color: var(--primary-blue) !important; font-size: 0.8rem;">
-                <i class="fas fa-award me-1"></i> 10 Anos no Mercado Angolano
-            </span>
-            <h1 class="fw-extrabold display-4 mb-3 text-white" style="line-height: 1.2;">
-                Consulvolt Soluções
-            </h1>
+    <style>
+        :root {
+            --primary-blue: #0058E6;
+            --primary-blue-hover: #0047b3;
+            --dark-navy: #0f172a;
+            --dark-surface: #1e293b;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-main);
+            background-color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .top-bar {
+            background-color: #0047b3;
+            color: #ffffff;
+            font-size: 0.825rem;
+            padding: 0.5rem 0;
+            font-weight: 500;
+        }
+
+        .top-bar a { color: #ffffff; text-decoration: none; }
+        .top-bar a:hover { text-decoration: underline; }
+
+        .navbar-main {
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand .brand-title {
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: var(--dark-navy);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-link {
+            font-weight: 600;
+            color: #334155 !important;
+            font-size: 0.95rem;
+            margin: 0 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active { color: var(--primary-blue) !important; }
+
+        .btn-blue {
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 0.6rem 1.4rem;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-blue:hover {
+            background-color: var(--primary-blue-hover);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline-dark-custom {
+            border: 2px solid var(--dark-navy);
+            color: var(--dark-navy);
+            font-weight: 700;
+            border-radius: 8px;
+            padding: 0.55rem 1.3rem;
+            transition: all 0.2s;
+        }
+
+        .btn-outline-dark-custom:hover {
+            background-color: var(--dark-navy);
+            color: #ffffff;
+        }
+
+        .hero-banner-page {
+            background: linear-gradient(135deg, #090d16 0%, #0f172a 100%);
+            color: #ffffff;
+            padding: 5rem 0 4rem;
+        }
+
+        .footer-main {
+            background: #090d16;
+            color: #94a3b8;
+            padding: 5rem 0 2rem;
+            font-size: 0.9rem;
+        }
+
+        .footer-main h5 { color: #ffffff; font-weight: 700; margin-bottom: 1.5rem; }
+        .footer-main a { color: #94a3b8; text-decoration: none; transition: all 0.2s; }
+        .footer-main a:hover { color: #ffffff; padding-left: 4px; }
+
+        .social-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. TOP BAR -->
+    <div class="top-bar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-4">
+                <span><i class="fas fa-id-card me-1"></i> NIF: <strong>5417213969</strong></span>
+                <span><i class="fas fa-phone-alt me-2"></i> (244) 923 692 943 / (244) 923 012 143</span>
+                <span class="d-none d-md-inline"><i class="fas fa-envelope me-2"></i> hdsgeral@gmail.com</span>
+                <span class="d-none d-lg-inline"><i class="fas fa-map-marker-alt me-2"></i> Lar Patriota, Luanda</span>
+            </div>
+            <div>
+                <a href="https://wa.me/244923692943" target="_blank" class="text-white fw-bold"><i class="fab fa-whatsapp me-1"></i> WhatsApp Comercial</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. NAVBAR MAIN -->
+    <nav class="navbar navbar-expand-lg navbar-main">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{{ route('home') }}">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: #0058E6; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800;">
+                    C
+                </div>
+                <div>
+                    <span class="brand-title">Consulvolt <span style="color: #0058E6;">Soluções</span></span>
+                    <span class="d-block text-muted" style="font-size: 0.65rem; text-transform: uppercase; font-weight: 700;">10 Anos de Experiência</span>
+                </div>
+            </a>
+
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMainContent">
+                <i class="fas fa-bars text-dark fs-3"></i>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMainContent">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Início</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{{ route('website.about') }}">Sobre Nós</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('website.services') }}">Serviços</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('website.terms') }}">Termos & AGT</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('website.contact') }}">Contactos</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ route('login') }}" class="btn btn-outline-dark-custom">
+                        <i class="fas fa-sign-in-alt me-1"></i> Entrar no ERP
+                    </a>
+                    <a href="{{ route('register') }}" class="btn btn-blue">
+                        <i class="fas fa-user-plus me-1"></i> Criar Conta
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 3. PAGE HERO BANNER -->
+    <section class="hero-banner-page">
+        <div class="container">
+            <span class="badge bg-primary px-3 py-2 rounded-pill mb-3" style="background-color: #0058E6 !important; font-size: 0.85rem;"><i class="fas fa-award me-1"></i> 10 Anos no Mercado Angolano</span>
+            <h1 class="fw-extrabold display-4 mb-3 text-white">Sobre a Consulvolt Soluções</h1>
             <p class="lead text-slate-300 fs-5 mb-0" style="max-width: 750px;">
-                Soluções integradas de engenharia elétrica, equipamentos informáticos, consultoria organizacional e desenvolvimento tecnológico para acelerar o crescimento e o controlo interno das empresas em Angola.
+                Eficiência, inovação e desenvolvimento de tecnologia para o crescimento das empresas em Angola.
             </p>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Carta de Apresentação Section -->
-<section class="py-5" style="background: #ffffff;">
-    <div class="container py-4">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-7">
-                <span class="text-primary fw-bold text-uppercase fs-7" style="color: var(--primary-blue) !important;">Carta de Apresentação</span>
-                <h2 class="fw-extrabold text-dark fs-2 mb-4 mt-1">Compromisso com a Eficiência, Inovação e Controlo Interno</h2>
-                
-                <div class="p-4 rounded-4 mb-4" style="background: #f8fafc; border-left: 4px solid var(--primary-blue);">
-                    <p class="text-dark fs-6 fw-semibold mb-0" style="line-height: 1.7;">
-                        "É com grande satisfação que apresentamos a <strong>Consulvolt Soluções</strong>, uma empresa com 10 anos de experiência consolidada no mercado angolano. A nossa atuação concentra-se na venda de materiais elétricos pesados, equipamentos informáticos e consumíveis, consultoria organizacional, desenvolvimento de aplicações tecnológicas para melhoria de processos e controlo interno, além da gestão integral de projetos."
+    <!-- 4. CARTA DE APRESENTAÇÃO -->
+    <section class="py-5" style="background: #ffffff;">
+        <div class="container py-4">
+            <div class="row g-5 align-items-center">
+                <div class="col-lg-7">
+                    <span class="text-primary fw-bold text-uppercase fs-8" style="color: #0058E6 !important;">Carta de Apresentação</span>
+                    <h2 class="fw-extrabold text-dark fs-2 mb-4 mt-2">10 Anos de Inovação e Qualidade em Angola</h2>
+                    
+                    <div class="p-4 rounded-4 mb-4" style="background: #f8fafc; border-left: 4px solid #0058E6;">
+                        <p class="text-dark fs-6 fw-semibold mb-0" style="line-height: 1.7;">
+                            "É com grande satisfação que apresentamos a <strong>Consulvolt Soluções</strong>, uma empresa com 10 anos de experiência no mercado angolano. Nossa atuação se concentra na venda de materiais elétricos pesados, equipamentos informáticos e consumíveis, consultoria organizacional, desenvolvimento de aplicações tecnológicas para melhoria de processos e controlo interno, além de gestão de projetos."
+                        </p>
+                    </div>
+
+                    <p class="text-secondary fs-6 mb-4" style="line-height: 1.7;">
+                        Temos nos dedicado a oferecer soluções que não apenas atendem às necessidades de nossos clientes, mas que também promovem a eficiência e a inovação em suas operações. Nossa equipe é composta por profissionais altamente qualificados, prontos para oferecer soluções personalizadas e desenvolver estratégias adaptadas a cada desafio.
                     </p>
-                </div>
 
-                <p class="text-secondary fs-6 mb-4" style="line-height: 1.7;">
-                    Temos nos dedicado continuamente a oferecer soluções que não apenas atendem às necessidades imediatas dos nossos clientes, mas que também promovem a eficiência operacional, a inovação e a sustentabilidade das suas operações. A nossa equipa é composta por profissionais altamente qualificados, prontos para oferecer atendimento personalizado e criar soluções adaptadas a cada desafio do tecido empresarial angolano.
-                </p>
-
-                <div class="row g-3 pt-2">
-                    <div class="col-sm-6">
-                        <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: #f1f5f9;">
-                            <div class="fs-3 text-primary" style="color: var(--primary-blue) !important;"><i class="fas fa-building"></i></div>
-                            <div>
-                                <h6 class="fw-bold text-dark mb-0">NIF Registado</h6>
-                                <small class="text-muted">5417213969</small>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <strong class="text-dark d-block">Contribuinte / NIF</strong>
+                                <span class="text-primary fw-bold" style="color: #0058E6 !important;">5417213969</span>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-sm-6">
-                        <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background: #f1f5f9;">
-                            <div class="fs-3 text-primary" style="color: var(--primary-blue) !important;"><i class="fas fa-map-marker-alt"></i></div>
-                            <div>
-                                <h6 class="fw-bold text-dark mb-0">Sede Principal</h6>
-                                <small class="text-muted">Lar Patriota, Luanda</small>
+                        <div class="col-sm-6">
+                            <div class="p-3 bg-light rounded-3 border">
+                                <strong class="text-dark d-block">Sede Institucional</strong>
+                                <span class="text-muted">Lar Patriota, Rua Ginásio Wanaka, Luanda</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-5">
-                <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
-                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80" alt="Consulvolt Equipa" class="img-fluid">
-                    <div class="card-body p-4 text-white" style="background: var(--dark-navy);">
-                        <h5 class="fw-bold mb-2">Porquê Escolher a Consulvolt?</h5>
-                        <ul class="list-unstyled mb-0 text-slate-300 fs-7">
-                            <li class="mb-2"><i class="fas fa-check-circle text-primary me-2" style="color: #60a5fa !important;"></i> Experiência comprovada de 10 anos em Angola</li>
-                            <li class="mb-2"><i class="fas fa-check-circle text-primary me-2" style="color: #60a5fa !important;"></i> Soluções 100% adaptadas à legislação nacional</li>
-                            <li class="mb-2"><i class="fas fa-check-circle text-primary me-2" style="color: #60a5fa !important;"></i> Software ERP Certificado pela AGT (n.º 142/AGT/2019)</li>
-                            <li class="mb-0"><i class="fas fa-check-circle text-primary me-2" style="color: #60a5fa !important;"></i> Suporte técnico local dedicado e especializado</li>
-                        </ul>
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80" alt="Consulvolt Soluções" class="img-fluid">
+                        <div class="card-body p-4 text-white" style="background: #090d16;">
+                            <h5 class="fw-bold mb-3">Nossos 4 Pilares de Serviço</h5>
+                            <ul class="list-unstyled fs-7 text-slate-300 mb-0">
+                                <li class="mb-2"><i class="fas fa-check-circle me-2 text-primary" style="color: #60a5fa !important;"></i> Materiais Elétricos Pesados e Informática</li>
+                                <li class="mb-2"><i class="fas fa-check-circle me-2 text-primary" style="color: #60a5fa !important;"></i> Consultoria Organizacional & Processos</li>
+                                <li class="mb-2"><i class="fas fa-check-circle me-2 text-primary" style="color: #60a5fa !important;"></i> Desenvolvimento de Aplicações Tecnológicas & ERP</li>
+                                <li class="mb-0"><i class="fas fa-check-circle me-2 text-primary" style="color: #60a5fa !important;"></i> Gestão de Projetos Empresariais</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Os 4 Pilares da Consulvolt -->
-<section class="py-5" style="background: #f8fafc;">
-    <div class="container py-4">
-        <div class="text-center max-w-2xl mx-auto mb-5">
-            <span class="text-primary fw-bold text-uppercase fs-7" style="color: var(--primary-blue) !important;">Áreas de Atuação</span>
-            <h2 class="fw-extrabold text-dark fs-2 mt-1">Serviços e Especialidades Institucionais</h2>
-            <p class="text-muted">Conheça o portefólio completo de serviços prestados pela Consulvolt Soluções.</p>
+    <!-- 5. FOOTER MAIN -->
+    <footer class="footer-main">
+        <div class="container">
+            <div class="row g-4 mb-5">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div style="width: 36px; height: 36px; border-radius: 8px; background: #0058E6; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800;">
+                            C
+                        </div>
+                        <span class="text-white fw-bold fs-5">Consulvolt <span style="color: #60a5fa;">Soluções</span></span>
+                    </div>
+                    <p class="text-slate-400 fs-7 mb-4">
+                        Consulvolt Soluções: 10 anos de experiência em Materiais Elétricos Pesados, Equipamentos Informáticos, Consultoria Organizacional, Gestão de Projetos e ERP Certificado pela AGT em Angola.
+                    </p>
+                    <div>
+                        <a href="https://wa.me/244923692943" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+                        <a href="mailto:hdsgeral@gmail.com" class="social-icon"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-4">
+                    <h5>Navegação</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ route('home') }}">Início</a></li>
+                        <li class="mb-2"><a href="{{ route('website.about') }}">Sobre Nós</a></li>
+                        <li class="mb-2"><a href="{{ route('website.services') }}">Serviços</a></li>
+                        <li class="mb-2"><a href="{{ route('website.terms') }}">Termos & AGT</a></li>
+                        <li class="mb-2"><a href="{{ route('website.contact') }}">Contactos</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-4">
+                    <h5>Módulos ERP</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ route('login') }}">Vendas & POS Certificado</a></li>
+                        <li class="mb-2"><a href="{{ route('login') }}">Recursos Humanos & IRT</a></li>
+                        <li class="mb-2"><a href="{{ route('login') }}">Contabilidade PGC</a></li>
+                        <li class="mb-2"><a href="{{ route('login') }}">Tesouraria & Bancos</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-4">
+                    <h5>Contactos & Sede</h5>
+                    <p class="text-slate-400 fs-7 mb-2"><i class="fas fa-id-card text-primary me-2" style="color: #60a5fa !important;"></i> NIF: 5417213969</p>
+                    <p class="text-slate-400 fs-7 mb-2"><i class="fas fa-map-marker-alt text-primary me-2" style="color: #60a5fa !important;"></i> Lar Patriota, Rua Ginásio Wanaka, Luanda</p>
+                    <p class="text-slate-400 fs-7 mb-2"><i class="fas fa-phone-alt text-primary me-2" style="color: #60a5fa !important;"></i> (244) 923 692 943 / (244) 923 012 143</p>
+                    <p class="text-slate-400 fs-7 mb-0"><i class="fas fa-envelope text-primary me-2" style="color: #60a5fa !important;"></i> hdsgeral@gmail.com</p>
+                </div>
+            </div>
+
+            <hr style="border-color: rgba(255, 255, 255, 0.1);">
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pt-3 fs-8 text-slate-400">
+                <p class="mb-0">&copy; {{ date('Y') }} Consulvolt Soluções. NIF: 5417213969. Todos os direitos reservados. Software Certificado AGT n.º 142/AGT/2019.</p>
+                <div class="d-flex gap-3 mt-2 mt-md-0">
+                    <a href="{{ route('login') }}" class="text-slate-400">Área de Cliente</a>
+                    <a href="{{ route('register') }}" class="text-slate-400">Registar Empresa</a>
+                </div>
+            </div>
         </div>
+    </footer>
 
-        <div class="row g-4">
-            <!-- Pilar 1 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm p-4 text-center" style="border-radius: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center text-white rounded-4" style="width: 60px; height: 60px; background: linear-gradient(135deg, #0058E6, #2563eb); font-size: 1.5rem;">
-                        <i class="fas fa-plug"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Materiais Elétricos & Informáticos</h5>
-                    <p class="text-muted fs-7 mb-0">Fornecimento de equipamentos pesados de eletricidade, infraestrutura de rede, computadores e consumíveis de alta qualidade.</p>
-                </div>
-            </div>
-
-            <!-- Pilar 2 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm p-4 text-center" style="border-radius: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center text-white rounded-4" style="width: 60px; height: 60px; background: linear-gradient(135deg, #0058E6, #2563eb); font-size: 1.5rem;">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Consultoria Organizacional</h5>
-                    <p class="text-muted fs-7 mb-0">Trabalhamos em parceria com a sua empresa para otimizar processos, aumentar a produtividade e aprimorar a gestão interna.</p>
-                </div>
-            </div>
-
-            <!-- Pilar 3 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm p-4 text-center" style="border-radius: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center text-white rounded-4" style="width: 60px; height: 60px; background: linear-gradient(135deg, #0058E6, #2563eb); font-size: 1.5rem;">
-                        <i class="fas fa-laptop-code"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Aplicações Tecnológicas & ERP</h5>
-                    <p class="text-muted fs-7 mb-0">Criação de soluções digitais sob medida visando a automação de processos, faturação fiscal AGT e controlo interno apurado.</p>
-                </div>
-            </div>
-
-            <!-- Pilar 4 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm p-4 text-center" style="border-radius: 18px; transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-6px)'" onmouseout="this.style.transform='translateY(0)'">
-                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center text-white rounded-4" style="width: 60px; height: 60px; background: linear-gradient(135deg, #0058E6, #2563eb); font-size: 1.5rem;">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <h5 class="fw-bold text-dark mb-2">Gestão de Projetos</h5>
-                    <p class="text-muted fs-7 mb-0">Suporte integral em todas as etapas dos seus projetos, garantindo a entrega dentro dos prazos e orçamentos estipulados.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Call to action -->
-<section class="py-5 text-center text-white" style="background: linear-gradient(135deg, #0058E6, #0047b3);">
-    <div class="container py-3">
-        <h3 class="fw-bold mb-3">Pronto para transformar as operações da sua empresa?</h3>
-        <p class="lead text-white-50 mb-4" style="max-width: 650px; margin: 0 auto;">Entre em contacto com os nossos consultores e agende uma apresentação personalizada.</p>
-        <a href="{{ route('website.contact') }}" class="btn btn-light text-primary fw-bold btn-lg px-5" style="border-radius: 12px; color: var(--primary-blue) !important;">
-            Falar com a Consulvolt <i class="fas fa-arrow-right ms-2"></i>
-        </a>
-    </div>
-</section>
-@endsection
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
