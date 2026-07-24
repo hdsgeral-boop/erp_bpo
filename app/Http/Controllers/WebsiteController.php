@@ -49,6 +49,46 @@ class WebsiteController extends Controller
     }
 
     /**
+     * Módulo ERP: Vendas & POS Certificado AGT
+     */
+    public function moduleVendasPos()
+    {
+        return view('website.modules.vendas_pos');
+    }
+
+    /**
+     * Módulo ERP: Recursos Humanos & Salários IRT/INSS
+     */
+    public function moduleRecursosHumanos()
+    {
+        return view('website.modules.recursos_humanos');
+    }
+
+    /**
+     * Módulo ERP: Contabilidade PGC
+     */
+    public function moduleContabilidadePgc()
+    {
+        return view('website.modules.contabilidade_pgc');
+    }
+
+    /**
+     * Módulo ERP: Tesouraria & Bancos
+     */
+    public function moduleTesourariaBancos()
+    {
+        return view('website.modules.tesouraria_bancos');
+    }
+
+    /**
+     * Módulo ERP: Integração PowerBI Direct
+     */
+    public function modulePowerbiDirect()
+    {
+        return view('website.modules.powerbi_direct');
+    }
+
+    /**
      * Processa o formulário de contacto / pedido de demonstração
      */
     public function contact(Request $request)

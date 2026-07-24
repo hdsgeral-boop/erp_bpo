@@ -40,6 +40,13 @@ Route::get('/contacto', [WebsiteController::class, 'contactView'])->name('websit
 Route::post('/contacto', [WebsiteController::class, 'contact'])->name('contact.submit');
 Route::get('/termos', [WebsiteController::class, 'terms'])->name('website.terms');
 
+// ─── Módulos ERP Explicação ──────────────────────────────
+Route::get('/modulos/vendas-pos', [WebsiteController::class, 'moduleVendasPos'])->name('website.modules.vendas-pos');
+Route::get('/modulos/recursos-humanos', [WebsiteController::class, 'moduleRecursosHumanos'])->name('website.modules.recursos-humanos');
+Route::get('/modulos/contabilidade-pgc', [WebsiteController::class, 'moduleContabilidadePgc'])->name('website.modules.contabilidade-pgc');
+Route::get('/modulos/tesouraria-bancos', [WebsiteController::class, 'moduleTesourariaBancos'])->name('website.modules.tesouraria-bancos');
+Route::get('/modulos/powerbi-direct', [WebsiteController::class, 'modulePowerbiDirect'])->name('website.modules.powerbi-direct');
+
 use App\Http\Controllers\GoogleAuthController;
 
 // ─── Web Auth Routes (Login / Register / Logout) ─────────

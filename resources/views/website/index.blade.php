@@ -818,11 +818,11 @@
                 <div class="col-lg-3 col-md-4">
                     <h5>Módulos ERP</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{{ route('login') }}">Vendas & POS Certificado</a></li>
-                        <li class="mb-2"><a href="{{ route('login') }}">Recursos Humanos & IRT</a></li>
-                        <li class="mb-2"><a href="{{ route('login') }}">Contabilidade PGC</a></li>
-                        <li class="mb-2"><a href="{{ route('login') }}">Tesouraria & Bancos</a></li>
-                        <li class="mb-2"><a href="{{ route('login') }}">Integração PowerBI Direct</a></li>
+                        <li class="mb-2"><a href="{{ route('website.modules.vendas-pos') }}">Vendas & POS Certificado</a></li>
+                        <li class="mb-2"><a href="{{ route('website.modules.recursos-humanos') }}">Recursos Humanos & IRT</a></li>
+                        <li class="mb-2"><a href="{{ route('website.modules.contabilidade-pgc') }}">Contabilidade PGC</a></li>
+                        <li class="mb-2"><a href="{{ route('website.modules.tesouraria-bancos') }}">Tesouraria & Bancos</a></li>
+                        <li class="mb-2"><a href="{{ route('website.modules.powerbi-direct') }}">Integração PowerBI Direct</a></li>
                     </ul>
                 </div>
 
