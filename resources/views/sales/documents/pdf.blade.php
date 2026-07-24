@@ -8,7 +8,7 @@
     <style>
         @page {
             size: A4 portrait;
-            margin: 10mm 12mm 18mm 15mm;
+            margin: 8mm 10mm 15mm 10mm;
         }
         
         * {
@@ -31,7 +31,7 @@
             width: 210mm;
             min-height: 297mm;
             margin: 0 auto;
-            padding: 15mm 15mm 20mm 18mm;
+            padding: 15mm 15mm 20mm 26mm;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             position: relative;
             display: flex;
@@ -67,14 +67,16 @@
         /* Left Vertical Watermark / Margin Text */
         .side-watermark {
             position: absolute;
-            left: 3mm;
-            bottom: 25mm;
+            left: 5mm;
+            top: 210mm;
             transform: rotate(-90deg);
-            transform-origin: left bottom;
-            font-size: 7px;
+            transform-origin: 0 0;
+            font-size: 6.8px;
             color: #64748b;
             white-space: nowrap;
-            font-family: monospace;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.2px;
+            opacity: 0.8;
         }
 
         /* Header Layout */
@@ -335,14 +337,21 @@
                 box-shadow: none;
                 width: 100%;
                 min-height: auto;
-                padding: 0;
+                padding: 10mm 12mm 15mm 24mm !important;
                 margin: 0;
+            }
+            .side-watermark {
+                position: fixed;
+                left: 4mm;
+                top: 210mm;
+                transform: rotate(-90deg);
+                transform-origin: 0 0;
             }
             .document-footer {
                 position: fixed;
                 bottom: 0;
-                left: 0;
-                right: 0;
+                left: 24mm;
+                right: 12mm;
                 padding-bottom: 4mm;
             }
         }
