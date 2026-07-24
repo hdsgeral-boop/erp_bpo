@@ -45,7 +45,7 @@
         <div class="card-body p-5">
             
             <div class="d-flex justify-content-center mb-5 position-relative">
-                <div class="position-absolute top-50 start-50 translate-middle w-50 bg-light" style="height: 4px; z-index: 0;"></div>
+                <div class="position-absolute top-50 translate-middle w-50 bg-light" style="left: 50%; height: 4px; z-index: 0;"></div>
                 <div class="d-flex justify-content-between position-relative w-50" style="z-index: 1;">
                     <div class="text-center bg-white px-2">
                         <div class="wizard-step completed mx-auto mb-2 shadow-sm"><i class="fas fa-check"></i></div>
