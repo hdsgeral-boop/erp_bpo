@@ -3,8 +3,8 @@
    ========================================================================== */
 
 :root {
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
+    --primary: #0058E6;
+    --primary-hover: #0047b3;
     --primary-light: #eff6ff;
     --secondary: #64748b;
     --success: #10b981;
@@ -194,9 +194,9 @@ body {
 
 .nav-item.active {
     color: #ffffff;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, #0058E6, #0047b3);
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    box-shadow: 0 4px 12px rgba(0, 88, 230, 0.35);
 }
 
 .nav-group.open > .nav-group-header {
@@ -212,14 +212,14 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    background: linear-gradient(135deg, #0058E6, #3b82f6);
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 800;
     font-size: 0.95rem;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 4px 10px rgba(0, 88, 230, 0.25);
     border: 2px solid #ffffff;
 }
 
@@ -251,6 +251,50 @@ body.sidebar-active .sidebar-backdrop {
     opacity: 1;
 }
 
+/* ─── Global Responsive Tables & Cards System ─────────────── */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.form-control, .form-select {
+    border-radius: var(--radius-sm);
+    padding: 0.65rem 0.9rem;
+    font-size: 0.925rem;
+    border: 1px solid var(--border-color);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 88, 230, 0.15);
+}
+
 /* ─── Responsive Layout Rules ────────────────────────────── */
 @media (max-width: 1024px) {
     .sidebar {
@@ -275,7 +319,47 @@ body.sidebar-active .sidebar-backdrop {
     }
 }
 
-/* ─── Desktop Collapsed Sidebar Mode (Menu Escondido com Ícones Principais) ─── */
+@media (max-width: 768px) {
+    .view-container {
+        padding: 1rem 0.75rem !important;
+    }
+    
+    .top-header {
+        padding: 0 0.75rem !important;
+        gap: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        font-size: 1rem !important; /* Previne auto-zoom no Safari iOS */
+    }
+
+    .btn {
+        padding: 0.6rem 0.9rem;
+    }
+
+    /* Stack filter bars and action headers on mobile */
+    .filter-bar, .action-header, .page-header-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .view-container {
+        padding: 0.75rem 0.5rem !important;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+
+    .top-header h1, .top-header .brand-title {
+        font-size: 1rem !important;
+    }
+}
+
+/* ─── Desktop Collapsed Sidebar Mode ─────────────────────── */
 body.sidebar-collapsed .sidebar {
     width: 80px;
 }
@@ -293,7 +377,6 @@ body.sidebar-collapsed .sidebar-nav .nav-group-items {
     display: none !important;
 }
 
-/* Exibir APENAS os ícones das opções principais do menu */
 body.sidebar-collapsed .sidebar-nav > .nav-item,
 body.sidebar-collapsed .sidebar-nav > .nav-group > .nav-group-header {
     display: flex !important;
@@ -324,9 +407,9 @@ body.sidebar-collapsed .sidebar-nav > .nav-group > .nav-group-header:hover {
 
 body.sidebar-collapsed .sidebar-nav > .nav-item.active,
 body.sidebar-collapsed .sidebar-nav > .nav-group.open > .nav-group-header {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    background: linear-gradient(135deg, #0058E6, #0047b3) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4) !important;
+    box-shadow: 0 4px 12px rgba(0, 88, 230, 0.4) !important;
 }
 
 body.sidebar-collapsed .main-content {

@@ -293,18 +293,18 @@
                     <div class="d-flex align-items-center gap-2">
                         <form id="company-switch-form" method="POST" action="{{ route('company.switch') }}" class="m-0">
                             @csrf
-                            <select name="company_id" onchange="this.form.submit()" class="form-select border shadow-sm fw-bold" style="background: #f8fafc; border-color: #cbd5e1; font-size: 0.925rem; border-radius: 10px; cursor: pointer;">
+                            <select name="company_id" onchange="this.form.submit()" class="form-select border shadow-sm fw-bold text-truncate" style="background: #f8fafc; border-color: #cbd5e1; font-size: 0.85rem; border-radius: 10px; cursor: pointer; max-width: 180px;">
                                 @foreach($opCompanies as $comp)
                                     <option value="{{ $comp->id }}" {{ $comp->id == $activeCompanyId ? 'selected' : '' }}>
-                                        {{ $comp->name }} (NIF: {{ $comp->nif ?? 'N/A' }})
+                                        {{ $comp->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </form>
 
-                        <a href="{{ route('billing.plans') }}" class="btn btn-sm d-flex align-items-center gap-2 fw-bold text-decoration-none px-3 py-2 shadow-sm" style="border-radius: 10px; background: {{ $isLicenseActive ? ($daysRemaining <= 5 ? '#fef3c7' : '#dcfce7') : '#fee2e2' }}; color: {{ $isLicenseActive ? ($daysRemaining <= 5 ? '#b45309' : '#15803d') : '#b91c1c' }}; border: 1px solid {{ $isLicenseActive ? ($daysRemaining <= 5 ? '#fde68a' : '#bbf7d0') : '#fecaca' }}; font-size: 0.85rem;" title="Clique para gerir a subscrição da empresa">
+                        <a href="{{ route('billing.plans') }}" class="btn btn-sm d-flex align-items-center gap-1 gap-md-2 fw-bold text-decoration-none px-2 px-md-3 py-2 shadow-sm" style="border-radius: 10px; background: {{ $isLicenseActive ? ($daysRemaining <= 5 ? '#fef3c7' : '#dcfce7') : '#fee2e2' }}; color: {{ $isLicenseActive ? ($daysRemaining <= 5 ? '#b45309' : '#15803d') : '#b91c1c' }}; border: 1px solid {{ $isLicenseActive ? ($daysRemaining <= 5 ? '#fde68a' : '#bbf7d0') : '#fecaca' }}; font-size: 0.8rem;" title="Clique para gerir a subscrição da empresa">
                             <i class="fas {{ $isLicenseActive ? ($daysRemaining <= 5 ? 'fa-clock' : 'fa-check-circle') : 'fa-lock' }}"></i>
-                            <span>{{ $isTrial ? 'Trial: ' : 'Licença: ' }}{{ $daysRemaining }} dias</span>
+                            <span class="d-none d-sm-inline">{{ $isTrial ? 'Trial: ' : 'Licença: ' }}</span><span>{{ $daysRemaining }}d</span>
                         </a>
                     </div>
                 </div>
