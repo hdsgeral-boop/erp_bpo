@@ -29,7 +29,7 @@
             display: flex;
         }
 
-        /* Lado Esquerdo (Institucional / Banner) — Fundo Branco */
+        /* Lado Esquerdo (Institucional / Banner) — Fundo Branco (Desktop apenas) */
         .auth-banner {
             background: #ffffff;
             border-right: 1px solid #e2e8f0;
@@ -63,6 +63,7 @@
             align-items: center;
             justify-content: center;
             padding: 3rem 2rem;
+            min-height: 100vh;
         }
 
         .auth-card {
@@ -133,15 +134,38 @@
             align-items: center;
             gap: 6px;
         }
+
+        /* Melhores práticas de Responsividade e Touch UI/UX */
+        @media (max-width: 991px) {
+            .auth-form-wrapper {
+                padding: 2.5rem 1.25rem;
+            }
+            .form-control, .input-group-text {
+                font-size: 1rem; /* Previne auto-zoom no iOS Safari */
+                padding: 0.9rem 1rem;
+            }
+            .btn-primary-custom {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .auth-form-wrapper {
+                padding: 2rem 1rem;
+            }
+            .auth-card {
+                padding: 0 0.5rem;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div class="auth-container row g-0">
-    <!-- LADO ESQUERDO: Fundo Branco com o Logótipo Oficial -->
-    <div class="col-lg-6 d-flex flex-column justify-content-between auth-banner">
+    <!-- LADO ESQUERDO: Fundo Branco com o Logótipo Oficial (Visível apenas em Desktop >= 992px) -->
+    <div class="col-lg-6 d-none d-lg-flex flex-column justify-content-between auth-banner">
         <div>
-            <!-- Único Logótipo Oficial no lado esquerdo -->
+            <!-- Logótipo Oficial no lado esquerdo -->
             <a href="{{ route('home') }}" class="d-inline-block mb-5" title="Voltar ao Website">
                 <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 60px; width: auto; object-fit: contain;">
             </a>
@@ -172,9 +196,17 @@
     </div>
 
     <!-- LADO DIREITO: Formulário com Fundo Escuro -->
-    <div class="col-lg-6 auth-form-wrapper">
+    <div class="col-lg-6 col-12 auth-form-wrapper">
         <div class="auth-card">
-            <div class="mb-4">
+            <!-- Header Móvel: Apresenta o logótipo oficial em dispositivos móveis (< 992px) -->
+            <div class="d-lg-none text-center mb-4">
+                <a href="{{ route('home') }}" class="d-inline-block mb-2" title="Voltar ao Website">
+                    <img src="{{ asset('img/logo_erp.png') }}" alt="Consulvolt Soluções" style="height: 52px; width: auto; object-fit: contain; background: #ffffff; padding: 6px 14px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                </a>
+                <span class="d-block text-slate-400 fs-8" style="color: #94a3b8;"><a href="{{ route('home') }}" class="text-decoration-none" style="color: #60a5fa;"><i class="fas fa-arrow-left me-1"></i> Voltar ao Website</a></span>
+            </div>
+
+            <div class="mb-4 text-center text-lg-start">
                 <h3 class="fw-bold text-white mb-1">Recuperar Palavra-passe</h3>
                 <p class="text-slate-400" style="color: #94a3b8;">Introduza o e-mail associado à sua conta corporativa.</p>
             </div>
