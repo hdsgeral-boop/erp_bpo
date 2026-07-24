@@ -249,6 +249,9 @@ Route::middleware(['can:treasury.view'])->group(function () {
     Route::post('/tesouraria/accounts', [TreasuryAccountController::class, 'store'])->name('tesouraria.accounts.store');
     Route::get('/tesouraria/accounts/{account}/edit', [TreasuryAccountController::class, 'edit'])->name('tesouraria.accounts.edit');
     Route::put('/tesouraria/accounts/{account}', [TreasuryAccountController::class, 'update'])->name('tesouraria.accounts.update');
+    Route::delete('/tesouraria/accounts/{account}', [TreasuryAccountController::class, 'destroy'])->name('tesouraria.accounts.destroy');
+    Route::get('/tesouraria/accounts/{account}/statement', [TreasuryAccountController::class, 'statement'])->name('tesouraria.accounts.statement');
+    Route::post('/tesouraria/accounts/{account}/movement', [TreasuryAccountController::class, 'quickMovement'])->name('tesouraria.accounts.movement');
     Route::get('/tesouraria/documentos/{type?}', fn($type = 'recebimentos') => view('treasury.documents', compact('type')))->name('tesouraria.documents.index');
     Route::get('/tesouraria/docs/{type?}', fn($type = 'recebimentos') => view('treasury.documents', compact('type')))->name('tesouraria.documentos.index');
     Route::get('/tesouraria/bank-statements', fn() => view('treasury.bank_statements'))->name('tesouraria.bank_statements.index');
