@@ -238,6 +238,78 @@ def generate_irt(data, output_path):
 
     wb.save(output_path)
 
+def generate_bank(data, output_path):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Pagamentos Bancarios"
+    ws.views.sheetView[0].showGridLines = True
+
+    font_header = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    fill_header = PatternFill(start_color="107C41", end_color="107C41", fill_type="solid")
+    font_bold = Font(name="Calibri", size=11, bold=True)
+    font_regular = Font(name="Calibri", size=11)
+    
+    border_thin = Border(
+        left=Side(style='thin', color='D9D9D9'),
+        right=Side(style='thin', color='D9D9D9'),
+        top=Side(style='thin', color='D9D9D9'),
+        bottom=Side(style='thin', color='D9D9D9')
+    )
+    border_total = Border(
+        top=Side(style='thin', color='000000'),
+        bottom=Side(style='double', color='000000')
+    )
+
+    headers = [
+        "Ord.", "Colaborador", "NIF", "Banco", "Coordenada Bancária (IBAN)", "Valor a Transferir (Líquido)"
+    ]
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.font = font_header
+        cell.fill = fill_header
+        cell.alignment = Alignment(horizontal="center" if col_num in [1,3,4] else ("right" if col_num == 6 else "left"), vertical="center")
+
+    tot_net = 0.0
+    row_idx = 2
+
+    for idx, item in enumerate(data.get("items", []), 1):
+        net_val = float(item.get("net_total", 0.0))
+        tot_net += net_val
+
+        row_vals = [
+            idx,
+            item.get("name", ""),
+            item.get("nif", "N/A"),
+            item.get("bank_name", "BAI"),
+            item.get("iban", "N/A"),
+            format_kz(net_val)
+        ]
+
+        for col_num, val in enumerate(row_vals, 1):
+            cell = ws.cell(row=row_idx, column=col_num, value=val)
+            cell.font = font_regular
+            cell.border = border_thin
+            cell.alignment = Alignment(horizontal="center" if col_num in [1,3,4] else ("right" if col_num == 6 else "left"), vertical="center")
+
+        row_idx += 1
+
+    total_row = [
+        "TOTAL A PROCESSAR PELO BANCO:", "", "", "", "", format_kz(tot_net)
+    ]
+    for col_num, val in enumerate(total_row, 1):
+        cell = ws.cell(row=row_idx, column=col_num, value=val)
+        cell.font = font_bold
+        cell.border = border_total
+        cell.alignment = Alignment(horizontal="right" if col_num == 6 else "left", vertical="center")
+
+    for col in ws.columns:
+        max_len = max(len(str(cell.value or '')) for cell in col)
+        col_letter = get_column_letter(col[0].column)
+        ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
+
+    wb.save(output_path)
+
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         sys.exit(1)
@@ -253,3 +325,5 @@ if __name__ == "__main__":
         generate_inss(payload, out_path)
     elif fmt == "irt":
         generate_irt(payload, out_path)
+    elif fmt == "bank":
+        generate_bank(payload, out_path)

@@ -457,11 +457,11 @@ class PayrollController extends Controller
         $run = PayrollRun::where('company_id', $companyId)->find((int)$id) ?? PayrollRun::findOrFail((int)$id);
         
         $exporter = new \App\Services\Exports\ReportExportService();
-        $csvData = $exporter->generateBankPs2Csv($run->id);
-        $fileName = "Ficheiro_Pagamento_PS2_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".csv";
+        $excelData = $exporter->generateBankExcelFile($run->id);
+        $fileName = "Mapa_Pagamentos_Bancarios_PS2_" . preg_replace('/[^0-9A-Za-z]/', '_', $run->reference) . ".xlsx";
 
-        return response($csvData, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
+        return response($excelData, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => "attachment; filename=\"{$fileName}\""
         ]);
     }

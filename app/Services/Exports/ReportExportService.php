@@ -107,6 +107,51 @@ class ReportExportService
     }
 
     /**
+     * Gera o Ficheiro de Pagamentos Bancários em formato Excel (.xlsx) / PS2
+     */
+    public function generateBankExcelFile($payrollRunId): string
+    {
+        $run = PayrollRun::with(['receipts.employee'])->findOrFail($payrollRunId);
+        $company = Company::find($run->company_id) ?? Company::first();
+
+        $items = [];
+        foreach ($run->receipts as $r) {
+            $emp = $r->employee;
+            $items[] = [
+                'name' => $emp->name ?? 'Colaborador',
+                'nif' => $emp->nif ?? 'N/A',
+                'bank_name' => $emp->bank_name ?? 'BAI',
+                'iban' => $emp->iban ?? 'AO060040000052141256251410126',
+                'net_total' => (float)$r->net_total
+            ];
+        }
+
+        $payload = [
+            'company_name' => $company->name ?? 'Empresa',
+            'reference' => $run->reference,
+            'items' => $items
+        ];
+
+        $jsonPath = storage_path('app/temp_bank_' . $run->id . '.json');
+        $xlsxPath = storage_path('app/temp_bank_' . $run->id . '.xlsx');
+
+        file_put_contents($jsonPath, json_encode($payload, JSON_UNESCAPED_UNICODE));
+
+        $scriptPath = __DIR__ . '/generate_payroll_excel.py';
+        exec("python \"{$scriptPath}\" bank \"{$jsonPath}\" \"{$xlsxPath}\"");
+
+        if (file_exists($xlsxPath)) {
+            $content = file_get_contents($xlsxPath);
+            @unlink($jsonPath);
+            @unlink($xlsxPath);
+            return $content;
+        }
+
+        @unlink($jsonPath);
+        return $this->generateBankPs2Csv($payrollRunId);
+    }
+
+    /**
      * Gera o Ficheiro de Pagamentos Bancários (Formato PS2 / CSV Bancário)
      */
     public function generateBankPs2Csv($payrollRunId): string
