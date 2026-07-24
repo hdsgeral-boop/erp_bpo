@@ -73,12 +73,13 @@ class SalesPOSController extends Controller
             ->first();
 
         $registers = PosRegister::where('company_id', $companyId)->where('is_active', true)->get();
-        $products = Product::where('company_id', $companyId)->get();
-        $categories = ProductCategory::where('company_id', $companyId)->get();
-        $customers = ThirdParty::where('company_id', $companyId)->get();
+        $products = Product::where('company_id', $companyId)->where('is_blocked', false)->orderBy('name')->get();
+        $categories = ProductCategory::where('company_id', $companyId)->withCount('products')->get();
+        $customers = ThirdParty::where('company_id', $companyId)->where('is_customer', true)->orderBy('name')->get();
         $taxes = Tax::where('company_id', $companyId)->get();
+        $treasuryAccounts = \App\Models\TreasuryAccount::where('company_id', $companyId)->where('is_active', true)->get();
 
-        return view('sales.pos', compact('activeSession', 'registers', 'products', 'categories', 'customers', 'taxes'));
+        return view('sales.pos', compact('activeSession', 'registers', 'products', 'categories', 'customers', 'taxes', 'treasuryAccounts'));
     }
 
     public function index()

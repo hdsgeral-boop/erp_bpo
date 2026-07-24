@@ -258,6 +258,10 @@ class CommercialDocumentController extends Controller
 
             $totalAmount = $totalSubtotal + $totalTax;
 
+            $paymentMethod = $request->input('payment_method', 'CASH');
+            $amountPaid = (float)$request->input('amount_paid', $totalAmount);
+            $totalDiscount = (float)$request->input('total_discount', 0);
+
             // Obter Hash do Documento Anterior da mesma série para encadeamento
             $lastPrevSale = \App\Models\Sale::where('company_id', $company->id)
                 ->where('doc_type', $docType)
@@ -277,6 +281,8 @@ class CommercialDocumentController extends Controller
                 $prevHash
             );
 
+            $isPaidDoc = in_array($docType, ['FR', 'FS']);
+
             $sale = \App\Models\Sale::create([
                 'company_id' => $company->id,
                 'customer_id' => $customerId,
@@ -285,11 +291,11 @@ class CommercialDocumentController extends Controller
                 'doc_number' => $docNumber,
                 'date' => $date,
                 'status' => 'ISSUED',
-                'payment_status' => $docType === 'FR' ? 'PAID' : 'PENDING',
-                'amount_paid' => $docType === 'FR' ? $totalAmount : 0,
+                'payment_status' => $isPaidDoc ? 'PAID' : 'PENDING',
+                'amount_paid' => $isPaidDoc ? $amountPaid : 0,
                 'total_amount' => $totalAmount,
                 'total_tax' => $totalTax,
-                'total_discount' => 0,
+                'total_discount' => $totalDiscount,
                 'notes' => $notes,
                 'created_by' => auth()->id() ?? 1,
                 'hash' => $sigResult['hash'],
@@ -301,13 +307,31 @@ class CommercialDocumentController extends Controller
                 $sale->items()->create($pItem);
             }
 
+            // Atualização de Saldo de Tesouraria se for venda a pronto
+            if ($isPaidDoc) {
+                $treasuryAccount = \App\Models\TreasuryAccount::firstOrCreate(
+                    ['company_id' => $company->id, 'is_active' => true],
+                    ['name' => 'Caixa Principal (POS)', 'currency' => 'AOA', 'initial_balance' => 0, 'current_balance' => 0]
+                );
+                if ($treasuryAccount) {
+                    $treasuryAccount->increment('current_balance', $totalAmount);
+                }
+            }
+
             // Submeter em tempo real à AGT via SOAP WebService
             $agtWebService = new \App\Services\AgtWebService();
             $agtWebService->submitInvoice($sale);
 
+            $changeAmount = max(0, $amountPaid - $totalAmount);
+
             return response()->json([
                 'success' => true,
                 'message' => "Documento {$docNumber} emitido com sucesso e assinado digitalmente segundo as normas da AGT.",
+                'sale_id' => $sale->id,
+                'change_amount' => $changeAmount,
+                'formatted_change' => number_format($changeAmount, 2, ',', '.') . ' Kz',
+                'thermal_url' => route('vendas.documentos.thermal', $sale->id),
+                'pdf_url' => route('vendas.documentos.pdf', $sale->id),
                 'data' => $sale->load(['customer', 'items.product']),
                 'print_mention' => $this->agtSignatureService->formatPrintMention($sigResult['control_code'])
             ], 201);
