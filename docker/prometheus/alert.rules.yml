@@ -1,0 +1,29 @@
+groups:
+  - name: erp_alerts
+    rules:
+      - alert: ContainerHighCpu
+        expr: (sum(rate(container_cpu_usage_seconds_total{name=~"erp_.*"}[3m])) BY (name) * 100) > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Uso elevado de CPU no container {{ $labels.name }}"
+          description: "O container {{ $labels.name }} está a consumir mais de 85% de CPU nos últimos 2 minutos."
+
+      - alert: ContainerHighMemory
+        expr: (sum(container_memory_working_set_bytes{name=~"erp_.*"}) BY (name) / sum(container_spec_memory_limit_bytes{name=~"erp_.*"}) BY (name) * 100) > 85
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Uso elevado de memória RAM no container {{ $labels.name }}"
+          description: "O container {{ $labels.name }} ultrapassou 85% do limite de memória RAM."
+
+      - alert: ContainerDown
+        expr: time() - container_last_seen{name=~"erp_.*"} > 30
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container desativado: {{ $labels.name }}"
+          description: "O container {{ $labels.name }} não responde há mais de 30 segundos."
