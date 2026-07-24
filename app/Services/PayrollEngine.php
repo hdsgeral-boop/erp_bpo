@@ -24,10 +24,12 @@ class PayrollEngine
             'DIAS_UTEIS' => $employee->work_days ?? 22,
         ];
 
-        // 1. Obter Vencimento Base do Contrato
+        // 1. Obter Vencimento Base do Contrato ou Ficha do Colaborador
         $contract = Contract::where('employee_id', $employee->id)->first();
-        if ($contract) {
+        if ($contract && (float)$contract->value > 0) {
             $context['BASE'] = (float) $contract->value;
+        } elseif ((float)$employee->base_salary > 0) {
+            $context['BASE'] = (float) $employee->base_salary;
         }
 
         // 2. Faltas
@@ -110,32 +112,69 @@ class PayrollEngine
             ];
         }
 
+        // Se não existirem rubricas personalizadas ou additions for 0, efetuar fallback automático com os dados do colaborador
+        if (empty($results['items']) || $results['additions'] <= 0) {
+            $baseSalary = $context['BASE'] > 0 ? $context['BASE'] : (float)$employee->base_salary;
+            $subsidyMeal = (float)($employee->subsidy_meal ?? 0);
+            $subsidyTransport = (float)($employee->subsidy_transport ?? 0);
+
+            if ($baseSalary > 0) {
+                $results['additions'] += $baseSalary;
+                $results['inss_base'] += $baseSalary;
+                $results['irt_base'] += $baseSalary;
+                $results['items'][] = [
+                    'id' => 1,
+                    'code' => 'P001',
+                    'name' => 'Vencimento Base',
+                    'type' => 'PROVENTO',
+                    'value' => $baseSalary
+                ];
+            }
+
+            if ($subsidyMeal > 0) {
+                $results['additions'] += $subsidyMeal;
+                $taxableMeal = max(0, $subsidyMeal - 30000);
+                $results['inss_base'] += $taxableMeal;
+                $results['irt_base'] += $taxableMeal;
+                $results['items'][] = [
+                    'id' => 2,
+                    'code' => 'P002',
+                    'name' => 'Subsídio de Alimentação',
+                    'type' => 'PROVENTO',
+                    'value' => $subsidyMeal
+                ];
+            }
+
+            if ($subsidyTransport > 0) {
+                $results['additions'] += $subsidyTransport;
+                $taxableTransport = max(0, $subsidyTransport - 30000);
+                $results['inss_base'] += $taxableTransport;
+                $results['irt_base'] += $taxableTransport;
+                $results['items'][] = [
+                    'id' => 3,
+                    'code' => 'P003',
+                    'name' => 'Subsídio de Transporte',
+                    'type' => 'PROVENTO',
+                    'value' => $subsidyTransport
+                ];
+            }
+        }
+
         // 4. Calcular INSS (Recorrendo à Tabela Dinâmica)
         $inssTax = PayrollTax::where('type', 'INSS')->where('is_active', true)->first();
         $inssEmployeeRate = $inssTax ? $inssTax->employee_rate / 100 : 0.03;
         $inssEmployerRate = $inssTax ? $inssTax->employer_rate / 100 : 0.08;
 
-        $inssEmployee = $results['inss_base'] * $inssEmployeeRate;
-        $inssCompany = $results['inss_base'] * $inssEmployerRate;
+        $inssEmployee = round($results['inss_base'] * $inssEmployeeRate, 2);
+        $inssCompany = round($results['inss_base'] * $inssEmployerRate, 2);
 
         // 5. Calcular IRT (A base do IRT já tem abatimento do INSS Trabalhador pela lei)
-        $actualIrtBase = $results['irt_base'] - $inssEmployee;
-        if ($actualIrtBase < 0) $actualIrtBase = 0;
+        $actualIrtBase = max(0, $results['irt_base'] - $inssEmployee);
+        $irt = $this->calculateIrt($actualIrtBase);
 
-        $irt = 0;
-        $taxBrackets = TaxBracket::where('is_active', true)->orderBy('min_value')->get();
-        foreach ($taxBrackets as $bracket) {
-            if ($actualIrtBase > $bracket->min_value && ($bracket->max_value === null || $actualIrtBase <= $bracket->max_value)) {
-                $excess = max(0, $actualIrtBase - $bracket->excess_of);
-                $irt = ($excess * ($bracket->tax_rate / 100)) + $bracket->fixed_portion;
-                break;
-            }
-        }
-
-        // Se Isenção, validar na DB - Para simplificar, assumimos que TaxBracket contém escalão 0%.
         // 6. Resumo Final
-        $gross = $results['additions']; // O Base já vem como uma Rubrica PROVENTO
-        $net = $gross - $results['deductions'] - $inssEmployee - $irt;
+        $gross = $results['additions'];
+        $net = max(0, $gross - $results['deductions'] - $inssEmployee - $irt);
 
         return [
             'gross_salary' => $gross,

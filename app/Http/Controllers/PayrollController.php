@@ -166,10 +166,11 @@ class PayrollController extends Controller
 
         foreach ($employees as $emp) {
             $calc = $this->engine->calculateForEmployee($emp, $month, $year);
+            $baseSalary = (float)($emp->base_salary ?? 0);
 
             $results[] = [
                 'employee' => $emp,
-                'base_salary' => $calc['gross_salary'] - $calc['additions'],
+                'base_salary' => $baseSalary,
                 'additions' => $calc['additions'],
                 'inss_base' => $calc['inss_base'],
                 'inss_employee' => $calc['inss_employee'],
@@ -180,7 +181,7 @@ class PayrollController extends Controller
                 'details' => $calc['itemized']
             ];
 
-            $totals['base'] += 0;
+            $totals['base'] += $baseSalary;
             $totals['additions'] += $calc['additions'];
             $totals['deductions'] += $calc['deductions'];
             $totals['inss_employee'] += $calc['inss_employee'];
