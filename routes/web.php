@@ -7,6 +7,7 @@ use App\Http\Controllers\SalesPOSController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ContractController;
