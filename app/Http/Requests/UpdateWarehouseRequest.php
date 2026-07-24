@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateWarehouseRequest extends FormRequest
@@ -12,18 +11,25 @@ class UpdateWarehouseRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return auth()->check() && (
+            auth()->user()->can('inventory.edit') || 
+            auth()->user()->hasRole(['Administrador', 'Gestor', 'Gestor de Armazém', 'Super Admin'])
+        );
     }
 
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:50',
+            'location' => 'nullable|string|max:255',
+            'company_id' => 'nullable|integer',
+            'is_active' => 'nullable',
         ];
     }
 }
