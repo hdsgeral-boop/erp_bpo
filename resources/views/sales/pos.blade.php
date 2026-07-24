@@ -21,13 +21,12 @@
     }
     .products-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 20px;
         overflow-y: auto;
         padding: 5px;
         padding-right: 15px;
     }
-    /* Scrollbar styling */
     .products-grid::-webkit-scrollbar { width: 6px; }
     .products-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     
@@ -55,7 +54,7 @@
         transform: scale(0.97);
     }
     .product-name {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: 700;
         color: #1e293b;
         margin-bottom: 10px;
@@ -65,9 +64,6 @@
         font-weight: 800;
         color: #2563eb;
         font-size: 1.1rem;
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
     }
     .cart-panel {
         background: #ffffff;
@@ -76,7 +72,7 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     }
     .cart-header {
         background: #f8fafc;
@@ -89,11 +85,6 @@
         padding: 10px 15px;
         font-size: 0.95rem;
         color: #334155;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .cart-header select:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
     .cart-items {
         flex: 1;
@@ -106,14 +97,6 @@
         align-items: center;
         padding: 12px 0;
         border-bottom: 1px dashed #e2e8f0;
-        animation: fadeIn 0.3s ease-out forwards;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateX(-10px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    .cart-item:last-child {
-        border-bottom: none;
     }
     .cart-item-name {
         font-size: 0.9rem;
@@ -123,12 +106,11 @@
     .cart-item-price {
         font-size: 0.8rem;
         color: #64748b;
-        margin-top: 2px;
     }
     .cart-qty-ctrl {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         background: #f1f5f9;
         padding: 4px;
         border-radius: 8px;
@@ -144,30 +126,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        transition: all 0.1s;
     }
     .cart-qty-btn:hover {
         background: #3b82f6;
         color: #fff;
-    }
-    .cart-qty-btn:active {
-        transform: scale(0.9);
     }
     .cart-total-panel {
         background: linear-gradient(135deg, #0f172a, #1e293b);
         color: #fff;
         padding: 25px;
         border-radius: 0 0 20px 20px;
-        position: relative;
-        overflow: hidden;
-    }
-    .cart-total-panel::before {
-        content: '';
-        position: absolute;
-        top: -50%; left: -50%; width: 200%; height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
-        pointer-events: none;
     }
     .total-row {
         display: flex;
@@ -175,7 +143,6 @@
         font-size: 1.6rem;
         font-weight: 800;
         margin-bottom: 20px;
-        letter-spacing: -0.5px;
     }
     .btn-pay {
         width: 100%;
@@ -187,29 +154,17 @@
         border: none;
         box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
         transition: all 0.3s;
+        color: white;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
     .btn-pay:hover:not(:disabled) {
         transform: translateY(-2px);
-        box-shadow: 0 15px 20px -5px rgba(16, 185, 129, 0.4);
         background: linear-gradient(135deg, #34d399, #10b981);
     }
     .btn-pay:disabled {
         background: #475569;
         box-shadow: none;
         opacity: 0.7;
-    }
-    
-    #productSearch {
-        border-radius: 12px;
-        border: 1px solid #cbd5e1;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s;
-    }
-    #productSearch:focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
     }
 </style>
 @endpush
@@ -218,16 +173,18 @@
 <div class="pos-container">
     <!-- Left: Products -->
     <div style="display: flex; flex-direction: column; gap: 15px;">
-        <input type="text" id="productSearch" class="form-control" placeholder="Pesquisar produto (Nome ou Código)..." style="font-size: 1.1rem; padding: 12px;">
+        <input type="text" id="productSearch" class="form-control" placeholder="Pesquisar produto (Nome ou Código)..." style="font-size: 1.1rem; padding: 12px; border-radius: 12px;">
         
         <div class="products-grid" id="productsGrid">
             @foreach($products as $product)
-            <div class="product-card" onclick="addToCart({{ $product->id }}, '{{ addslashes($product->name) }}', {{ $product->price }})">
+            <div class="product-card" onclick="addToCart({{ $product->id }}, '{{ addslashes($product->name) }}', {{ $product->unit_price }})">
                 <div class="product-name">{{ $product->name }}</div>
                 <div>
-                    <div class="product-price">{{ number_format($product->price, 2, ',', '.') }} Kz</div>
-                    @if($product->is_stockable)
-                    <div style="font-size: 0.7rem; color: #64748b; margin-top: 4px;">Stock: {{ $product->stock }}</div>
+                    <div class="product-price">{{ number_format($product->unit_price, 2, ',', '.') }} Kz</div>
+                    @if($product->is_inventory)
+                    <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">
+                        <i class="fas fa-boxes me-1"></i> Stock: {{ (int)$product->stock_qty }}
+                    </div>
                     @endif
                 </div>
             </div>
@@ -245,7 +202,6 @@
                 <option value="GT">Guia de Transporte</option>
                 <option value="OR">Orçamento</option>
                 <option value="PP">Fatura Pró-Forma</option>
-                <option value="EN">Encomenda (Armazém)</option>
             </select>
             <div class="d-flex gap-2">
                 <select id="customerId" class="form-select flex-grow-1">
@@ -260,7 +216,6 @@
             </div>
         </div>
         <div class="cart-items" id="cartItems">
-            <!-- Items via JS -->
             <div style="text-align: center; color: #94a3b8; padding: 40px 0;" id="emptyCartMsg">
                 O carrinho está vazio
             </div>
@@ -273,6 +228,8 @@
             <button class="btn btn-success btn-pay" onclick="processSale()" id="payBtn" disabled>
                 <i class="fas fa-money-bill-wave"></i> Cobrar e Emitir
             </button>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Criar Cliente Rápido -->
@@ -314,59 +271,48 @@
     </div>
 </div>
 
-<script>
-    document.getElementById('quickCustomerForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        formData.append('type', 'customer');
+<!-- Modal Sucesso Venda -->
+<div class="modal fade" id="saleSuccessModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-body text-center p-4">
+                <div class="text-success mb-3" style="font-size: 3.5rem;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h4 class="fw-bold mb-2 text-dark">Venda Emitida com Sucesso!</h4>
+                <p class="text-muted mb-4" id="successDocNumber">Documento processado e assinado digitalmente.</p>
+                <div class="d-flex justify-content-center gap-2">
+                    <a id="printThermalBtn" href="#" target="_blank" class="btn btn-primary px-3 py-2 fw-bold">
+                        <i class="fas fa-receipt me-1"></i> Imprimir Talão
+                    </a>
+                    <a id="printPdfBtn" href="#" target="_blank" class="btn btn-outline-secondary px-3 py-2 fw-bold">
+                        <i class="fas fa-file-pdf me-1"></i> Ver PDF
+                    </a>
+                    <button type="button" class="btn btn-success px-4 py-2 fw-bold" onclick="location.reload()">
+                        <i class="fas fa-plus me-1"></i> Nova Venda
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        fetch("{{ route('entidades.store') }}", {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            },
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success || data.id) {
-                const select = document.getElementById('customerId');
-                const opt = document.createElement('option');
-                opt.value = data.data ? data.data.id : (data.id || data.third_party.id);
-                opt.textContent = (data.data ? data.data.name : data.name) + ' (Novo)';
-                opt.selected = true;
-                select.appendChild(opt);
-
-                const modal = bootstrap.Modal.getInstance(document.getElementById('createCustomerModal'));
-                if(modal) modal.hide();
-                this.reset();
-                alert('Cliente criado com sucesso!');
-            } else {
-                alert('Cliente adicionado!');
-                location.reload();
-            }
-        })
-        .catch(err => {
-            alert('Cliente guardado!');
-            location.reload();
-        });
-    });
-
+@push('scripts')
 <script>
     let cart = [];
 
     function formatMoney(amount) {
-        return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(amount).replace('Kz', '').trim() + ' Kz';
+        return new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' Kz';
     }
 
     function addToCart(id, name, price) {
-        let item = cart.find(i => i.id === id);
+        let item = cart.find(i => i.product_id === id);
         if (item) {
             item.quantity++;
             item.subtotal = item.quantity * item.unit_price;
         } else {
             cart.push({
+                product_id: id,
                 id: id,
                 name: name,
                 unit_price: price,
@@ -378,11 +324,11 @@
     }
 
     function updateQty(id, delta) {
-        let item = cart.find(i => i.id === id);
+        let item = cart.find(i => i.product_id === id);
         if (item) {
             item.quantity += delta;
             if (item.quantity <= 0) {
-                cart = cart.filter(i => i.id !== id);
+                cart = cart.filter(i => i.product_id !== id);
             } else {
                 item.subtotal = item.quantity * item.unit_price;
             }
@@ -392,12 +338,11 @@
 
     function renderCart() {
         const container = document.getElementById('cartItems');
-        const emptyMsg = document.getElementById('emptyCartMsg');
         const totalEl = document.getElementById('cartTotal');
         const payBtn = document.getElementById('payBtn');
 
         if (cart.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 40px 0;" id="emptyCartMsg">O carrinho está vazio</div>';
+            container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 40px 0;">O carrinho está vazio</div>';
             totalEl.textContent = '0,00 Kz';
             payBtn.disabled = true;
             return;
@@ -416,11 +361,11 @@
                         <div class="cart-item-price">${formatMoney(item.unit_price)}</div>
                     </div>
                     <div class="cart-qty-ctrl">
-                        <button class="cart-qty-btn" onclick="updateQty(${item.id}, -1)"><i class="fas fa-minus" style="font-size: 10px;"></i></button>
+                        <button type="button" class="cart-qty-btn" onclick="updateQty(${item.product_id}, -1)"><i class="fas fa-minus" style="font-size: 10px;"></i></button>
                         <span style="font-weight: 600; width: 24px; text-align: center;">${item.quantity}</span>
-                        <button class="cart-qty-btn" onclick="updateQty(${item.id}, 1)"><i class="fas fa-plus" style="font-size: 10px;"></i></button>
+                        <button type="button" class="cart-qty-btn" onclick="updateQty(${item.product_id}, 1)"><i class="fas fa-plus" style="font-size: 10px;"></i></button>
                     </div>
-                    <div style="width: 80px; text-align: right; font-weight: 700;">
+                    <div style="width: 90px; text-align: right; font-weight: 700;">
                         ${formatMoney(item.subtotal)}
                     </div>
                 </div>
@@ -433,6 +378,7 @@
     function processSale() {
         if (cart.length === 0) return;
 
+        const payBtn = document.getElementById('payBtn');
         payBtn.disabled = true;
         payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
 
@@ -440,7 +386,8 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 doc_type: document.getElementById('docType').value,
@@ -451,22 +398,28 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                alert('Fatura emitida com sucesso!');
+                const modal = new bootstrap.Modal(document.getElementById('saleSuccessModal'));
+                document.getElementById('successDocNumber').textContent = data.message || 'Documento emitido com sucesso.';
+                
+                const saleId = data.data ? data.data.id : (data.sale_id || '');
+                document.getElementById('printThermalBtn').href = `/vendas/documentos/${saleId}/talao`;
+                document.getElementById('printPdfBtn').href = `/vendas/documentos/${saleId}/pdf`;
+                
+                modal.show();
                 cart = [];
                 renderCart();
-                // Opcional: imprimir janela
             } else {
-                alert('Erro: ' + data.message);
+                alert('Erro ao emitir venda: ' + (data.message || 'Falha no processamento.'));
             }
         })
         .catch(err => {
-            alert('Erro no servidor!');
+            alert('Erro no servidor ao processar a venda.');
             console.error(err);
         })
         .finally(() => {
             payBtn.disabled = false;
-            payBtn.innerHTML = payBtn.dataset.defaultText || '<i class="fas fa-money-bill-wave"></i> Cobrar e Emitir';
-            if(cart.length === 0) payBtn.disabled = true;
+            updatePayButton();
+            if (cart.length === 0) payBtn.disabled = true;
         });
     }
 
@@ -479,29 +432,67 @@
         if(type === 'FT') { icon = '<i class="fas fa-file-invoice"></i> '; text = 'Emitir Fatura'; }
         if(type === 'GT') { icon = '<i class="fas fa-truck"></i> '; text = 'Emitir Guia'; }
         if(type === 'OR' || type === 'PP') { icon = '<i class="fas fa-save"></i> '; text = 'Gravar Documento'; }
-        if(type === 'EN') { icon = '<i class="fas fa-box"></i> '; text = 'Registar Encomenda'; }
 
         if(cart.length > 0) {
             btn.innerHTML = icon + text;
+        } else {
+            btn.innerHTML = icon + text;
+            btn.disabled = true;
         }
         btn.dataset.defaultText = icon + text;
     }
 
-    // Call once to initialize
-    document.addEventListener('DOMContentLoaded', () => updatePayButton());
+    document.addEventListener('DOMContentLoaded', () => {
+        updatePayButton();
 
-    // Search logic
-    document.getElementById('productSearch').addEventListener('input', function(e) {
-        const text = e.target.value.toLowerCase();
-        const cards = document.querySelectorAll('.product-card');
-        cards.forEach(card => {
-            const name = card.querySelector('.product-name').textContent.toLowerCase();
-            if (name.includes(text)) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
+        // Submeter Cliente Rápido
+        document.getElementById('quickCustomerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            formData.append('type', 'customer');
+
+            fetch("{{ route('entidades.store') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                const select = document.getElementById('customerId');
+                const opt = document.createElement('option');
+                opt.value = data.data ? data.data.id : (data.id || data.third_party?.id);
+                opt.textContent = (data.data ? data.data.name : data.name) + ' (Novo)';
+                opt.selected = true;
+                select.appendChild(opt);
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createCustomerModal'));
+                if(modal) modal.hide();
+                this.reset();
+                alert('Cliente criado com sucesso!');
+            })
+            .catch(err => {
+                alert('Cliente guardado!');
+                location.reload();
+            });
+        });
+
+        // Pesquisa de Produtos
+        document.getElementById('productSearch').addEventListener('input', function(e) {
+            const text = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => {
+                const name = card.querySelector('.product-name').textContent.toLowerCase();
+                if (name.includes(text)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         });
     });
 </script>
+@endpush
 @endsection

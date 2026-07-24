@@ -191,16 +191,29 @@ class CommercialDocumentController extends Controller
 
         if ($request->wantsJson() || $request->expectsJson() || $request->is('api/*')) {
             $request->validate([
-                'customer_id' => 'required|exists:third_parties,id',
-                'doc_type' => 'required|string|in:FT,FR,OR,PP,NC,ND,GT,GR',
+                'customer_id' => 'nullable|exists:third_parties,id',
+                'doc_type' => 'required|string|in:FT,FR,OR,PP,NC,ND,GT,GR,FS,EN',
                 'items' => 'required|array|min:1',
                 'items.*.product_id' => 'required|exists:products,id',
                 'items.*.quantity' => 'required|numeric|min:0.01',
                 'items.*.unit_price' => 'required|numeric|min:0'
             ]);
 
-            $docType = $request->input('doc_type', 'FT');
+            $docType = $request->input('doc_type', 'FR');
             $customerId = $request->input('customer_id');
+
+            if (empty($customerId)) {
+                $defaultCustomer = ThirdParty::where('company_id', $company->id)->where('is_customer', true)->first();
+                if (!$defaultCustomer) {
+                    $defaultCustomer = ThirdParty::create([
+                        'company_id' => $company->id,
+                        'name' => 'Consumidor Final',
+                        'nif' => '999999999',
+                        'is_customer' => true
+                    ]);
+                }
+                $customerId = $defaultCustomer->id;
+            }
             $warehouseId = $request->input('warehouse_id');
             $date = $request->input('date', date('Y-m-d'));
             $notes = $request->input('notes');
@@ -233,8 +246,8 @@ class CommercialDocumentController extends Controller
                     'subtotal' => $subtotal
                 ];
 
-                // Baixa no stock se for Fatura (FT/FR)
-                if (in_array($docType, ['FT', 'FR'])) {
+                // Baixa no stock se for Fatura (FT/FR/FS)
+                if (in_array($docType, ['FT', 'FR', 'FS'])) {
                     $product = Product::find($item['product_id']);
                     if ($product && $product->is_inventory) {
                         $product->stock_qty = max(0, $product->stock_qty - $qty);
