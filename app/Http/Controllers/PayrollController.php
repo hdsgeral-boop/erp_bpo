@@ -285,13 +285,14 @@ class PayrollController extends Controller
 
             // CONTABILIDADE PARAMETRIZADA
             Journal::create([
+                'company_id' => $companyId,
+                'code' => 'SAL',
                 'reference' => 'SAL-' . $reference . '-V' . $newVersion,
                 'date' => date('Y-m-d'),
                 'description' => 'Proc. Salarial ' . $reference . ' (V'.$newVersion.')',
                 'total_debit' => $totals['additions'] + $totals['inss_company'],
                 'total_credit' => $totals['net'] + $totals['irt'] + ($totals['inss_employee'] + $totals['inss_company']),
-                'status' => 'APPROVED',
-                'company_id' => $companyId
+                'status' => 'APPROVED'
             ]);
 
             DB::commit();
