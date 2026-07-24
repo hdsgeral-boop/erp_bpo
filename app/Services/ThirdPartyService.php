@@ -14,9 +14,9 @@ class ThirdPartyService
         $this->thirdPartyRepository = $thirdPartyRepository;
     }
 
-    public function getAllPaginated($perPage = 15, $search = null, $type = null)
+    public function getAllPaginated($perPage = 15, $search = null, $type = null, $companyId = null)
     {
-        return $this->thirdPartyRepository->paginate($perPage, $search, $type);
+        return $this->thirdPartyRepository->paginate($perPage, $search, $type, $companyId);
     }
 
     public function getById($id)

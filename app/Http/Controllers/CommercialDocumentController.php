@@ -90,15 +90,23 @@ class CommercialDocumentController extends Controller
 
     public function create(string $category)
     {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $company = Company::find($companyId) ?? Company::first();
+
         $docTypes = $this->getDocTypesByCategory($category);
-        $customers = ThirdParty::where('is_customer', true)->orWhereNull('is_customer')->orderBy('name')->get();
+        $customers = ThirdParty::where('company_id', $companyId)
+            ->where(function($q) {
+                $q->where('is_customer', true)->orWhereNull('is_customer');
+            })->orderBy('name')->get();
+
         if ($customers->isEmpty()) {
-            $customers = ThirdParty::orderBy('name')->get();
+            $customers = ThirdParty::where('company_id', $companyId)->orderBy('name')->get();
         }
-        $products = Product::orderBy('name')->get();
-        $warehouses = Warehouse::orderBy('name')->get();
-        $company = Company::first();
+
+        $products = Product::where('company_id', $companyId)->orderBy('name')->get();
+        $warehouses = Warehouse::where('company_id', $companyId)->orderBy('name')->get();
         $taxes = Tax::where('is_active', true)->orWhereNull('is_active')->orderBy('name')->get();
+
         if ($taxes->isEmpty()) {
             $taxes = collect([
                 (object)['id' => 1, 'name' => 'IVA 14%', 'rate' => 14],
@@ -106,7 +114,7 @@ class CommercialDocumentController extends Controller
             ]);
         }
         
-        $series = DocumentSeries::where('company_id', $company->id ?? 1)
+        $series = DocumentSeries::where('company_id', $companyId)
                                 ->where('is_active', true)
                                 ->get();
         if ($series->isEmpty()) {

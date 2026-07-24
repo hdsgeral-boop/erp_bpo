@@ -51,7 +51,14 @@ class ProductController extends Controller
 
     public function create()
     {
-        $categories = ProductCategory::orderBy('name')->get();
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $categories = ProductCategory::where('company_id', $companyId)->orderBy('name')->get();
+
+        if ($categories->isEmpty()) {
+            return redirect()->route('logistica.categories.create')
+                ->with('warning', 'Primeiro deve criar pelo menos uma Categoria antes de registar artigos.');
+        }
+
         return view('inventory.products.create', compact('categories'));
     }
 
@@ -59,13 +66,8 @@ class ProductController extends Controller
     {
         $data = $request->validated();
         
-        if (empty($data['company_id'])) {
-            $company = Company::first();
-            if (!$company) {
-                return back()->withInput()->with('error', 'Tem de criar pelo menos uma Empresa no sistema.');
-            }
-            $data['company_id'] = $company->id;
-        }
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $data['company_id'] = $companyId;
 
         $data['is_inventory'] = $request->has('is_inventory');
         $data['is_asset'] = $request->has('is_asset');
@@ -86,14 +88,18 @@ class ProductController extends Controller
 
     public function edit(string $id)
     {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
         $product = $this->productRepository->findOrFail((int)$id);
-        $categories = ProductCategory::orderBy('name')->get();
+        $categories = ProductCategory::where('company_id', $companyId)->orderBy('name')->get();
         return view('inventory.products.edit', compact('product', 'categories'));
     }
 
     public function update(UpdateProductRequest $request, string $id)
     {
         $data = $request->validated();
+        
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $data['company_id'] = $companyId;
         
         $data['is_inventory'] = $request->has('is_inventory');
         $data['is_asset'] = $request->has('is_asset');

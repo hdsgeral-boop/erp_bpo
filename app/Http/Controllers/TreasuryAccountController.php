@@ -32,8 +32,9 @@ class TreasuryAccountController extends Controller
             'initial_balance' => 'required|numeric',
         ]);
 
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
         TreasuryAccount::create([
-            'company_id' => session('company_id'),
+            'company_id' => $companyId,
             'name' => $request->name,
             'currency' => $request->currency,
             'initial_balance' => $request->initial_balance,

@@ -49,7 +49,7 @@ class JournalController extends Controller
 
     public function createData()
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
 
         $accounts = ChartOfAccount::where('company_id', $companyId)
             ->where('type', 'M') // Apenas contas de movimento
@@ -61,7 +61,7 @@ class JournalController extends Controller
 
     public function store(Request $request)
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
 
         $validated = $request->validate([
             'doc_date' => 'required|date',

@@ -28,8 +28,9 @@ class ThirdPartyController extends Controller
     {
         $search = $request->input('search');
         $type = $request->input('type'); // 'customer', 'supplier', or null for all
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
         
-        $thirdParties = $this->thirdPartyService->getAllPaginated(15, $search, $type);
+        $thirdParties = $this->thirdPartyService->getAllPaginated(15, $search, $type, $companyId);
         
         return view('entities.index', compact('thirdParties', 'search', 'type'));
     }
@@ -50,15 +51,8 @@ class ThirdPartyController extends Controller
     {
         $data = $request->validated();
         
-        // Em um cenário multi-empresa real, isto viria do contexto do user logado.
-        // Aqui garantimos que tem company_id, ou usamos a primeira empresa como fallback se não vier no request.
-        if (empty($data['company_id'])) {
-            $company = Company::first();
-            if (!$company) {
-                return back()->withInput()->with('error', 'Tem de criar pelo menos uma Empresa no sistema antes de criar entidades.');
-            }
-            $data['company_id'] = $company->id;
-        }
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $data['company_id'] = $companyId;
 
         try {
             $thirdParty = $this->thirdPartyService->createThirdParty($data);

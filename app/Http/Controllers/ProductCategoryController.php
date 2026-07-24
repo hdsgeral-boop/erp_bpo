@@ -11,7 +11,8 @@ class ProductCategoryController extends Controller
      */
     public function index()
     {
-        $categories = \App\Models\ProductCategory::all();
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $categories = \App\Models\ProductCategory::where('company_id', $companyId)->get();
         return view('product_categories.index', compact('categories'));
     }
 
@@ -29,11 +30,18 @@ class ProductCategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:product_categories,code',
+            'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
         ]);
         
-        $validated['company_id'] = 1;
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $validated['company_id'] = $companyId;
+
+        // Validar unicidade por empresa
+        $exists = \App\Models\ProductCategory::where('company_id', $companyId)->where('code', $validated['code'])->exists();
+        if ($exists) {
+            return back()->withInput()->with('error', 'Já existe uma categoria com este código nesta empresa.');
+        }
 
         \App\Models\ProductCategory::create($validated);
 
@@ -53,7 +61,8 @@ class ProductCategoryController extends Controller
      */
     public function edit(string $id)
     {
-        $category = \App\Models\ProductCategory::findOrFail($id);
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $category = \App\Models\ProductCategory::where('company_id', $companyId)->findOrFail($id);
         return view('product_categories.edit', compact('category'));
     }
 
@@ -62,16 +71,26 @@ class ProductCategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $category = \App\Models\ProductCategory::findOrFail($id);
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $category = \App\Models\ProductCategory::where('company_id', $companyId)->findOrFail($id);
         
         $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:product_categories,code,'.$id,
+            'code' => 'required|string|max:50',
             'name' => 'required|string|max:255',
         ]);
 
+        $exists = \App\Models\ProductCategory::where('company_id', $companyId)
+            ->where('code', $validated['code'])
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()->with('error', 'Já existe outra categoria com este código nesta empresa.');
+        }
+
         $category->update($validated);
 
-        return redirect()->route('logistica.categories.index')->with('success', 'Categoria atualizada.');
+        return redirect()->route('logistica.categories.index')->with('success', 'Categoria atualizada com sucesso.');
     }
 
     /**
@@ -79,9 +98,15 @@ class ProductCategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        $category = \App\Models\ProductCategory::findOrFail($id);
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $category = \App\Models\ProductCategory::where('company_id', $companyId)->findOrFail($id);
+        
+        if ($category->products()->count() > 0) {
+            return back()->with('error', 'Não é possível eliminar categorias que possuem artigos associados.');
+        }
+
         $category->delete();
         
-        return redirect()->route('logistica.categories.index')->with('success', 'Categoria removida.');
+        return redirect()->route('logistica.categories.index')->with('success', 'Categoria removida com sucesso.');
     }
 }

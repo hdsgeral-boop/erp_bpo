@@ -86,7 +86,7 @@ class AssetController extends Controller
      */
     public function createData()
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
 
         $categories = AssetCategory::where('company_id', $companyId)->orderBy('name')->get();
         $vendors = ThirdParty::where('company_id', $companyId)->where('is_supplier', true)->orderBy('name')->get();
@@ -101,10 +101,10 @@ class AssetController extends Controller
      */
     public function store(StoreFixedAssetRequest $request)
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
         $data = $request->validated();
         
-        $data['company_id'] = $companyId; // FIX #1
+        $data['company_id'] = $companyId;
 
         $response = $this->assetService->createAsset($data, auth()->id());
 

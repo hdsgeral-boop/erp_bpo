@@ -54,8 +54,9 @@ class EmployeeController extends Controller
      */
     public function create()
     {
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
         $companies = Company::all();
-        $departments = Department::orderBy('name')->get();
+        $departments = Department::where('company_id', $companyId)->orderBy('name')->get();
         $positions = Position::orderBy('title')->get();
         $roles = Role::orderBy('name')->get();
 
@@ -69,13 +70,8 @@ class EmployeeController extends Controller
     {
         $data = $request->validated();
         
-        if (empty($data['company_id'])) {
-            $company = Company::first();
-            if (!$company) {
-                return back()->withInput()->with('error', 'Tem de criar pelo menos uma Empresa no sistema antes de criar colaboradores.');
-            }
-            $data['company_id'] = $company->id;
-        }
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $data['company_id'] = $companyId;
 
         try {
             $employee = $this->employeeService->createEmployee($data);

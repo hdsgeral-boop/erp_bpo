@@ -137,9 +137,14 @@ Route::middleware(['can:inventory.view'])->group(function () {
     Route::get('/logistica/inventario/armazens/{id}/edit', [WarehouseController::class, 'edit'])->name('inventario.armazens.edit');
     Route::put('/logistica/inventario/armazens/{id}', [WarehouseController::class, 'update'])->name('inventario.armazens.update');
     Route::delete('/logistica/inventario/armazens/{id}', [WarehouseController::class, 'destroy'])->name('inventario.armazens.destroy');
-    Route::get('/logistica/categories', [ProductController::class, 'categoriesView'])->name('logistica.categories.index');
+    Route::get('/logistica/categories', [ProductCategoryController::class, 'index'])->name('logistica.categories.index');
+    Route::get('/logistica/categories/create', [ProductCategoryController::class, 'create'])->name('logistica.categories.create');
+    Route::post('/logistica/categories', [ProductCategoryController::class, 'store'])->name('logistica.categories.store');
+    Route::get('/logistica/categories/{id}/edit', [ProductCategoryController::class, 'edit'])->name('logistica.categories.edit');
+    Route::put('/logistica/categories/{id}', [ProductCategoryController::class, 'update'])->name('logistica.categories.update');
+    Route::delete('/logistica/categories/{id}', [ProductCategoryController::class, 'destroy'])->name('logistica.categories.destroy');
+    Route::get('/product_categories', [ProductCategoryController::class, 'index'])->name('product_categories.index');
     Route::get('/logistica/products', [ProductController::class, 'indexView'])->name('logistica.products.index');
-    Route::get('/logistica/categories', [ProductController::class, 'indexView'])->name('product_categories.index');
     Route::get('/logistica/products/create', [ProductController::class, 'create'])->name('logistica.products.create');
     Route::get('/logistica/inventario/artigos', [ProductController::class, 'indexView'])->name('inventario.artigos.index');
     Route::get('/logistica/inventario/artigos/create', [ProductController::class, 'create'])->name('inventario.artigos.create');

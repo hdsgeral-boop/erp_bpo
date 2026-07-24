@@ -44,13 +44,8 @@ class WarehouseController extends Controller
     {
         $data = $request->validated();
         
-        if (empty($data['company_id'])) {
-            $company = Company::first();
-            if (!$company) {
-                return back()->withInput()->with('error', 'Tem de criar pelo menos uma Empresa no sistema.');
-            }
-            $data['company_id'] = $company->id;
-        }
+        $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $data['company_id'] = $companyId;
 
         $this->warehouseRepository->create($data);
         return redirect()->route('inventario.armazens.index')->with('success', 'Armazém criado com sucesso.');

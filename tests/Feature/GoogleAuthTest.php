@@ -50,7 +50,18 @@ class GoogleAuthTest extends TestCase
 
         $response = $this->get(route('auth.google.callback'));
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('auth.google.onboarding'));
+        $response->assertSessionHas('google_onboarding_data');
+
+        // Submeter formulário de onboarding
+        $onboardingResponse = $this->post(route('auth.google.onboarding.submit'), [
+            'name' => 'Novo Utilizador Google',
+            'company_name' => 'Empresa Google Lda',
+            'company_nif' => '541888999',
+            'phone' => '+244 923 000 111',
+        ]);
+
+        $onboardingResponse->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
 
         $this->assertDatabaseHas('users', [
@@ -63,12 +74,16 @@ class GoogleAuthTest extends TestCase
 
     public function test_existing_user_auto_linking_without_duplication(): void
     {
+        $company = Company::first();
+        $roleAdmin = \Spatie\Permission\Models\Role::where('name', 'Administrador')->first();
+
         $existingUser = User::create([
             'name' => 'Utilizador Existente',
             'email' => 'existente@empresa.com',
             'password' => bcrypt('password123'),
             'status' => 'active',
         ]);
+        $existingUser->companies()->attach($company->id, ['role_id' => $roleAdmin->id]);
 
         $abstractUser = Mockery::mock(SocialiteUser::class);
         $abstractUser->shouldReceive('getId')->andReturn('google-id-99999');

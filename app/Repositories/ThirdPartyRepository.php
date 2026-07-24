@@ -12,10 +12,13 @@ class ThirdPartyRepository implements ThirdPartyRepositoryInterface
         return ThirdParty::orderBy('name')->get();
     }
     
-    public function paginate($perPage = 15, $search = null, $type = null)
+    public function paginate($perPage = 15, $search = null, $type = null, $companyId = null)
     {
         $query = ThirdParty::query();
         
+        $companyIdResolved = $companyId ?? session('company_id') ?? auth()->user()?->company_id ?? 1;
+        $query->where('company_id', $companyIdResolved);
+
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
