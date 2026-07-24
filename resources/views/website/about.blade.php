@@ -237,7 +237,7 @@
                         Consulvolt Soluções - 10 Anos de Excelência e Inovação Tecnológica em Angola. ERP Certificado pela AGT.
                     </p>
                     <div>
-                        <a href="https://wa.me/244923692943" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://wa.me/244923012143" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
                         <a href="mailto:hdsgeral@gmail.com" class="social-icon"><i class="fas fa-envelope"></i></a>
                     </div>
                 </div>
@@ -285,7 +285,7 @@
     </footer>
 
     <!-- Floating WhatsApp Button -->
-    <a href="https://wa.me/244923692943" target="_blank" class="whatsapp-float-btn" title="Falar no WhatsApp">
+    <a href="https://wa.me/244923012143" target="_blank" class="whatsapp-float-btn" title="Falar no WhatsApp">
         <i class="fab fa-whatsapp"></i>
     </a>
 

@@ -210,7 +210,7 @@
                         <i class="fas fa-shield-alt"></i> Software Certificado AGT n.º 142/AGT/2019
                     </div>
                     <div>
-                        <a href="https://wa.me/244923692943" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://wa.me/244923012143" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
                         <a href="mailto:hdsgeral@gmail.com" class="social-icon"><i class="fas fa-envelope"></i></a>
                     </div>
                 </div>
