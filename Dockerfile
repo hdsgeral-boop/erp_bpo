@@ -1,10 +1,11 @@
 # ─────────────────────────────────────────
-# Stage 1: Composer dependencies
+# Stage 1: Composer Build & Auto-loader
 # ─────────────────────────────────────────
 FROM composer:2.7 AS composer_stage
 
 WORKDIR /app
 COPY composer.json composer.lock ./
+
 RUN composer install \
     --no-dev \
     --no-scripts \
@@ -16,11 +17,11 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
 # ─────────────────────────────────────────
-# Stage 2: Runtime PHP 8.3-FPM
+# Stage 2: Runtime PHP 8.3-FPM Production
 # ─────────────────────────────────────────
 FROM php:8.3-fpm-alpine
 
-# System dependencies
+# Install System Dependencies
 RUN apk add --no-cache \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -34,9 +35,10 @@ RUN apk add --no-cache \
     oniguruma-dev \
     postgresql-dev \
     openssl \
-    supervisor
+    supervisor \
+    tesseract-ocr
 
-# PHP extensions
+# Configure and Install PHP Extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install \
         pdo \
@@ -50,26 +52,28 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
         pcntl \
         opcache
 
-# Redis PHP extension
+# PECL Redis Extension
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del .build-deps
 
-# PHP-FPM config
+# Copy Custom PHP & OPcache Config
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
-# Supervisor config
+# Copy Supervisor Config
 COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 WORKDIR /var/www
 
-# Copy from composer stage
+# Copy Application Artifacts
 COPY --from=composer_stage /app /var/www
 
-# Permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+# Create Logs & Runtime Directories with Permissions
+RUN mkdir -p /var/log/php /var/log/supervisor /var/www/storage/logs \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/log/php \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 9000

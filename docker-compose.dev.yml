@@ -1,0 +1,41 @@
+name: erp_consulvolt_dev
+
+services:
+  backend:
+    volumes:
+      - .:/var/www
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+
+  horizon:
+    volumes:
+      - .:/var/www
+
+  queue:
+    volumes:
+      - .:/var/www
+
+  scheduler:
+    volumes:
+      - .:/var/www
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: erp_frontend_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost/api/v1
+      NODE_ENV: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - erp_private_network
