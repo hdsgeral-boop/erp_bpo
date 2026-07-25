@@ -276,4 +276,43 @@ class AgtSaftExportService
         $dom->formatOutput = true;
         return $dom->saveXML();
     }
+
+    /**
+     * Valida um documento XML SAF-T (AO) contra o esquema XSD oficial da AGT.
+     *
+     * @param string $xmlContent
+     * @return array ['is_valid' => bool, 'errors' => array]
+     */
+    public function validateXmlAgainstXsd(string $xmlContent): array
+    {
+        $xsdPath = storage_path('app/schemas/SAF-T_AO_1.01_01.xsd');
+        
+        if (!file_exists($xsdPath)) {
+            return [
+                'is_valid' => true,
+                'errors' => ['Aviso: Esquema XSD de validação não encontrado em ' . $xsdPath]
+            ];
+        }
+
+        libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        $dom = new \DOMDocument();
+        $dom->loadXML($xmlContent);
+
+        $isValid = $dom->schemaValidate($xsdPath);
+        $errors = [];
+
+        if (!$isValid) {
+            foreach (libxml_get_errors() as $error) {
+                $errors[] = sprintf("Linha %d: %s", $error->line, trim($error->message));
+            }
+            libxml_clear_errors();
+        }
+
+        return [
+            'is_valid' => $isValid,
+            'errors' => $errors
+        ];
+    }
 }

@@ -490,13 +490,25 @@ class CommercialDocumentController extends Controller
             return response()->json(['error' => 'Documento não encontrado.'], 404);
         }
 
+        // Registar contagem de impressões e data da última via
+        $sale->increment('print_count');
+        $sale->last_printed_at = now();
+        $sale->save();
+
+        if ($sale->print_count > 1) {
+            $lastPrintFormatted = $sale->last_printed_at ? $sale->last_printed_at->format('Y-m-d H:i') : date('Y-m-d H:i');
+            $copyMention = "2.ª Via emitida em {$lastPrintFormatted}";
+        } else {
+            $copyMention = "Original";
+        }
+
         $company = Company::find($companyId) ?? Company::first();
         $controlCode = ($sale->hash && strlen($sale->hash) >= 31) 
             ? ($sale->hash[0] . $sale->hash[10] . $sale->hash[20] . $sale->hash[30]) 
             : 'kMB0';
         $printMention = $this->agtSignatureService->formatPrintMention($controlCode);
 
-        return response()->view('sales.documents.pdf', compact('sale', 'company', 'printMention'))
+        return response()->view('sales.documents.pdf', compact('sale', 'company', 'printMention', 'copyMention'))
             ->header('Content-Type', 'text/html; charset=UTF-8');
     }
 

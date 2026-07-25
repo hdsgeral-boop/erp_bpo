@@ -469,7 +469,7 @@
                         @default Documento n.º {{ $sale->doc_number }}
                     @endswitch
                 </div>
-                <div class="doc-copy">Original</div>
+                <div class="doc-copy" style="{{ isset($copyMention) && str_contains($copyMention, '2.ª') ? 'color: #dc2626; font-weight: 800;' : '' }}">{{ $copyMention ?? 'Original' }}</div>
             </div>
 
             <!-- Rectification Box for Credit Notes -->

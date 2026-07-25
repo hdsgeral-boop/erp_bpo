@@ -14,7 +14,7 @@ class Sale extends Model
         'status', 'is_posted', 'related_doc_id', 'is_master_data',
         'warehouse_id', 'created_by', 'cancelled_by', 'cancelled_at', 'cancellation_reason',
         'total_amount', 'total_tax', 'total_discount', 'notes',
-        'amount_paid', 'payment_status'
+        'amount_paid', 'payment_status', 'print_count', 'last_printed_at'
     ];
 
     protected $casts = [
@@ -25,6 +25,7 @@ class Sale extends Model
         'total_tax' => 'decimal:2',
         'total_discount' => 'decimal:2',
         'cancelled_at' => 'datetime',
+        'last_printed_at' => 'datetime',
     ];
 
     public function company()

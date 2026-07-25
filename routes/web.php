@@ -126,6 +126,12 @@ Route::middleware(['can:sales.view'])->group(function () {
         $service = new \App\Services\AgtSaftExportService();
         $xmlContent = $service->generateSaftXml($companyId, $startDate, $endDate);
         
+        $validation = $service->validateXmlAgainstXsd($xmlContent);
+        if (!$validation['is_valid']) {
+            $errorMsg = "O ficheiro SAF-T gerado contém violações do esquema oficial XSD da AGT (1.01_01): " . implode("; ", $validation['errors']);
+            return back()->with('error', $errorMsg);
+        }
+
         $fileName = "SAFT-AO-{$companyId}-{$startDate}-{$endDate}.xml";
 
         return response($xmlContent, 200, [
