@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\Warehouse;
 use App\Models\DocumentSeries;
 use App\Models\Tax;
+use App\Models\Sale;
 use App\Http\Requests\StoreSaleRequest;
 use App\Repositories\Contracts\SaleRepositoryInterface;
 use App\Services\SaleService;
