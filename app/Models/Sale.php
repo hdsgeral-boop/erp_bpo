@@ -56,4 +56,9 @@ class Sale extends Model
     {
         return $this->belongsTo(User::class, 'cancelled_by');
     }
+
+    public function relatedDoc()
+    {
+        return $this->belongsTo(Sale::class, 'related_doc_id');
+    }
 }
