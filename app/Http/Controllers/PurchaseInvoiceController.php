@@ -153,8 +153,11 @@ class PurchaseInvoiceController extends Controller
                 
                 $product = Product::where('company_id', $companyId)->find($item['product_id']);
                 if ($product) {
-                    $warehouse = \App\Models\Warehouse::where('company_id', $companyId)->first();
-                    $warehouseId = $warehouse ? $warehouse->id : 1;
+                    $warehouse = \App\Models\Warehouse::firstOrCreate(
+                        ['company_id' => $companyId],
+                        ['name' => 'Armazém Principal / Central', 'location' => 'Sede']
+                    );
+                    $warehouseId = $warehouse->id;
 
                     InventoryMovement::create([
                         'company_id' => $companyId,
@@ -241,8 +244,11 @@ class PurchaseInvoiceController extends Controller
             foreach ($invoice->items as $item) {
                 $product = Product::where('company_id', $companyId)->find($item->product_id);
                 if ($product) {
-                    $warehouse = \App\Models\Warehouse::where('company_id', $companyId)->first();
-                    $warehouseId = $warehouse ? $warehouse->id : 1;
+                    $warehouse = \App\Models\Warehouse::firstOrCreate(
+                        ['company_id' => $companyId],
+                        ['name' => 'Armazém Principal / Central', 'location' => 'Sede']
+                    );
+                    $warehouseId = $warehouse->id;
 
                     InventoryMovement::create([
                         'company_id' => $companyId,
