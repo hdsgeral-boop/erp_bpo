@@ -72,14 +72,15 @@ class SaleService
             $systemEntryDate = now()->format('Y-m-d\TH:i:s');
             $grossTotal = number_format($data['total_amount'] + $data['total_tax'], 2, '.', '');
             
-            $hash = $this->agtSignatureService->signDocument(
+            $sigResult = $this->agtSignatureService->signDocument(
                 $data['date'], 
                 $systemEntryDate, 
                 $docNumber, 
                 $grossTotal, 
                 $previousHash
             );
-            $hashControl = '1'; // Versão da chave
+            $hash = is_array($sigResult) ? ($sigResult['hash'] ?? '') : (string)$sigResult;
+            $hashControl = is_array($sigResult) ? ($sigResult['hash_control'] ?? '1') : '1';
 
             // 4. Criar Cabeçalho do Documento
             $sale = Sale::create([
