@@ -256,6 +256,7 @@ Route::middleware(['can:treasury.view'])->group(function () {
     Route::post('/tesouraria/accounts/{account}/movement', [TreasuryAccountController::class, 'quickMovement'])->name('tesouraria.accounts.movement');
     Route::get('/tesouraria/documentos-novo/{category?}', [ReceiptController::class, 'create'])->name('tesouraria.documentos.create');
     Route::get('/tesouraria/documentos-detalhes/{category}/{id}', [ReceiptController::class, 'show'])->name('tesouraria.documentos.show');
+    Route::get('/tesouraria/documentos-pdf/{category}/{id}', [ReceiptController::class, 'pdf'])->name('tesouraria.documentos.pdf');
     Route::post('/tesouraria/documentos-anular/{category}/{id}', [ReceiptController::class, 'cancel'])->name('tesouraria.documentos.cancel');
     Route::get('/tesouraria/documentos/{category?}', [ReceiptController::class, 'index'])->name('tesouraria.documents.index');
     Route::get('/tesouraria/docs/{category?}', [ReceiptController::class, 'index'])->name('tesouraria.documentos.index');

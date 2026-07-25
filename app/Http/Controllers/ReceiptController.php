@@ -210,4 +210,23 @@ class ReceiptController extends Controller
             return redirect()->back()->with('error', 'Erro ao anular documento: ' . $e->getMessage());
         }
     }
+
+    public function pdf(Request $request, $category = 'recebimentos', $id = null)
+    {
+        if (is_numeric($category) && $id === null) {
+            $id = $category;
+            $category = 'recebimentos';
+        }
+
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $receipt = Receipt::with(['items.sale', 'items.purchaseInvoice', 'thirdParty', 'treasuryAccount', 'company'])
+            ->where('company_id', $companyId)
+            ->findOrFail($id);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('treasury.receipts.pdf', compact('receipt', 'category'));
+        $pdf->setPaper('A4', 'portrait');
+
+        $safeNum = preg_replace('/[^0-9A-Za-z]/', '_', $receipt->doc_number);
+        return $pdf->stream("Recibo_{$safeNum}.pdf");
+    }
 }
