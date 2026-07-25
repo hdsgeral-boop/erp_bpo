@@ -13,6 +13,7 @@ use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\LogisticsController;
+use App\Http\Controllers\InventorySessionController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PayrollController;
@@ -140,6 +141,14 @@ Route::middleware(['can:inventory.view'])->group(function () {
     Route::get('/logistica/movements', [InventoryMovementController::class, 'indexView'])->name('logistica.movements.index');
     Route::post('/logistica/movements', [InventoryMovementController::class, 'store'])->name('logistica.movements.store');
     Route::get('/logistica/movements/pdf', [InventoryMovementController::class, 'pdf'])->name('logistica.movements.pdf');
+
+    // Sessões de Inventário
+    Route::get('/logistica/inventario', [InventorySessionController::class, 'index'])->name('logistica.inventario.index');
+    Route::post('/logistica/inventario', [InventorySessionController::class, 'store'])->name('logistica.inventario.store');
+    Route::get('/logistica/inventario/{id}/contagem', [InventorySessionController::class, 'contagem'])->name('logistica.inventario.contagem');
+    Route::post('/logistica/inventario/{id}/contagem', [InventorySessionController::class, 'saveContagem'])->name('logistica.inventario.saveContagem');
+    Route::get('/logistica/inventario/{id}/revisao', [InventorySessionController::class, 'review'])->name('logistica.inventario.review');
+    Route::post('/logistica/inventario/{id}/fechar', [InventorySessionController::class, 'close'])->name('logistica.inventario.close');
     Route::get('/logistica/warehouses', [WarehouseController::class, 'indexView'])->name('logistica.warehouses.index');
     Route::get('/logistica/warehouses/create', [WarehouseController::class, 'create'])->name('logistica.warehouses.create');
     Route::get('/logistica/inventario/armazens', [WarehouseController::class, 'indexView'])->name('inventario.armazens.index');
@@ -165,10 +174,6 @@ Route::middleware(['can:inventory.view'])->group(function () {
     Route::get('/logistica/inventario/artigos/{id}/edit', [ProductController::class, 'edit'])->name('inventario.artigos.edit');
     Route::put('/logistica/inventario/artigos/{id}', [ProductController::class, 'update'])->name('inventario.artigos.update');
     Route::delete('/logistica/inventario/artigos/{id}', [ProductController::class, 'destroy'])->name('inventario.artigos.destroy');
-    Route::get('/logistica/inventario', fn() => view('logistica.inventario.index', ['sessions' => \App\Models\InventorySession::with('warehouse')->get(), 'warehouses' => \App\Models\Warehouse::all()]))->name('logistica.inventario.index');
-    Route::post('/logistica/inventario', fn() => back()->with('success', 'Sessão iniciada.'))->name('logistica.inventario.store');
-    Route::get('/logistica/inventario/contagem/{id}', fn($id) => view('logistica.inventario.contagem', compact('id')))->name('logistica.inventario.contagem');
-    Route::get('/logistica/inventario/review/{id}', fn($id) => view('logistica.inventario.review', compact('id')))->name('logistica.inventario.review');
 });
 
 // Compras

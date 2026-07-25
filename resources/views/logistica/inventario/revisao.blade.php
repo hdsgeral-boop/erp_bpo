@@ -69,7 +69,7 @@
                                         @endif
                                     </td>
                                     <td class="text-end font-monospace">
-                                        {{ number_format($custo, 2) }} €
+                                        {{ number_format($custo, 2, ',', '.') }} AKZ
                                     </td>
                                     <td>
                                         @if($line->difference > 0)
@@ -85,12 +85,12 @@
                     <tfoot class="table-light">
                         <tr>
                             <td colspan="4" class="text-end fw-bold">Total Sobras:</td>
-                            <td class="text-end fw-bold text-success font-monospace">+{{ number_format($totalSobras, 2) }} €</td>
+                            <td class="text-end fw-bold text-success font-monospace">+{{ number_format($totalSobras, 2, ',', '.') }} AKZ</td>
                             <td></td>
                         </tr>
                         <tr>
                             <td colspan="4" class="text-end fw-bold">Total Quebras:</td>
-                            <td class="text-end fw-bold text-danger font-monospace">-{{ number_format($totalQuebras, 2) }} €</td>
+                            <td class="text-end fw-bold text-danger font-monospace">-{{ number_format($totalQuebras, 2, ',', '.') }} AKZ</td>
                             <td></td>
                         </tr>
                     </tfoot>
