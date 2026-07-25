@@ -63,7 +63,9 @@ class InventorySessionController extends Controller
                     'inventory_session_id' => $session->id,
                     'product_id' => $prod->id,
                     'system_qty' => $sysQty,
+                    'system_quantity' => $sysQty,
                     'counted_qty' => null,
+                    'counted_quantity' => null,
                     'difference' => null
                 ]);
             }
@@ -106,7 +108,9 @@ class InventorySessionController extends Controller
             $line = InventorySessionLine::find($lineId);
             if ($line && isset($data['counted_qty'])) {
                 $line->counted_qty = $data['counted_qty'];
-                $line->difference = floatval($data['counted_qty']) - floatval($line->system_qty);
+                $line->counted_quantity = $data['counted_qty'];
+                $sysQty = floatval($line->system_qty ?? $line->system_quantity ?? 0);
+                $line->difference = floatval($data['counted_qty']) - $sysQty;
                 $line->save();
             }
         }
