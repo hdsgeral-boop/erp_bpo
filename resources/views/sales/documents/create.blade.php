@@ -113,7 +113,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Motivo da Retificação / Anulação <span class="text-danger">*</span></label>
-                    <input type="text" name="cancellation_reason" class="form-control" placeholder="Ex: Anulação total da Fatura por erro no NIF / Devolução de Mercadoria" required value="{{ old('cancellation_reason') }}">
+                    <input type="text" name="cancellation_reason" class="form-control" placeholder="Ex: Anulação total da Fatura por erro no NIF / Devolução de Mercadoria" required value="{{ old('cancellation_reason', isset($preselectedInvoice) ? 'Anulação total da Fatura ' . $preselectedInvoice->doc_number : '') }}">
                 </div>
             </div>
         </div>
@@ -139,7 +139,7 @@
                     <select name="customer_id" id="customer_id_select" class="form-select" required>
                         <option value="">Selecione o cliente...</option>
                         @foreach($customers as $customer)
-                            <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }} (NIF: {{ $customer->tax_id ?? $customer->nif }})</option>
+                            <option value="{{ $customer->id }}" {{ (old('customer_id') == $customer->id || (isset($preselectedInvoice) && $preselectedInvoice->customer_id == $customer->id)) ? 'selected' : '' }}>{{ $customer->name }} (NIF: {{ $customer->tax_id ?? $customer->nif }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -148,7 +148,7 @@
                     <select name="warehouse_id" id="warehouse_id_select" class="form-select" required>
                         <option value="">Selecione o armazém...</option>
                         @foreach($warehouses as $wh)
-                            <option value="{{ $wh->id }}" {{ old('warehouse_id') == $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
+                            <option value="{{ $wh->id }}" {{ (old('warehouse_id') == $wh->id || (isset($preselectedInvoice) && $preselectedInvoice->warehouse_id == $wh->id)) ? 'selected' : '' }}>{{ $wh->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -272,24 +272,26 @@
                 const discount = parseFloat(row.querySelector('input[name*="[discount_amount]"]').value) || 0;
                 
                 const taxSelect = row.querySelector('.tax-select');
-                const taxOption = taxSelect.options[taxSelect.selectedIndex];
+                const taxOption = taxSelect ? taxSelect.options[taxSelect.selectedIndex] : null;
                 const taxRate = parseFloat(taxOption ? taxOption.dataset.rate : 0) || 0;
                 
                 const exemptionInput = row.querySelector('.exemption-input');
-                if (taxRate === 0 && taxSelect.value !== '') {
-                    exemptionInput.removeAttribute('readonly');
-                    exemptionInput.setAttribute('required', 'required');
-                } else {
-                    exemptionInput.setAttribute('readonly', 'readonly');
-                    exemptionInput.removeAttribute('required');
-                    exemptionInput.value = '';
+                if (exemptionInput) {
+                    if (taxRate === 0 && taxSelect && taxSelect.value !== '') {
+                        exemptionInput.removeAttribute('readonly');
+                        exemptionInput.setAttribute('required', 'required');
+                    } else {
+                        exemptionInput.setAttribute('readonly', 'readonly');
+                        exemptionInput.removeAttribute('required');
+                    }
                 }
                 
                 const lineSubtotal = (qty * price) - discount;
                 const lineTax = lineSubtotal * (taxRate / 100);
                 const lineTotal = lineSubtotal + lineTax;
 
-                row.querySelector('.total-line').value = lineTotal.toFixed(2);
+                const totalInput = row.querySelector('.total-line');
+                if (totalInput) totalInput.value = lineTotal.toFixed(2);
 
                 globalSubtotal += lineSubtotal;
                 globalDiscount += discount;
@@ -327,7 +329,7 @@
             addLine();
         });
 
-        function addLine(productId = '', quantity = 1, unitPrice = 0, taxId = '', discount = 0) {
+        function addLine(productId = '', quantity = 1, unitPrice = 0, taxId = '', discount = 0, exemptionReason = '') {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
@@ -349,7 +351,7 @@
                         @endforeach
                     </select>
                 </td>
-                <td><input type="text" name="items[${lineIndex}][exemption_reason]" class="form-control exemption-input" placeholder="M04..." readonly></td>
+                <td><input type="text" name="items[${lineIndex}][exemption_reason]" class="form-control exemption-input" value="${exemptionReason}" placeholder="M04..." readonly></td>
                 <td><input type="text" class="form-control bg-light total-line fw-bold" value="0.00" readonly></td>
                 <td class="text-center"><button type="button" class="btn btn-sm text-danger remove-line"><i class="fas fa-trash"></i></button></td>
             `;
@@ -357,11 +359,11 @@
 
             if(productId) {
                 const prodSelect = tr.querySelector('.product-select');
-                prodSelect.value = productId;
+                if (prodSelect) prodSelect.value = productId;
             }
             if(taxId) {
                 const taxSelect = tr.querySelector('.tax-select');
-                taxSelect.value = taxId;
+                if (taxSelect) taxSelect.value = taxId;
             }
 
             lineIndex++;
@@ -385,9 +387,9 @@
         // --- Logica de Auto-Preenchimento ao Selecionar Fatura a Retificar ---
         const relatedSelect = document.getElementById('related_doc_select');
         if(relatedSelect) {
-            relatedSelect.addEventListener('change', function() {
-                const opt = this.options[this.selectedIndex];
-                if(!opt.value) return;
+            function populateFromSelectedInvoice() {
+                const opt = relatedSelect.options[relatedSelect.selectedIndex];
+                if(!opt || !opt.value) return;
 
                 const customerId = opt.dataset.customerId;
                 const warehouseId = opt.dataset.warehouseId;
@@ -402,17 +404,33 @@
                     if(whSelect) whSelect.value = warehouseId;
                 }
 
+                const reasonInput = document.querySelector('input[name="cancellation_reason"]');
+                if(reasonInput && (!reasonInput.value || reasonInput.value.startsWith('Anulação total da Fatura'))) {
+                    const docText = opt.textContent.trim().split(' - ')[0] || '';
+                    reasonInput.value = 'Anulação total da Fatura ' + docText;
+                }
+
                 if(items && items.length > 0) {
-                    tbody.innerHTML = ''; // Limpar linhas atuais
+                    tbody.innerHTML = ''; // Limpar linhas anteriores
+                    lineIndex = 0;
                     items.forEach(item => {
-                        addLine(item.product_id, item.quantity, item.unit_price, item.tax_id, item.discount_amount || 0);
+                        addLine(
+                            item.product_id,
+                            item.quantity,
+                            item.unit_price,
+                            item.tax_id || '',
+                            item.discount_amount || 0,
+                            item.exemption_reason || ''
+                        );
                     });
                 }
-            });
+            }
 
-            // Se ja existir uma fatura pre-selecionada via query string
+            relatedSelect.addEventListener('change', populateFromSelectedInvoice);
+
+            // Se ja existir uma fatura pre-selecionada via query string ou Blade
             if(relatedSelect.value) {
-                relatedSelect.dispatchEvent(new Event('change'));
+                populateFromSelectedInvoice();
             }
         }
 
