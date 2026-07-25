@@ -8,13 +8,18 @@ class PurchaseInvoice extends Model
 {
     protected $guarded = [];
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function supplier()
     {
-        return $this->belongsTo(\App\Models\ThirdParty::class, 'supplier_id');
+        return $this->belongsTo(ThirdParty::class, 'supplier_id');
     }
 
     public function items()
     {
-        return $this->morphMany(\App\Models\PurchaseItem::class, 'parent');
+        return $this->morphMany(PurchaseItem::class, 'parent');
     }
 }
