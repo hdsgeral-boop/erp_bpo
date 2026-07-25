@@ -6,6 +6,7 @@ use App\Http\Controllers\CommercialDocumentController;
 use App\Http\Controllers\SalesPOSController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseRequestController;
+use App\Http\Controllers\PurchaseDeliveryController;
 use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCategoryController;
@@ -184,7 +185,11 @@ Route::middleware(['can:purchases.view'])->group(function () {
     Route::get('/compras/encomendas/{id}', [PurchaseOrderController::class, 'show'])->name('compras.encomendas.show');
     Route::get('/compras/encomendas/{id}/pdf', [PurchaseOrderController::class, 'pdf'])->name('compras.encomendas.pdf');
     Route::post('/compras/encomendas/{id}/aprovar', [PurchaseOrderController::class, 'approve'])->name('compras.encomendas.approve');
-    Route::get('/compras/rececoes', fn() => view('compras.rececoes'))->name('compras.rececoes.index');
+    // Receções de Mercadoria (Entrada em Armazém)
+    Route::get('/compras/rececoes', [PurchaseDeliveryController::class, 'indexView'])->name('compras.rececoes.index');
+    Route::get('/compras/rececoes/create', [PurchaseDeliveryController::class, 'create'])->name('compras.rececoes.create');
+    Route::post('/compras/rececoes', [PurchaseDeliveryController::class, 'store'])->name('compras.rececoes.store');
+    Route::get('/compras/rececoes/{id}', [PurchaseDeliveryController::class, 'show'])->name('compras.rececoes.show');
     Route::get('/compras/faturas', [PurchaseInvoiceController::class, 'indexView'])->name('compras.faturas.index');
     Route::get('/compras/faturas/create', [PurchaseInvoiceController::class, 'create'])->name('compras.faturas.create');
     Route::post('/compras/faturas', [PurchaseInvoiceController::class, 'store'])->name('compras.faturas.store');
