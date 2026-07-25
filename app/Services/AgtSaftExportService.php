@@ -22,6 +22,46 @@ use SimpleXMLElement;
  */
 class AgtSaftExportService
 {
+    /**
+     * Mapeia o motivo de isenção de IVA para o código oficial AGT/OECD (TaxExemptionCode: M01 - M99).
+     */
+    public static function getTaxExemptionCode(?string $reason): string
+    {
+        if (empty($reason)) {
+            return 'M02';
+        }
+
+        $reasonUpper = mb_strtoupper(trim($reason));
+
+        if (preg_match('/\b(M\d{2})\b/', $reasonUpper, $matches)) {
+            return $matches[1];
+        }
+
+        if (str_contains($reasonUpper, 'CESTA BÁSICA') || str_contains($reasonUpper, 'CESTA BASICA')) {
+            return 'M04';
+        }
+        if (str_contains($reasonUpper, 'ARTIGO 9') || str_contains($reasonUpper, 'ART. 9')) {
+            return 'M01';
+        }
+        if (str_contains($reasonUpper, 'ARTIGO 12') || str_contains($reasonUpper, 'ART. 12') || str_contains($reasonUpper, 'SAÚDE') || str_contains($reasonUpper, 'EDUCAÇÃO')) {
+            return 'M02';
+        }
+        if (str_contains($reasonUpper, 'EXCLUSÃO') || str_contains($reasonUpper, 'EXCLUSAO') || str_contains($reasonUpper, 'ARTIGO 2') || str_contains($reasonUpper, 'SIMPLIFICADO')) {
+            return 'M11';
+        }
+        if (str_contains($reasonUpper, 'EXPORTAÇÃO') || str_contains($reasonUpper, 'EXPORTACAO') || str_contains($reasonUpper, 'ARTIGO 15')) {
+            return 'M12';
+        }
+        if (str_contains($reasonUpper, 'INTERNACIONAL') || str_contains($reasonUpper, 'ARTIGO 16')) {
+            return 'M13';
+        }
+        if (str_contains($reasonUpper, 'AUTOLIQUIDAÇÃO') || str_contains($reasonUpper, 'AUTOLIQUIDACAO') || str_contains($reasonUpper, 'REVERSÃO')) {
+            return 'M16';
+        }
+
+        return 'M02';
+    }
+
     public function generateSaftXml(int $companyId, string $startDate, string $endDate): string
     {
         $company = Company::find($companyId) ?? Company::first();
@@ -81,7 +121,6 @@ class AgtSaftExportService
         $masterFiles = $xml->addChild('MasterFiles');
 
         // 2.1 Customer Table
-        // Consumidor final por defeito se a lista estiver vazia
         if ($customers->isEmpty()) {
             $cust = $masterFiles->addChild('Customer');
             $cust->addChild('CustomerID', '0');
@@ -137,8 +176,8 @@ class AgtSaftExportService
         $sourceDocs = $xml->addChild('SourceDocuments');
         $salesInvoices = $sourceDocs->addChild('SalesInvoices');
 
-        $totalCredit = 0;
-        $totalDebit = 0;
+        $totalCredit = 0.0;
+        $totalDebit = 0.0;
 
         $salesInvoices->addChild('NumberOfEntries', (string)$sales->count());
 
@@ -168,8 +207,8 @@ class AgtSaftExportService
             $invoice->addChild('CustomerID', (string)($sale->customer_id ?? 0));
 
             $lineNum = 1;
-            $netTotal = 0;
-            $taxTotal = 0;
+            $netTotal = 0.0;
+            $taxTotal = 0.0;
 
             foreach ($sale->items as $item) {
                 $line = $invoice->addChild('Line');
@@ -182,14 +221,25 @@ class AgtSaftExportService
                 $line->addChild('TaxPointDate', Carbon::parse($sale->date)->format('Y-m-d'));
                 $line->addChild('Description', htmlspecialchars($item->product->name ?? 'Artigo'));
 
-                $itemNet = $item->quantity * $item->unit_price;
-                $itemTax = $item->tax_amount ?? ($itemNet * (($item->tax_rate ?? 14) / 100));
+                $itemNet = round(($item->quantity * $item->unit_price) - ($item->discount_amount ?? 0), 2, PHP_ROUND_HALF_UP);
+                
+                $taxRate = (float)($item->tax_rate ?? 0);
+                $taxCode = ($item->tax?->code) ?? (($taxRate > 0) ? 'NOR' : 'ISE');
+                $isExempt = ($taxRate == 0 || $taxCode === 'ISE');
+
+                if ($isExempt) {
+                    $itemTax = 0.00;
+                    $taxRate = 0.00;
+                    $taxCode = 'ISE';
+                } else {
+                    $itemTax = round($itemNet * ($taxRate / 100), 2, PHP_ROUND_HALF_UP);
+                }
 
                 if ($sale->doc_type === 'NC') {
-                    $line->addChild('DebitAmount', number_format($itemNet, 4, '.', ''));
+                    $line->addChild('DebitAmount', number_format($itemNet, 2, '.', ''));
                     $totalDebit += $itemNet;
                 } else {
-                    $line->addChild('CreditAmount', number_format($itemNet, 4, '.', ''));
+                    $line->addChild('CreditAmount', number_format($itemNet, 2, '.', ''));
                     $totalCredit += $itemNet;
                 }
 
@@ -199,12 +249,17 @@ class AgtSaftExportService
                 $tax = $line->addChild('Tax');
                 $tax->addChild('TaxType', 'IVA');
                 $tax->addChild('TaxCountryRegion', 'AO');
-                $tax->addChild('TaxCode', ($item->tax_rate > 0) ? 'NOR' : 'ISE');
-                $tax->addChild('TaxPercentage', number_format($item->tax_rate ?? 14, 0, '.', ''));
+                $tax->addChild('TaxCode', $taxCode);
+                $tax->addChild('TaxPercentage', number_format($taxRate, 2, '.', ''));
 
-                if ($item->tax_rate == 0) {
-                    $line->addChild('TaxExemptionReason', htmlspecialchars($item->exemption_reason ?? 'Isento nos termos do Artigo 12.º do CIVA'));
+                if ($isExempt) {
+                    $exemptionReason = $item->exemption_reason ?: 'Isento nos termos do Artigo 12.º do CIVA';
+                    $exemptionCode = self::getTaxExemptionCode($exemptionReason);
+                    $line->addChild('TaxExemptionReason', htmlspecialchars($exemptionReason));
+                    $line->addChild('TaxExemptionCode', $exemptionCode);
                 }
+
+                $line->addChild('SettlementAmount', '0.00');
             }
 
             $docTotals = $invoice->addChild('DocumentTotals');

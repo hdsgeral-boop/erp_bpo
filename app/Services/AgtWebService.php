@@ -80,6 +80,9 @@ class AgtWebService
     protected function buildSoapXml(Sale $sale, Company $company, string $username, string $nonce, string $createdAt): string
     {
         $customerNif = $sale->customer->nif ?? '999999990'; // 999999990 para Consumidor Final
+        $taxPayable = number_format($sale->total_tax, 2, '.', '');
+        $netTotal = number_format($sale->total_amount, 2, '.', '');
+        $grossTotal = number_format($sale->total_amount + $sale->total_tax, 2, '.', '');
 
         return <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -100,9 +103,9 @@ class AgtWebService
          <agt:InvoiceStatus>N</agt:InvoiceStatus>
          <agt:CustomerTaxID>{$customerNif}</agt:CustomerTaxID>
          <agt:DocumentTotals>
-            <agt:TaxPayable>{$sale->total_tax}</agt:TaxPayable>
-            <agt:NetTotal>{$sale->total_amount}</agt:NetTotal>
-            <agt:GrossTotal>{$sale->total_amount}</agt:GrossTotal>
+            <agt:TaxPayable>{$taxPayable}</agt:TaxPayable>
+            <agt:NetTotal>{$netTotal}</agt:NetTotal>
+            <agt:GrossTotal>{$grossTotal}</agt:GrossTotal>
          </agt:DocumentTotals>
       </agt:SubmitInvoiceRequest>
    </soapenv:Body>
