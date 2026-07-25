@@ -52,7 +52,7 @@
                 <i class="fas fa-arrow-left me-1"></i> Voltar à Lista
             </a>
             <h2 class="fw-bold mb-0 text-dark">
-                {{ $invoice->doc_type }} {{ $invoice->doc_number }}
+                {{ str_starts_with($invoice->doc_number, $invoice->doc_type) ? $invoice->doc_number : ($invoice->doc_type . ' ' . $invoice->doc_number) }}
                 @if($invoice->status === 'ISSUED')
                     <span class="badge bg-success ms-2 fs-6 align-middle"><i class="fas fa-check-circle"></i> Emitido</span>
                 @else
@@ -77,9 +77,9 @@
             </h2>
         </div>
         <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary fw-bold" onclick="window.print()">
+            <a href="{{ route('vendas.documentos.pdf', $invoice->id) }}?print=true" target="_blank" class="btn btn-outline-secondary fw-bold">
                 <i class="fas fa-print me-1"></i> Imprimir (A4)
-            </button>
+            </a>
             @if($invoice->status === 'ISSUED')
                 @if(in_array($invoice->doc_type, ['FT', 'FR', 'FS', 'ND']))
                     <a href="{{ route('vendas.documentos.create', ['category' => 'notas', 'related_id' => $invoice->id]) }}" class="btn btn-warning fw-bold text-dark ms-2">
@@ -118,7 +118,21 @@
                 
                 <div class="invoice-header d-flex justify-content-between align-items-start position-relative" style="z-index: 1;">
                     <div>
-                        <h1 class="invoice-title text-uppercase">{{ $category }}</h1>
+                        @php
+                            $docTypeName = match($invoice->doc_type) {
+                                'FT' => 'Fatura',
+                                'FR' => 'Fatura-Recibo',
+                                'FS' => 'Fatura Simplificada',
+                                'NC' => 'Nota de Crédito',
+                                'ND' => 'Nota de Débito',
+                                'PP' => 'Fatura Pró-Forma',
+                                'OR' => 'Orçamento',
+                                'GT' => 'Guia de Transporte',
+                                'GR' => 'Guia de Remessa',
+                                default => 'Documento Comercial'
+                            };
+                        @endphp
+                        <h1 class="invoice-title text-uppercase">{{ $docTypeName }}</h1>
                         <h4 class="text-primary fw-bold">{{ $invoice->doc_number }}</h4>
                         
                         <div class="mt-4">

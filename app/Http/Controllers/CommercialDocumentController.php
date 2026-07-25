@@ -484,7 +484,7 @@ class CommercialDocumentController extends Controller
     public function pdf(Request $request, string $id)
     {
         $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
-        $sale = \App\Models\Sale::with(['customer', 'items.product', 'warehouse', 'company'])->find((int)$id);
+        $sale = \App\Models\Sale::with(['customer', 'items.product', 'warehouse', 'company', 'relatedDoc'])->find((int)$id);
 
         if (!$sale) {
             return response()->json(['error' => 'Documento não encontrado.'], 404);
