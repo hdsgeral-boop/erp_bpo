@@ -11,6 +11,7 @@ use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\InventoryMovementController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PayrollController;
@@ -135,7 +136,9 @@ Route::middleware(['can:sales.view'])->group(function () {
 Route::middleware(['can:inventory.view'])->group(function () {
     Route::get('/logistica/stock', [ProductController::class, 'indexView'])->name('logistica.stock');
     Route::get('/logistica/guias', fn() => view('logistica.guias.index'))->name('logistica.guias.index');
-    Route::get('/logistica/movements', fn() => view('logistica.movements.index'))->name('logistica.movements.index');
+    Route::get('/logistica/movements', [InventoryMovementController::class, 'indexView'])->name('logistica.movements.index');
+    Route::post('/logistica/movements', [InventoryMovementController::class, 'store'])->name('logistica.movements.store');
+    Route::get('/logistica/movements/pdf', [InventoryMovementController::class, 'pdf'])->name('logistica.movements.pdf');
     Route::get('/logistica/warehouses', [WarehouseController::class, 'indexView'])->name('logistica.warehouses.index');
     Route::get('/logistica/warehouses/create', [WarehouseController::class, 'create'])->name('logistica.warehouses.create');
     Route::get('/logistica/inventario/armazens', [WarehouseController::class, 'indexView'])->name('inventario.armazens.index');
