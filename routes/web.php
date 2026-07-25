@@ -12,6 +12,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\InventoryMovementController;
+use App\Http\Controllers\LogisticsController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PayrollController;
@@ -135,7 +136,7 @@ Route::middleware(['can:sales.view'])->group(function () {
 // Logística & Inventário
 Route::middleware(['can:inventory.view'])->group(function () {
     Route::get('/logistica/stock', [ProductController::class, 'indexView'])->name('logistica.stock');
-    Route::get('/logistica/guias', fn() => view('logistica.guias.index'))->name('logistica.guias.index');
+    Route::get('/logistica/guias', [LogisticsController::class, 'guias'])->name('logistica.guias.index');
     Route::get('/logistica/movements', [InventoryMovementController::class, 'indexView'])->name('logistica.movements.index');
     Route::post('/logistica/movements', [InventoryMovementController::class, 'store'])->name('logistica.movements.store');
     Route::get('/logistica/movements/pdf', [InventoryMovementController::class, 'pdf'])->name('logistica.movements.pdf');
