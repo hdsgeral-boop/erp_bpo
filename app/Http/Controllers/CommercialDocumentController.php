@@ -106,13 +106,27 @@ class CommercialDocumentController extends Controller
 
         $products = Product::where('company_id', $companyId)->orderBy('name')->get();
         $warehouses = Warehouse::where('company_id', $companyId)->orderBy('name')->get();
-        $taxes = Tax::where('is_active', true)->orWhereNull('is_active')->orderBy('name')->get();
+        $taxes = Tax::where('company_id', $companyId)->where('is_active', true)->orderBy('rate', 'desc')->get();
 
         if ($taxes->isEmpty()) {
-            $taxes = collect([
-                (object)['id' => 1, 'name' => 'IVA 14%', 'rate' => 14],
-                (object)['id' => 2, 'name' => 'Isento 0%', 'rate' => 0]
+            Tax::create([
+                'company_id' => $companyId,
+                'name' => 'IVA 14% (Geral)',
+                'code' => 'NOR',
+                'type' => 'VAT',
+                'rate' => 14.00,
+                'is_active' => true,
             ]);
+            Tax::create([
+                'company_id' => $companyId,
+                'name' => 'Isento 0% (IVA)',
+                'code' => 'ISE',
+                'type' => 'VAT',
+                'rate' => 0.00,
+                'exemption_reason' => 'M04 - Isenção Artigo 9º do CIVA',
+                'is_active' => true,
+            ]);
+            $taxes = Tax::where('company_id', $companyId)->where('is_active', true)->orderBy('rate', 'desc')->get();
         }
         
         $seriesQuery = DocumentSeries::where('company_id', $companyId)->where('is_active', true);
@@ -371,7 +385,22 @@ class CommercialDocumentController extends Controller
             $price = $item['unit_price'];
             $discount = $item['discount_amount'] ?? 0;
             
-            $tax = Tax::find($item['tax_id'] ?? 1);
+            $taxId = $item['tax_id'] ?? null;
+            $tax = $taxId ? Tax::find($taxId) : null;
+            if (!$tax) {
+                $tax = Tax::where('company_id', $company->id)->where('is_active', true)->first();
+                if (!$tax) {
+                    $tax = Tax::create([
+                        'company_id' => $company->id,
+                        'name' => 'IVA 14% (Geral)',
+                        'code' => 'NOR',
+                        'type' => 'VAT',
+                        'rate' => 14.00,
+                        'is_active' => true,
+                    ]);
+                }
+            }
+            $item['tax_id'] = $tax->id;
             $subtotalSemIva = ($qty * $price) - $discount;
             $taxAmount = $subtotalSemIva * (($tax->rate ?? 14) / 100);
             
