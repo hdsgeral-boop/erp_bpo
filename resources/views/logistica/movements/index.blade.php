@@ -182,7 +182,7 @@
                         <option value="">Todos os Tipos</option>
                         <option value="IN" {{ request('type') == 'IN' ? 'selected' : '' }}>Entrada (IN)</option>
                         <option value="OUT" {{ request('type') == 'OUT' ? 'selected' : '' }}>Saída (OUT)</option>
-                        <option value="ADJUSTMENT" {{ request('type') == 'ADJUSTMENT' ? 'selected' : '' }}>Ajuste Manuel</option>
+                        <option value="ADJUSTMENT" {{ request('type') == 'ADJUSTMENT' ? 'selected' : '' }}>Ajuste Manual</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -190,7 +190,7 @@
                     <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
                 </div>
                 <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary flex-grow-1 fw-bold" style="border-radius: 8px;">
+                    <button type="submit" class="btn btn-primary grow flex-grow-1 fw-bold" style="border-radius: 8px;">
                         <i class="fas fa-filter me-1"></i> Filtrar
                     </button>
                     <a href="{{ route('logistica.movements.index') }}" class="btn btn-outline-secondary" style="border-radius: 8px;">
