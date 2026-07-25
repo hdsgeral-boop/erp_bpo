@@ -11,12 +11,6 @@ use App\Services\TreasuryService;
 use App\Services\DocumentSeriesService;
 use Illuminate\Http\Request;
 
-/**
- * ReceiptController
- *
- * BUGS CORRIGIDOS:
- * #1 / #4 - Substituído session('company_id') por auth()->user()->company_id (com fallback para compatibilidade)
- */
 class ReceiptController extends Controller
 {
     protected $treasuryService;
@@ -28,10 +22,13 @@ class ReceiptController extends Controller
         $this->docSeriesService = $docSeriesService;
     }
 
-    public function index(Request $request)
+    public function index(Request $request, $category = 'recebimentos')
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
-        $category = $request->route('category') ?? $request->input('category', 'recebimentos');
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $category = $request->route('category') ?? $request->input('category', $category);
+        if (!in_array($category, ['recebimentos', 'pagamentos'])) {
+            $category = 'recebimentos';
+        }
         $docType = $category === 'recebimentos' ? 'RC' : 'PG';
 
         $query = Receipt::with(['thirdParty', 'treasuryAccount'])
@@ -54,20 +51,26 @@ class ReceiptController extends Controller
 
         $receipts = $query->orderBy('date', 'desc')->paginate($request->input('per_page', 15));
 
-        return response()->json($receipts);
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json($receipts);
+        }
+
+        return view('treasury.receipts.index', compact('receipts', 'category', 'docType'));
     }
 
-    public function createData(Request $request)
+    public function create(Request $request, $category = 'recebimentos')
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
-        $category = $request->route('category') ?? $request->input('category', 'recebimentos');
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $category = $request->route('category') ?? $request->input('category', $category);
+        if (!in_array($category, ['recebimentos', 'pagamentos'])) {
+            $category = 'recebimentos';
+        }
         $docType = $category === 'recebimentos' ? 'RC' : 'PG';
         
         $thirdParties = ThirdParty::where('company_id', $companyId)->get();
         $accounts = TreasuryAccount::where('company_id', $companyId)->where('is_active', true)->get();
         $series = $this->docSeriesService->getAvailableSeries($docType, $companyId);
 
-        // Pre-selection if coming from a specific invoice
         $selectedEntityId = null;
         $pendingDocs = [];
         
@@ -90,13 +93,20 @@ class ReceiptController extends Controller
             }
         }
 
-        return response()->json(compact('category', 'docType', 'thirdParties', 'accounts', 'series', 'selectedEntityId', 'pendingDocs'));
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(compact('category', 'docType', 'thirdParties', 'accounts', 'series', 'selectedEntityId', 'pendingDocs'));
+        }
+
+        return view('treasury.receipts.create', compact('category', 'docType', 'thirdParties', 'accounts', 'series', 'selectedEntityId', 'pendingDocs'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, $category = 'recebimentos')
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
-        $category = $request->route('category') ?? $request->input('category', 'recebimentos');
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $category = $request->route('category') ?? $request->input('category', $category);
+        if (!in_array($category, ['recebimentos', 'pagamentos'])) {
+            $category = 'recebimentos';
+        }
         $docType = $category === 'recebimentos' ? 'RC' : 'PG';
 
         $request->validate([
@@ -109,7 +119,7 @@ class ReceiptController extends Controller
 
         try {
             $data = [
-                'company_id' => $companyId, // FIX #1
+                'company_id' => $companyId,
                 'third_party_id' => $request->third_party_id,
                 'treasury_account_id' => $request->treasury_account_id,
                 'doc_type' => $docType,
@@ -119,52 +129,85 @@ class ReceiptController extends Controller
                 'series_id' => $request->series_id,
             ];
 
-            // Limpar itens com valor 0
             $items = array_filter($request->items, function($item) {
                 return isset($item['amount_paid']) && floatval($item['amount_paid']) > 0;
             });
 
             if (empty($items)) {
-                return response()->json(['success' => false, 'message' => 'Deve indicar o valor a liquidar em pelo menos um documento.'], 422);
+                if ($request->expectsJson() || $request->is('api/*')) {
+                    return response()->json(['success' => false, 'message' => 'Deve indicar o valor a liquidar em pelo menos um documento.'], 422);
+                }
+                return redirect()->back()->withInput()->with('error', 'Deve indicar o valor a liquidar em pelo menos um documento.');
             }
 
-            $receipt = $this->treasuryService->processReceipt($data, $items, auth()->id());
+            $receipt = $this->treasuryService->processReceipt($data, $items, auth()->id() ?? 1);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Documento financeiro gerado com sucesso!',
-                'receipt' => $receipt
-            ]);
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Documento financeiro gerado com sucesso!',
+                    'receipt' => $receipt
+                ]);
+            }
+
+            return redirect()->route('tesouraria.documentos.show', ['category' => $category, 'id' => $receipt->id])
+                ->with('success', 'Documento de liquidação gerado com sucesso!');
 
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Erro ao processar: ' . $e->getMessage()], 500);
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => 'Erro ao processar: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->withInput()->with('error', 'Erro ao processar documento: ' . $e->getMessage());
         }
     }
 
-    public function show(Request $request, $category, $id)
+    public function show(Request $request, $category = 'recebimentos', $id = null)
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
-        $receipt = Receipt::with(['items.sale', 'items.purchaseInvoice', 'thirdParty', 'treasuryAccount'])
+        if (is_numeric($category) && $id === null) {
+            $id = $category;
+            $category = 'recebimentos';
+        }
+
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
+        $receipt = Receipt::with(['items.sale', 'items.purchaseInvoice', 'thirdParty', 'treasuryAccount', 'company'])
             ->where('company_id', $companyId)
             ->findOrFail($id);
         
-        return response()->json($receipt);
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json($receipt);
+        }
+
+        return view('treasury.receipts.show', compact('receipt', 'category'));
     }
 
-    public function cancel(Request $request, $category, $id)
+    public function cancel(Request $request, $category = 'recebimentos', $id = null)
     {
-        $companyId = auth()->user()->company_id ?? 1; // FIX #1
+        if (is_numeric($category) && $id === null) {
+            $id = $category;
+            $category = 'recebimentos';
+        }
+
+        $companyId = auth()->user()->company_id ?? session('company_id') ?? 1;
         
         try {
             $receipt = Receipt::where('company_id', $companyId)->findOrFail($id);
-            $this->treasuryService->cancelReceipt($receipt->id, auth()->id());
+            $this->treasuryService->cancelReceipt($receipt->id, auth()->id() ?? 1);
             
-            return response()->json([
-                'success' => true,
-                'message' => 'Documento financeiro anulado com sucesso e saldos revertidos!'
-            ]);
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Documento financeiro anulado com sucesso e saldos revertidos!'
+                ]);
+            }
+
+            return redirect()->route('tesouraria.documentos.index', $category)
+                ->with('success', 'Documento anulado com sucesso e saldos revertidos.');
+
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Erro ao anular: ' . $e->getMessage()], 500);
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => 'Erro ao anular: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Erro ao anular documento: ' . $e->getMessage());
         }
     }
 }

@@ -253,8 +253,12 @@ Route::middleware(['can:treasury.view'])->group(function () {
     Route::get('/tesouraria/accounts/{account}/statement', [TreasuryAccountController::class, 'statement'])->name('tesouraria.accounts.statement');
     Route::get('/tesouraria/accounts/{account}/pdf', [TreasuryAccountController::class, 'exportPdf'])->name('tesouraria.accounts.pdf');
     Route::post('/tesouraria/accounts/{account}/movement', [TreasuryAccountController::class, 'quickMovement'])->name('tesouraria.accounts.movement');
-    Route::get('/tesouraria/documentos/{type?}', fn($type = 'recebimentos') => view('treasury.documents', compact('type')))->name('tesouraria.documents.index');
-    Route::get('/tesouraria/docs/{type?}', fn($type = 'recebimentos') => view('treasury.documents', compact('type')))->name('tesouraria.documentos.index');
+    Route::get('/tesouraria/documentos-novo/{category?}', [ReceiptController::class, 'create'])->name('tesouraria.documentos.create');
+    Route::get('/tesouraria/documentos-detalhes/{category}/{id}', [ReceiptController::class, 'show'])->name('tesouraria.documentos.show');
+    Route::post('/tesouraria/documentos-anular/{category}/{id}', [ReceiptController::class, 'cancel'])->name('tesouraria.documentos.cancel');
+    Route::get('/tesouraria/documentos/{category?}', [ReceiptController::class, 'index'])->name('tesouraria.documents.index');
+    Route::get('/tesouraria/docs/{category?}', [ReceiptController::class, 'index'])->name('tesouraria.documentos.index');
+    Route::post('/tesouraria/documentos/{category?}', [ReceiptController::class, 'store'])->name('tesouraria.documentos.store');
     Route::get('/tesouraria/bank-statements', fn() => view('treasury.bank_statements'))->name('tesouraria.bank_statements.index');
     Route::get('/tesouraria/aging', [CurrentAccountController::class, 'agingView'])->name('tesouraria.aging');
 });
