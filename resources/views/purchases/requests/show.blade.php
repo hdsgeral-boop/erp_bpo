@@ -35,6 +35,9 @@
             <h2 class="fw-bold mb-0 text-dark">Pedido Interno #REQ-{{ str_pad($purchaseRequest->id, 4, '0', STR_PAD_LEFT) }}</h2>
         </div>
         <div>
+            <a href="{{ route('compras.pedidos.pdf', $purchaseRequest->id) }}" target="_blank" class="btn btn-outline-secondary fw-bold me-2" style="border-radius: 10px;">
+                <i class="fas fa-file-pdf text-danger me-1"></i> Imprimir (PDF)
+            </a>
             @if($purchaseRequest->status === 'PENDING')
                 <form action="{{ route('compras.pedidos.reject', $purchaseRequest->id) }}" method="POST" class="d-inline">
                     @csrf

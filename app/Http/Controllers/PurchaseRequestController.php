@@ -5,18 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\Product;
 use App\Models\Company;
+use App\Models\PurchaseRequest;
+use App\Models\PurchaseItem;
 use App\Http\Requests\StorePurchaseRequest;
 use App\Repositories\Contracts\PurchaseRepositoryInterface;
 use App\Services\PurchaseService;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
-/**
- * PurchaseRequestController
- *
- * BUGS CORRIGIDOS:
- * #1 - Utilização de company_id do utilizador autenticado
- * API-only - Adaptado para interagir via JSON com o frontend
- */
 class PurchaseRequestController extends Controller
 {
     protected $purchaseRepo;
@@ -28,21 +24,50 @@ class PurchaseRequestController extends Controller
         $this->purchaseService = $purchaseService;
     }
 
-    public function index(Request $request)
+    public function indexView(Request $request)
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
         $search = $request->input('search');
         $status = $request->input('status');
-        
-        // Paginação com scope do repositório
-        $requests = $this->purchaseRepo->paginateRequests(15, $search, $status);
-        
-        return response()->json($requests);
+
+        $query = PurchaseRequest::where('company_id', $companyId)
+            ->with(['department', 'creator', 'items.product']);
+
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('requester_name', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($status)) {
+            $query->where('status', $status);
+        }
+
+        $requests = $query->orderBy('id', 'desc')->paginate(15);
+
+        $stats = [
+            'total_count' => PurchaseRequest::where('company_id', $companyId)->count(),
+            'pending_count' => PurchaseRequest::where('company_id', $companyId)->where('status', 'PENDING')->count(),
+            'approved_count' => PurchaseRequest::where('company_id', $companyId)->where('status', 'APPROVED')->count(),
+            'converted_count' => PurchaseRequest::where('company_id', $companyId)->where('status', 'CONVERTED')->count(),
+        ];
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json($requests);
+        }
+
+        return view('purchases.requests.index', compact('requests', 'stats'));
+    }
+
+    public function index(Request $request)
+    {
+        return $this->indexView($request);
     }
 
     public function createData()
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $departments = Department::where('company_id', $companyId)->orderBy('name')->get();
         $products = Product::where('company_id', $companyId)->orderBy('name')->get();
@@ -50,47 +75,69 @@ class PurchaseRequestController extends Controller
         return response()->json(compact('departments', 'products'));
     }
 
-    public function store(StorePurchaseRequest $request)
+    public function create()
     {
-        $companyId = auth()->user()->company_id ?? 1;
-        $data = $request->validated();
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
-        $headerData = [
-            'company_id' => $companyId, // FIX #1
-            'requester_name' => $data['requester_name'],
-            'department_id' => $data['department_id'],
-            'date' => $data['date'],
-            'status' => 'PENDING',
-            'created_by' => auth()->id(),
-            'notes' => $data['notes'] ?? null,
-        ];
+        $departments = Department::where('company_id', $companyId)->orderBy('name')->get();
+        $products = Product::where('company_id', $companyId)->orderBy('name')->get();
 
-        $purchaseRequest = $this->purchaseRepo->createRequest($headerData, $data['items']);
-
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Pedido Interno de compra criado com sucesso.',
-                'purchase_request' => $purchaseRequest
-            ]);
-        }
-
-        return redirect()->route('compras.pedidos.index')->with('success', 'Pedido Interno de compra criado com sucesso.');
+        return view('purchases.requests.create', compact('departments', 'products'));
     }
 
-    public function show(string $id)
+    public function store(Request $request)
     {
-        $companyId = auth()->user()->company_id ?? 1;
-        $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
-        
-        if ($purchaseRequest->company_id !== $companyId) {
-            if (request()->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
-            }
-            return back()->with('error', 'Não autorizado.');
-        }
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
-        if (request()->wantsJson()) {
+        $request->validate([
+            'requester_name' => 'required|string|max:255',
+            'department_id' => 'required|exists:departments,id',
+            'date' => 'required|date',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+        ]);
+
+        try {
+            $headerData = [
+                'company_id' => $companyId,
+                'requester_name' => $request->requester_name,
+                'department_id' => $request->department_id,
+                'date' => $request->date,
+                'status' => 'PENDING',
+                'created_by' => auth()->id() ?? 1,
+                'notes' => $request->notes ?? null,
+            ];
+
+            $purchaseRequest = $this->purchaseRepo->createRequest($headerData, $request->items);
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pedido interno de compra criado com sucesso.',
+                    'purchase_request' => $purchaseRequest
+                ]);
+            }
+
+            return redirect()->route('compras.pedidos.index')->with('success', 'Pedido Interno de compra criado com sucesso!');
+
+        } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->withInput()->with('error', 'Erro ao criar pedido interno: ' . $e->getMessage());
+        }
+    }
+
+    public function show(Request $request, string $id)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        
+        $purchaseRequest = PurchaseRequest::with(['department', 'creator', 'approver', 'convertedToOrder', 'items.product', 'company'])
+            ->where('company_id', $companyId)
+            ->findOrFail((int)$id);
+
+        if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json($purchaseRequest);
         }
 
@@ -99,43 +146,49 @@ class PurchaseRequestController extends Controller
 
     public function approve(Request $request, string $id)
     {
-        $companyId = auth()->user()->company_id ?? 1;
-        $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $purchaseRequest = PurchaseRequest::where('company_id', $companyId)->findOrFail((int)$id);
 
-        if ($purchaseRequest->company_id !== $companyId) {
-            if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
-            }
-            return back()->with('error', 'Não autorizado.');
-        }
-
-        $response = $this->purchaseService->approveRequest((int)$id, auth()->id());
+        $purchaseRequest->update([
+            'status' => 'APPROVED',
+            'approved_by' => auth()->id() ?? 1,
+            'approved_at' => now(),
+        ]);
         
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json($response);
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['success' => true, 'message' => 'Pedido de compra aprovado com sucesso.']);
         }
 
-        return back()->with('success', 'Pedido de compra aprovado com sucesso.');
+        return back()->with('success', 'Pedido interno de compra aprovado com sucesso! Já pode ser convertido em encomenda a fornecedor.');
     }
 
     public function reject(Request $request, string $id)
     {
-        $companyId = auth()->user()->company_id ?? 1;
-        $purchaseRequest = $this->purchaseRepo->findRequest((int)$id);
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+        $purchaseRequest = PurchaseRequest::where('company_id', $companyId)->findOrFail((int)$id);
 
-        if ($purchaseRequest->company_id !== $companyId) {
-            if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Não autorizado.'], 403);
-            }
-            return back()->with('error', 'Não autorizado.');
-        }
-
-        $response = $this->purchaseService->rejectRequest((int)$id, auth()->id());
+        $purchaseRequest->update([
+            'status' => 'REJECTED',
+        ]);
         
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json($response);
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json(['success' => true, 'message' => 'Pedido de compra recusado.']);
         }
 
-        return back()->with('success', 'Pedido de compra recusado.');
+        return back()->with('success', 'Pedido interno de compra rejeitado.');
+    }
+
+    public function pdf(Request $request, string $id)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $purchaseRequest = PurchaseRequest::with(['department', 'creator', 'approver', 'items.product', 'company'])
+            ->where('company_id', $companyId)
+            ->findOrFail((int)$id);
+
+        $pdf = Pdf::loadView('purchases.requests.pdf', compact('purchaseRequest'));
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->stream("Pedido_Interno_REQ_{$purchaseRequest->id}.pdf");
     }
 }

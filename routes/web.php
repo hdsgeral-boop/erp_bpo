@@ -5,6 +5,7 @@ use App\Http\Controllers\GlobalDashboardController;
 use App\Http\Controllers\CommercialDocumentController;
 use App\Http\Controllers\SalesPOSController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductCategoryController;
@@ -167,13 +168,22 @@ Route::middleware(['can:inventory.view'])->group(function () {
 
 // Compras
 Route::middleware(['can:purchases.view'])->group(function () {
-    Route::get('/compras/pedidos', [PurchaseOrderController::class, 'indexView'])->name('compras.pedidos.index');
-    Route::get('/compras/pedidos/create', fn() => view('purchases.requests.create', ['suppliers' => \App\Models\ThirdParty::all(), 'products' => \App\Models\Product::all(), 'departments' => \App\Models\Department::all()]))->name('compras.pedidos.create');
-    Route::post('/compras/pedidos', [\App\Http\Controllers\PurchaseRequestController::class, 'store'])->name('compras.pedidos.store');
-    Route::get('/compras/pedidos/{id}/edit', fn($id) => back())->name('compras.pedidos.edit');
+    // Pedidos Internos (Requisições)
+    Route::get('/compras/pedidos', [PurchaseRequestController::class, 'indexView'])->name('compras.pedidos.index');
+    Route::get('/compras/pedidos/create', [PurchaseRequestController::class, 'create'])->name('compras.pedidos.create');
+    Route::post('/compras/pedidos', [PurchaseRequestController::class, 'store'])->name('compras.pedidos.store');
+    Route::get('/compras/pedidos/{id}', [PurchaseRequestController::class, 'show'])->name('compras.pedidos.show');
+    Route::get('/compras/pedidos/{id}/pdf', [PurchaseRequestController::class, 'pdf'])->name('compras.pedidos.pdf');
+    Route::post('/compras/pedidos/{id}/aprovar', [PurchaseRequestController::class, 'approve'])->name('compras.pedidos.approve');
+    Route::post('/compras/pedidos/{id}/rejeitar', [PurchaseRequestController::class, 'reject'])->name('compras.pedidos.reject');
+
+    // Encomendas a Fornecedores (Ordens de Compra)
     Route::get('/compras/encomendas', [PurchaseOrderController::class, 'indexView'])->name('compras.encomendas.index');
-    Route::get('/compras/encomendas/create', fn() => view('purchases.requests.create', ['suppliers' => \App\Models\ThirdParty::all(), 'products' => \App\Models\Product::all(), 'departments' => \App\Models\Department::all()]))->name('compras.encomendas.create');
-    Route::get('/compras/encomendas/{id}', fn($id) => back())->name('compras.encomendas.show');
+    Route::get('/compras/encomendas/create', [PurchaseOrderController::class, 'create'])->name('compras.encomendas.create');
+    Route::post('/compras/encomendas', [PurchaseOrderController::class, 'store'])->name('compras.encomendas.store');
+    Route::get('/compras/encomendas/{id}', [PurchaseOrderController::class, 'show'])->name('compras.encomendas.show');
+    Route::get('/compras/encomendas/{id}/pdf', [PurchaseOrderController::class, 'pdf'])->name('compras.encomendas.pdf');
+    Route::post('/compras/encomendas/{id}/aprovar', [PurchaseOrderController::class, 'approve'])->name('compras.encomendas.approve');
     Route::get('/compras/rececoes', fn() => view('compras.rececoes'))->name('compras.rececoes.index');
     Route::get('/compras/faturas', [PurchaseInvoiceController::class, 'indexView'])->name('compras.faturas.index');
     Route::get('/compras/faturas/create', [PurchaseInvoiceController::class, 'create'])->name('compras.faturas.create');

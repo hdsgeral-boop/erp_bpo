@@ -50,9 +50,9 @@
                 </a>
             @endif
             
-            <button class="btn btn-outline-secondary fw-bold ms-2" onclick="window.print()">
-                <i class="fas fa-print me-1"></i> Imprimir
-            </button>
+            <a href="{{ route('compras.encomendas.pdf', $order->id) }}" target="_blank" class="btn btn-outline-secondary fw-bold ms-2">
+                <i class="fas fa-file-pdf text-danger me-1"></i> Imprimir (PDF)
+            </a>
         </div>
     </div>
 
