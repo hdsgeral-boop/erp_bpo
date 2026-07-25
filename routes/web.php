@@ -23,6 +23,7 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\BenefitController;
 use App\Http\Controllers\TreasuryAccountController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\DocumentSeriesController;
 use App\Http\Controllers\CurrentAccountController;
 use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\JournalController;
@@ -371,6 +372,7 @@ Route::middleware(['can:companies.view'])->group(function () {
 });
 
 Route::middleware(['can:settings.view'])->group(function () {
+    Route::resource('/config/document-series', DocumentSeriesController::class, ['names' => 'config.document-series']);
     Route::get('/admin/pos-registers', [PosRegisterController::class, 'indexView'])->name('admin.pos_registers.index');
     Route::get('/admin/settings', fn() => view('admin.settings'))->name('admin.settings.index');
     Route::get('/admin/integrations', [IntegrationController::class, 'index'])->name('admin.integrations.index');

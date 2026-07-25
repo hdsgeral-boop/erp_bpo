@@ -34,7 +34,27 @@ class DocumentSeriesService
             $series = $query->lockForUpdate()->first();
 
             if (!$series) {
-                throw new Exception("Série Documental não encontrada ou inativa para o tipo '{$documentType}'. Por favor, configure as séries documentais nas Definições.");
+                // Tentar encontrar a série por defeito para este tipo de documento
+                $series = DocumentSeries::where('company_id', $companyId)
+                    ->where('document_type', $documentType)
+                    ->where('is_active', true)
+                    ->where('is_default', true)
+                    ->lockForUpdate()
+                    ->first();
+            }
+
+            if (!$series) {
+                // Auto-criar Série Padrão Inicial para este tipo de documento na empresa
+                $year = date('Y');
+                $series = DocumentSeries::create([
+                    'company_id' => $companyId,
+                    'document_type' => $documentType,
+                    'identifier' => "A{$year}",
+                    'description' => "Série Geral {$year} ({$documentType})",
+                    'current_number' => 0,
+                    'is_active' => true,
+                    'is_default' => true,
+                ]);
             }
 
             $series->current_number += 1;
