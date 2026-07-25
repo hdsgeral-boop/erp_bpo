@@ -95,7 +95,7 @@
                 </select>
             </div>
             <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-sm rounded-3 flex-grow-1 fw-bold"><i class="fas fa-filter me-1"></i> Filtrar</button>
+                <button type="submit" class="btn btn-primary btn-sm rounded-3 grow fw-bold"><i class="fas fa-filter me-1"></i> Filtrar</button>
                 <a href="{{ route('tesouraria.accounts.statement', $account->id) }}" class="btn btn-outline-secondary btn-sm rounded-3"><i class="fas fa-undo me-1"></i> Limpar</a>
             </div>
         </form>

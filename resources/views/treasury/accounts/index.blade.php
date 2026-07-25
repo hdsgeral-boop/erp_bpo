@@ -96,7 +96,7 @@
             <div class="col-md-4">
                 <div class="card-premium p-4 h-100 position-relative border">
                     @if(!$account->is_active)
-                        <span class="position-absolute top-0 end-0 mt-3 me-3 badge bg-danger-subtle text-danger border border-danger-subtle">Inativa</span>
+                        <span class="position-absolute top-0 inset-e-0 mt-3 me-3 badge bg-danger-subtle text-danger border border-danger-subtle">Inativa</span>
                     @endif
                     
                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -151,7 +151,7 @@
                     </div>
 
                     <div class="mt-3 pt-2 d-flex gap-2">
-                        <a href="{{ route('tesouraria.accounts.statement', $account->id) }}" class="btn btn-outline-primary btn-sm flex-grow-1 fw-bold" style="border-radius: 8px;">
+                        <a href="{{ route('tesouraria.accounts.statement', $account->id) }}" class="btn btn-outline-primary btn-sm grow fw-bold" style="border-radius: 8px;">
                             <i class="fas fa-receipt me-1"></i> Extrato
                         </a>
                         <button type="button" class="btn btn-success btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#quickMovementModal{{ $account->id }}" style="border-radius: 8px;">
