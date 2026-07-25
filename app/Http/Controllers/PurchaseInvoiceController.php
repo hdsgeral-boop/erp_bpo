@@ -9,43 +9,59 @@ use App\Models\ThirdParty;
 use App\Models\Product;
 use App\Models\InventoryMovement;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
-/**
- * PurchaseInvoiceController
- *
- * BUGS CORRIGIDOS:
- * #1 - company_id via auth()->user()->company_id (nunca hardcoded a 1)
- * Multi-tenant - Consultas restritas ao ID da empresa do utilizador autenticado
- * API-only - Respostas e retornos formatados em JSON
- */
 class PurchaseInvoiceController extends Controller
 {
     public function indexView(Request $request)
     {
         $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
-        $invoices = PurchaseInvoice::where('company_id', $companyId)
-            ->with(['supplier', 'items'])
-            ->orderBy('date', 'desc')
+        $query = PurchaseInvoice::where('company_id', $companyId)
+            ->with(['supplier', 'items.product']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                  ->orWhereHas('supplier', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $invoices = $query->orderBy('date', 'desc')
             ->orderBy('id', 'desc')
-            ->paginate(15);
+            ->paginate($request->input('per_page', 15));
             
         $suppliers = ThirdParty::where('company_id', $companyId)->get();
 
-        return view('purchases.invoices.index', compact('invoices', 'suppliers'));
+        // Calcular estatísticas rápidas
+        $stats = [
+            'total_count' => PurchaseInvoice::where('company_id', $companyId)->count(),
+            'total_amount' => PurchaseInvoice::where('company_id', $companyId)->where('status', '!=', 'CANCELLED')->sum('total_amount'),
+            'total_paid' => PurchaseInvoice::where('company_id', $companyId)->where('status', '!=', 'CANCELLED')->sum('amount_paid'),
+            'total_pending' => PurchaseInvoice::where('company_id', $companyId)->where('status', '!=', 'CANCELLED')->selectRaw('SUM(total_amount - COALESCE(amount_paid, 0)) as pending')->value('pending') ?? 0,
+        ];
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json($invoices);
+        }
+
+        return view('purchases.invoices.index', compact('invoices', 'suppliers', 'stats'));
     }
 
     public function index()
     {
-        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
-
-        $invoices = PurchaseInvoice::where('company_id', $companyId)
-            ->with('supplier')
-            ->orderBy('date', 'desc')
-            ->orderBy('id', 'desc')
-            ->get();
-            
-        return response()->json($invoices);
+        return $this->indexView(request());
     }
 
     public function createData()
@@ -53,7 +69,6 @@ class PurchaseInvoiceController extends Controller
         $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
 
         $suppliers = ThirdParty::where('company_id', $companyId)
-            ->where('is_supplier', true)
             ->orderBy('name')
             ->get();
 
@@ -62,6 +77,16 @@ class PurchaseInvoiceController extends Controller
             ->get();
 
         return response()->json(compact('suppliers', 'products'));
+    }
+
+    public function create()
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $suppliers = ThirdParty::where('company_id', $companyId)->orderBy('name')->get();
+        $products = Product::where('company_id', $companyId)->orderBy('name')->get();
+
+        return view('purchases.invoices.create', compact('suppliers', 'products'));
     }
 
     public function store(Request $request)
@@ -83,7 +108,7 @@ class PurchaseInvoiceController extends Controller
 
             $total = 0;
             foreach ($validated['items'] as $item) {
-                $total += $item['quantity'] * $item['unit_price'];
+                $total += floatval($item['quantity']) * floatval($item['unit_price']);
             }
 
             $invoice = PurchaseInvoice::create([
@@ -92,23 +117,29 @@ class PurchaseInvoiceController extends Controller
                 'invoice_number' => $validated['invoice_number'],
                 'date' => $validated['date'],
                 'total_amount' => $total,
+                'amount_paid' => 0.00,
                 'status' => 'ISSUED',
+                'payment_status' => 'PENDING',
                 'is_posted' => true,
             ]);
 
             foreach ($validated['items'] as $item) {
+                $qty = floatval($item['quantity']);
+                $unitPrice = floatval($item['unit_price']);
+                $lineTotal = $qty * $unitPrice;
+
                 PurchaseItem::create([
                     'parent_id' => $invoice->id,
                     'parent_type' => PurchaseInvoice::class,
                     'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'received_qty' => $item['quantity'],
+                    'quantity' => $qty,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $lineTotal,
+                    'received_qty' => $qty,
                 ]);
                 
                 $product = Product::where('company_id', $companyId)->find($item['product_id']);
-                if ($product && $product->is_inventory) {
-                    // Determinar um armazém da empresa para a receção
+                if ($product) {
                     $warehouse = \App\Models\Warehouse::where('company_id', $companyId)->first();
                     $warehouseId = $warehouse ? $warehouse->id : 1;
 
@@ -118,26 +149,121 @@ class PurchaseInvoiceController extends Controller
                         'warehouse_id' => $warehouseId,
                         'date' => $validated['date'],
                         'type' => 'IN',
-                        'quantity' => $item['quantity'],
+                        'quantity' => $qty,
                         'reference' => 'Compra: ' . $validated['invoice_number']
                     ]);
                     
-                    $product->stock_qty += $item['quantity'];
+                    $product->stock_qty += $qty;
                     $product->save();
                 }
             }
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Fatura de fornecedor registada com sucesso!',
-                'invoice' => $invoice
-            ]);
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Fatura de fornecedor registada com sucesso!',
+                    'invoice' => $invoice
+                ]);
+            }
+
+            return redirect()->route('compras.faturas.index')
+                ->with('success', 'Fatura de fornecedor ' . $invoice->invoice_number . ' registada com sucesso! Entradas de stock e pendentes atualizados.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->withInput()->with('error', 'Erro ao registar fatura: ' . $e->getMessage());
+        }
+    }
+
+    public function show(Request $request, $id)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $invoice = PurchaseInvoice::where('company_id', $companyId)
+            ->with(['supplier', 'items.product', 'company'])
+            ->findOrFail($id);
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json($invoice);
+        }
+
+        return view('purchases.invoices.show', compact('invoice'));
+    }
+
+    public function pdf(Request $request, $id)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        $invoice = PurchaseInvoice::where('company_id', $companyId)
+            ->with(['supplier', 'items.product', 'company'])
+            ->findOrFail($id);
+
+        $pdf = Pdf::loadView('purchases.invoices.pdf', compact('invoice'));
+        $pdf->setPaper('A4', 'portrait');
+
+        $safeNum = preg_replace('/[^0-9A-Za-z]/', '_', $invoice->invoice_number);
+        return $pdf->stream("Fatura_Compra_{$safeNum}.pdf");
+    }
+
+    public function cancel(Request $request, $id)
+    {
+        $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
+
+        try {
+            DB::beginTransaction();
+
+            $invoice = PurchaseInvoice::where('company_id', $companyId)
+                ->with('items')
+                ->findOrFail($id);
+
+            if ($invoice->status === 'CANCELLED') {
+                throw new \Exception('Esta fatura já se encontra anulada.');
+            }
+
+            foreach ($invoice->items as $item) {
+                $product = Product::where('company_id', $companyId)->find($item->product_id);
+                if ($product) {
+                    $warehouse = \App\Models\Warehouse::where('company_id', $companyId)->first();
+                    $warehouseId = $warehouse ? $warehouse->id : 1;
+
+                    InventoryMovement::create([
+                        'company_id' => $companyId,
+                        'product_id' => $item->product_id,
+                        'warehouse_id' => $warehouseId,
+                        'date' => date('Y-m-d'),
+                        'type' => 'OUT',
+                        'quantity' => $item->quantity,
+                        'reference' => 'Anulação Fatura Compra: ' . $invoice->invoice_number
+                    ]);
+
+                    $product->stock_qty -= $item->quantity;
+                    $product->save();
+                }
+            }
+
+            $invoice->status = 'CANCELLED';
+            $invoice->save();
+
+            DB::commit();
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => true, 'message' => 'Fatura de fornecedor anulada com sucesso!']);
+            }
+
+            return redirect()->route('compras.faturas.index')
+                ->with('success', 'Fatura de fornecedor ' . $invoice->invoice_number . ' anulada com sucesso e stock revertido.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Erro ao anular fatura: ' . $e->getMessage());
         }
     }
 }

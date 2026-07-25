@@ -176,8 +176,11 @@ Route::middleware(['can:purchases.view'])->group(function () {
     Route::get('/compras/encomendas/{id}', fn($id) => back())->name('compras.encomendas.show');
     Route::get('/compras/rececoes', fn() => view('compras.rececoes'))->name('compras.rececoes.index');
     Route::get('/compras/faturas', [PurchaseInvoiceController::class, 'indexView'])->name('compras.faturas.index');
-    Route::get('/compras/faturas/create', fn() => view('purchases.invoices.create', ['suppliers' => \App\Models\ThirdParty::all(), 'products' => \App\Models\Product::all()]))->name('compras.faturas.create');
-    Route::post('/compras/faturas', fn() => redirect()->route('compras.faturas.index')->with('success', 'Fatura registada.'))->name('compras.faturas.store');
+    Route::get('/compras/faturas/create', [PurchaseInvoiceController::class, 'create'])->name('compras.faturas.create');
+    Route::post('/compras/faturas', [PurchaseInvoiceController::class, 'store'])->name('compras.faturas.store');
+    Route::get('/compras/faturas/{id}', [PurchaseInvoiceController::class, 'show'])->name('compras.faturas.show');
+    Route::get('/compras/faturas/{id}/pdf', [PurchaseInvoiceController::class, 'pdf'])->name('compras.faturas.pdf');
+    Route::post('/compras/faturas/{id}/anular', [PurchaseInvoiceController::class, 'cancel'])->name('compras.faturas.cancel');
 });
 
 // Recursos Humanos (Salários & RH)
