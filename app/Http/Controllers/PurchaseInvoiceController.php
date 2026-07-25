@@ -103,6 +103,19 @@ class PurchaseInvoiceController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
+        $exists = PurchaseInvoice::where('company_id', $companyId)
+            ->where('supplier_id', $validated['supplier_id'])
+            ->where('invoice_number', trim($validated['invoice_number']))
+            ->where('status', '!=', 'CANCELLED')
+            ->exists();
+
+        if ($exists) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => "Já existe uma fatura de fornecedor registada com o número '{$validated['invoice_number']}' para o fornecedor selecionado."], 422);
+            }
+            return redirect()->back()->withInput()->with('error', "Já existe uma fatura de fornecedor registada com o número '{$validated['invoice_number']}' para o fornecedor selecionado.");
+        }
+
         try {
             DB::beginTransaction();
 
