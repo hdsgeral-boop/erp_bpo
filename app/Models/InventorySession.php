@@ -8,6 +8,11 @@ class InventorySession extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'date' => 'date',
+        'scheduled_date' => 'date',
+    ];
+
     public function warehouse()
     {
         return $this->belongsTo(Warehouse::class);

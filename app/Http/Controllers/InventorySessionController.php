@@ -43,8 +43,10 @@ class InventorySessionController extends Controller
                 'company_id' => $companyId,
                 'warehouse_id' => $validated['warehouse_id'],
                 'date' => $validated['date'],
+                'scheduled_date' => $validated['date'],
                 'status' => 'OPEN',
-                'responsible_name' => $validated['responsible_name']
+                'responsible_name' => $validated['responsible_name'] ?? 'Equipa de Inventário',
+                'created_by' => auth()->check() ? auth()->user()->name : 'Sistema'
             ]);
 
             $products = Product::where('company_id', $companyId)
