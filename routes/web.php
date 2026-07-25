@@ -17,6 +17,7 @@ use App\Http\Controllers\AbsenceController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\BenefitController;
 use App\Http\Controllers\TreasuryAccountController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\CurrentAccountController;
 use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\JournalController;
