@@ -81,6 +81,11 @@
                 <i class="fas fa-print me-1"></i> Imprimir (A4)
             </button>
             @if($invoice->status === 'ISSUED')
+                @if(in_array($invoice->doc_type, ['FT', 'FR', 'FS', 'ND']))
+                    <a href="{{ route('vendas.documentos.create', ['category' => 'notas', 'related_id' => $invoice->id]) }}" class="btn btn-warning fw-bold text-dark ms-2">
+                        <i class="fas fa-file-invoice me-1"></i> Emitir Nota de Crédito
+                    </a>
+                @endif
                 @if(in_array($invoice->doc_type, ['FT', 'FR', 'ND']) && $invoice->payment_status !== 'PAID')
                     <a href="{{ route('tesouraria.documentos.index', 'recebimentos') }}" class="btn btn-success fw-bold ms-2">
                         <i class="fas fa-hand-holding-usd me-1"></i> Liquidar / Emitir Recibo
@@ -139,7 +144,16 @@
                         </div>
                     </div>
                     
-                    @if($invoice->status === 'CANCELLED')
+                    @if($invoice->relatedDoc)
+                    <div class="col-sm-6">
+                        <div class="p-3 border rounded h-100" style="background: #fffbebf5; border-color: #fcd34d !important;">
+                            <div class="fw-bold mb-1" style="color: #92400e;"><i class="fas fa-link me-1"></i> Fatura de Origem Retificada</div>
+                            <div class="small"><strong>N.º Fatura:</strong> <a href="{{ route('vendas.documentos.show', ['category' => 'faturas', 'id' => $invoice->relatedDoc->id]) }}" class="fw-bold text-decoration-none">{{ $invoice->relatedDoc->doc_number }}</a></div>
+                            <div class="small"><strong>Data Fatura:</strong> {{ $invoice->relatedDoc->date->format('d/m/Y') }}</div>
+                            <div class="small mt-2"><strong>Motivo AGT:</strong> {{ $invoice->cancellation_reason ?: ($invoice->notes ?: 'Anulação / Retificação') }}</div>
+                        </div>
+                    </div>
+                    @elseif($invoice->status === 'CANCELLED')
                     <div class="col-sm-6">
                         <div class="p-3 bg-danger bg-opacity-10 border border-danger rounded h-100">
                             <div class="text-danger fw-bold mb-1"><i class="fas fa-exclamation-circle me-1"></i> Informação de Anulação</div>

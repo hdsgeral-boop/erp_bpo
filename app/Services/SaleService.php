@@ -99,6 +99,8 @@ class SaleService
                 'total_tax' => $data['total_tax'],
                 'total_discount' => $data['total_discount'] ?? 0,
                 'notes' => $data['notes'] ?? null,
+                'related_doc_id' => $data['related_doc_id'] ?? null,
+                'cancellation_reason' => $data['cancellation_reason'] ?? ($data['notes'] ?? null),
             ]);
 
             // 4. Inserir Linhas e Movimentar Stock (se aplicável)

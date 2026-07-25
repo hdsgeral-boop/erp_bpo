@@ -134,7 +134,10 @@
             <table class="table align-middle mb-0" style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                        <th style="padding: 1rem 1.25rem; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">N.º Fatura</th>
+                        <th style="padding: 1rem 1.25rem; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">N.º Documento</th>
+                        @if($category === 'notas')
+                        <th style="padding: 1rem 1.25rem; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Doc. Origem Retificado</th>
+                        @endif
                         <th style="padding: 1rem 1.25rem; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Cliente</th>
                         <th style="padding: 1rem 1.25rem; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Data Emissão</th>
                         <th style="padding: 1rem 1.25rem; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; text-align: right;">Valor S/ IVA</th>
@@ -149,6 +152,20 @@
                         <td style="padding: 1rem 1.25rem; font-weight: 700; color: #2563eb; font-size: 0.95rem;">
                             <i class="fas fa-file-invoice me-1 text-primary" style="opacity: 0.7;"></i> {{ $inv->doc_number }}
                         </td>
+                        @if($category === 'notas')
+                        <td style="padding: 1rem 1.25rem;">
+                            @if($inv->relatedDoc)
+                                <a href="{{ route('vendas.documentos.show', ['category' => 'faturas', 'id' => $inv->relatedDoc->id]) }}" class="badge bg-amber-100 text-amber-900 border border-amber-300 text-decoration-none px-2 py-1" style="background: #fef3c7; color: #92400e; font-weight: 700;">
+                                    <i class="fas fa-link me-1"></i> {{ $inv->relatedDoc->doc_number }}
+                                </a>
+                            @else
+                                <span class="text-muted small">Sem Ref.</span>
+                            @endif
+                            @if($inv->cancellation_reason)
+                                <div class="text-muted small mt-1" style="font-size: 0.75rem;">Motivo: {{ Str::limit($inv->cancellation_reason, 35) }}</div>
+                            @endif
+                        </td>
+                        @endif
                         <td style="padding: 1rem 1.25rem;">
                             <div style="font-weight: 700; color: #0f172a;">{{ $inv->customer ? $inv->customer->name : 'Consumidor Final' }}</div>
                             <span style="font-size: 0.75rem; color: #64748b;">NIF: {{ $inv->customer->nif ?? '999999999' }}</span>

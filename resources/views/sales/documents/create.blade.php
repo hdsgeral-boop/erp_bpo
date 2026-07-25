@@ -55,7 +55,13 @@
             <i class="fas fa-arrow-left me-1"></i> Voltar à Lista
         </a>
         <h2 class="fw-bold mb-0 text-dark"><i class="fas fa-file-invoice-dollar text-primary me-2"></i>{{ $title }}</h2>
-        <p class="text-muted mt-1">Ao gravar, o stock será deduzido automaticamente do armazém selecionado.</p>
+        <p class="text-muted mt-1">
+            @if($category === 'notas')
+                As Notas de Crédito retificam ou anulam faturas emitidas e repõem o stock no armazém em conformidade com as normas da AGT.
+            @else
+                Ao gravar, o stock será deduzido automaticamente do armazém selecionado.
+            @endif
+        </p>
     </div>
 
     @if ($errors->any())
@@ -75,6 +81,43 @@
 
     <form action="{{ route('vendas.documentos.store', $category) }}" method="POST" id="invoice-form">
         @csrf
+
+        @if($category === 'notas' || request('doc_type') == 'NC')
+        <!-- Secção de Documento de Origem a Retificar / Anular (Regra Obrigatória AGT) -->
+        <div class="card-premium p-4 mb-4 border-start border-4 border-warning">
+            <div class="d-flex align-items-center mb-3">
+                <div style="width: 42px; height: 42px; background: #fef3c7; border-radius: 10px; display: flex; align-items: center; justify-content: center;" class="me-3">
+                    <i class="fas fa-link text-warning" style="font-size: 1.25rem;"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">Documento de Origem a Retificar / Anular <span class="badge bg-danger ms-2">Obrigatório AGT</span></h5>
+                    <p class="text-muted small mb-0">Em conformidade com as normas da AGT (Decreto Presidencial n.º 312/18), a Nota de Crédito deve estar associada a uma Fatura anterior.</p>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Selecione a Fatura a Anular / Creditar <span class="text-danger">*</span></label>
+                    <select name="related_doc_id" id="related_doc_select" class="form-select" required>
+                        <option value="">-- Selecione a Fatura de Origem --</option>
+                        @foreach($invoicesToRectify ?? [] as $inv)
+                            <option value="{{ $inv->id }}"
+                                data-customer-id="{{ $inv->customer_id }}"
+                                data-warehouse-id="{{ $inv->warehouse_id }}"
+                                data-items='@json($inv->items)'
+                                {{ (isset($preselectedInvoice) && $preselectedInvoice->id == $inv->id) ? 'selected' : '' }}>
+                                {{ $inv->doc_number }} - {{ $inv->customer->name ?? 'Consumidor Final' }} ({{ number_format($inv->total_amount + $inv->total_tax, 2, ',', '.') }} Kz - {{ \Carbon\Carbon::parse($inv->date)->format('d/m/Y') }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Motivo da Retificação / Anulação <span class="text-danger">*</span></label>
+                    <input type="text" name="cancellation_reason" class="form-control" placeholder="Ex: Anulação total da Fatura por erro no NIF / Devolução de Mercadoria" required value="{{ old('cancellation_reason') }}">
+                </div>
+            </div>
+        </div>
+        @endif
         
         <div class="card-premium p-4 mb-4">
             <h5 class="fw-bold border-bottom pb-2 mb-4">Cabeçalho do Documento</h5>
@@ -93,17 +136,17 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Cliente <span class="text-danger">*</span></label>
-                    <select name="customer_id" class="form-select" required>
+                    <select name="customer_id" id="customer_id_select" class="form-select" required>
                         <option value="">Selecione o cliente...</option>
                         @foreach($customers as $customer)
-                            <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }} (NIF: {{ $customer->tax_id }})</option>
+                            <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }} (NIF: {{ $customer->tax_id ?? $customer->nif }})</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Armazém (Origem da Mercadoria) <span class="text-danger">*</span></label>
-                    <select name="warehouse_id" class="form-select" required>
-                        <option value="">Selecione de onde sai o stock...</option>
+                    <label class="form-label">Armazém (Destino/Origem Stock) <span class="text-danger">*</span></label>
+                    <select name="warehouse_id" id="warehouse_id_select" class="form-select" required>
+                        <option value="">Selecione o armazém...</option>
                         @foreach($warehouses as $wh)
                             <option value="{{ $wh->id }}" {{ old('warehouse_id') == $wh->id ? 'selected' : '' }}>{{ $wh->name }}</option>
                         @endforeach
@@ -111,7 +154,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Notas Opcionais (Rodapé)</label>
-                    <input type="text" name="notes" class="form-control" value="{{ old('notes') }}" placeholder="Ex: Isenção Artigo 9º...">
+                    <input type="text" name="notes" class="form-control" value="{{ old('notes') }}" placeholder="Ex: Isenção Artigo 9º / Referência ao processo...">
                 </div>
             </div>
         </div>
@@ -194,7 +237,7 @@
                             <span id="summary-tax">0.00</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="fw-bold mb-0 text-dark">Total a Pagar:</h5>
+                            <h5 class="fw-bold mb-0 text-dark">Total a Crédito/Debitar:</h5>
                             <h4 class="text-primary" id="summary-grand-total">0.00 AOA</h4>
                         </div>
                     </div>
@@ -232,7 +275,6 @@
                 const taxOption = taxSelect.options[taxSelect.selectedIndex];
                 const taxRate = parseFloat(taxOption ? taxOption.dataset.rate : 0) || 0;
                 
-                // Tratar Motivo de Isenção na View
                 const exemptionInput = row.querySelector('.exemption-input');
                 if (taxRate === 0 && taxSelect.value !== '') {
                     exemptionInput.removeAttribute('readonly');
@@ -282,6 +324,10 @@
         });
 
         document.getElementById('add-item-btn').addEventListener('click', function() {
+            addLine();
+        });
+
+        function addLine(productId = '', quantity = 1, unitPrice = 0, taxId = '', discount = 0) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>
@@ -292,9 +338,9 @@
                         @endforeach
                     </select>
                 </td>
-                <td><input type="number" step="0.01" min="0.01" name="items[${lineIndex}][quantity]" class="form-control calc-trigger" value="1" required></td>
-                <td><input type="number" step="0.01" min="0" name="items[${lineIndex}][unit_price]" class="form-control calc-trigger price-input" required></td>
-                <td><input type="number" step="0.01" min="0" name="items[${lineIndex}][discount_amount]" class="form-control calc-trigger" value="0"></td>
+                <td><input type="number" step="0.01" min="0.01" name="items[${lineIndex}][quantity]" class="form-control calc-trigger" value="${quantity}" required></td>
+                <td><input type="number" step="0.01" min="0" name="items[${lineIndex}][unit_price]" class="form-control calc-trigger price-input" value="${unitPrice}" required></td>
+                <td><input type="number" step="0.01" min="0" name="items[${lineIndex}][discount_amount]" class="form-control calc-trigger" value="${discount}"></td>
                 <td>
                     <select name="items[${lineIndex}][tax_id]" class="form-select calc-trigger tax-select" required>
                         <option value="" data-rate="0">Selecione...</option>
@@ -308,9 +354,20 @@
                 <td class="text-center"><button type="button" class="btn btn-sm text-danger remove-line"><i class="fas fa-trash"></i></button></td>
             `;
             tbody.appendChild(tr);
+
+            if(productId) {
+                const prodSelect = tr.querySelector('.product-select');
+                prodSelect.value = productId;
+            }
+            if(taxId) {
+                const taxSelect = tr.querySelector('.tax-select');
+                taxSelect.value = taxId;
+            }
+
             lineIndex++;
             updateRemoveButtons();
-        });
+            calculateTotals();
+        }
 
         tbody.addEventListener('click', function(e) {
             if (e.target.closest('.remove-line')) {
@@ -323,6 +380,40 @@
         function updateRemoveButtons() {
             const btns = tbody.querySelectorAll('.remove-line');
             btns.forEach(btn => btn.disabled = btns.length === 1);
+        }
+
+        // --- Logica de Auto-Preenchimento ao Selecionar Fatura a Retificar ---
+        const relatedSelect = document.getElementById('related_doc_select');
+        if(relatedSelect) {
+            relatedSelect.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                if(!opt.value) return;
+
+                const customerId = opt.dataset.customerId;
+                const warehouseId = opt.dataset.warehouseId;
+                const items = JSON.parse(opt.dataset.items || '[]');
+
+                if(customerId) {
+                    const custSelect = document.getElementById('customer_id_select');
+                    if(custSelect) custSelect.value = customerId;
+                }
+                if(warehouseId) {
+                    const whSelect = document.getElementById('warehouse_id_select');
+                    if(whSelect) whSelect.value = warehouseId;
+                }
+
+                if(items && items.length > 0) {
+                    tbody.innerHTML = ''; // Limpar linhas atuais
+                    items.forEach(item => {
+                        addLine(item.product_id, item.quantity, item.unit_price, item.tax_id, item.discount_amount || 0);
+                    });
+                }
+            });
+
+            // Se ja existir uma fatura pre-selecionada via query string
+            if(relatedSelect.value) {
+                relatedSelect.dispatchEvent(new Event('change'));
+            }
         }
 
         calculateTotals();

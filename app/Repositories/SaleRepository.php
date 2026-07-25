@@ -15,7 +15,7 @@ class SaleRepository implements SaleRepositoryInterface
     public function paginateSalesByCategory(int $perPage = 15, ?string $search = null, ?string $status = null, ?array $docTypes = null)
     {
         $companyId = session('company_id') ?? auth()->user()?->company_id ?? 1;
-        $query = Sale::where('company_id', $companyId)->with(['customer', 'creator', 'warehouse'])->orderBy('created_at', 'desc');
+        $query = Sale::where('company_id', $companyId)->with(['customer', 'creator', 'warehouse', 'relatedDoc'])->orderBy('created_at', 'desc');
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -39,6 +39,6 @@ class SaleRepository implements SaleRepositoryInterface
 
     public function findSale(int $id)
     {
-        return Sale::with(['items.product', 'customer', 'creator', 'warehouse', 'canceller', 'attachments'])->findOrFail($id);
+        return Sale::with(['items.product', 'customer', 'creator', 'warehouse', 'canceller', 'attachments', 'relatedDoc'])->findOrFail($id);
     }
 }

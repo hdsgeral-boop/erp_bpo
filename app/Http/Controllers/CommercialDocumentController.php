@@ -88,7 +88,7 @@ class CommercialDocumentController extends Controller
         return $this->index($request, $category);
     }
 
-    public function create(string $category)
+    public function create(Request $request, string $category)
     {
         $companyId = session('company_id') ?? (auth()->check() ? auth()->user()->company_id : 1);
         $company = Company::find($companyId) ?? Company::first();
@@ -114,16 +114,37 @@ class CommercialDocumentController extends Controller
             ]);
         }
         
-        $series = DocumentSeries::where('company_id', $companyId)
-                                ->where('is_active', true)
-                                ->get();
+        $seriesQuery = DocumentSeries::where('company_id', $companyId)->where('is_active', true);
+        if ($category === 'notas') {
+            $seriesQuery->whereIn('document_type', ['NC', 'ND']);
+        }
+        $series = $seriesQuery->get();
+
         if ($series->isEmpty()) {
+            $docTypeDefault = ($category === 'notas') ? 'NC' : 'FT';
             $series = collect([
-                (object)['id' => 1, 'identifier' => 'Série A (2026)', 'is_default' => true, 'current_number' => 0]
+                (object)['id' => 1, 'identifier' => 'Série A (2026)', 'document_type' => $docTypeDefault, 'is_default' => true, 'current_number' => 0]
             ]);
         }
-                                
-        return view('sales.documents.create', compact('customers', 'products', 'warehouses', 'series', 'taxes', 'category'));
+
+        // Faturas emitidas validas para retificacao / anulacao via Nota de Credito
+        $invoicesToRectify = Sale::with(['customer', 'items.product'])
+            ->where('company_id', $companyId)
+            ->whereIn('doc_type', ['FT', 'FR', 'FS'])
+            ->where('status', '!=', 'CANCELLED')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $relatedId = $request->query('related_id') ?? $request->query('source_id');
+        $preselectedInvoice = null;
+        if ($relatedId) {
+            $preselectedInvoice = Sale::with(['customer', 'items.product'])->find($relatedId);
+        }
+
+        return view('sales.documents.create', compact(
+            'customers', 'products', 'warehouses', 'series', 'taxes', 'category',
+            'invoicesToRectify', 'preselectedInvoice'
+        ));
     }
 
     public function formOptions(Request $request)
@@ -362,14 +383,24 @@ class CommercialDocumentController extends Controller
             $totalDiscount += $discount;
         }
 
+        $docType = $data['doc_type'] ?? ($seriesModel->document_type ?? ($category === 'notas' ? 'NC' : 'FT'));
+        $relatedDocId = $data['related_doc_id'] ?? null;
+        $cancellationReason = $data['cancellation_reason'] ?? ($data['notes'] ?? null);
+
+        if ($docType === 'NC' && empty($relatedDocId)) {
+            return back()->withInput()->with('error', 'Segundo as normas fiscais da AGT (Decreto Presidencial n.º 312/18), uma Nota de Crédito deve obrigatoriamente estar associada a uma Fatura de origem.');
+        }
+
         $headerData = [
             'company_id' => $company->id,
             'customer_id' => $data['customer_id'],
             'warehouse_id' => $data['warehouse_id'] ?? null,
             'series_id' => $data['series_id'] ?? null,
-            'doc_type' => $seriesModel->document_type ?? 'FT',
+            'doc_type' => $docType,
             'date' => $data['date'] ?? date('Y-m-d'),
             'notes' => $data['notes'] ?? null,
+            'related_doc_id' => $relatedDocId,
+            'cancellation_reason' => $cancellationReason,
             'total_amount' => $totalAmount,
             'total_tax' => $totalTax,
             'total_discount' => $totalDiscount,
@@ -377,6 +408,16 @@ class CommercialDocumentController extends Controller
 
         try {
             $invoice = $this->saleService->createDocument($headerData, $data['items'], auth()->id());
+            
+            // Registar na Fatura de Origem que foi anulada/retificada por esta NC
+            if ($docType === 'NC' && $relatedDocId) {
+                $origSale = Sale::find($relatedDocId);
+                if ($origSale) {
+                    $origSale->notes = ($origSale->notes ? $origSale->notes . ' | ' : '') . "Retificado/Anulado pela Nota de Crédito {$invoice->doc_number}";
+                    $origSale->save();
+                }
+            }
+
             return redirect()->route('vendas.documentos.show', ['category' => $category, 'id' => $invoice->id])->with('success', 'Documento emitido com sucesso!');
         } catch (\Exception $e) {
             return back()->withInput()->with('error', $e->getMessage());
