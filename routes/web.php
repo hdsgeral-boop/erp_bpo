@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GlobalDashboardController;
 use App\Http\Controllers\CommercialDocumentController;
 use App\Http\Controllers\SalesPOSController;
+use App\Http\Controllers\AnnualInventoryExportController;
+use App\Http\Controllers\IvaPeriodicDeclarationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\PurchaseDeliveryController;
@@ -103,7 +106,38 @@ Route::middleware(['can:bi.view'])->group(function () {
 Route::middleware(['can:pos.access'])->group(function () {
     Route::get('/vendas/pos', [SalesPOSController::class, 'indexView'])->name('vendas.pos.index');
     Route::get('/logistica/pos-balcao', [SalesPOSController::class, 'indexView'])->name('logistica.pos.balcao');
+    Route::post('/vendas/pos/store', [SalesPOSController::class, 'store'])->name('vendas.pos.store');
+    Route::post('/vendas/pos/cash-movement', [SalesPOSController::class, 'recordCashMovement'])->name('sales.pos.cash_movement');
+    Route::post('/vendas/pos/close-session', [SalesPOSController::class, 'closeSession'])->name('vendas.pos.close');
+    Route::get('/vendas/pos/session/{id}/report-z', [SalesPOSController::class, 'reportZ'])->name('sales.pos.report_z');
+    Route::get('/vendas/pos/session/{id}/report-x', [SalesPOSController::class, 'reportX'])->name('sales.pos.report_x');
+
+    // Suspender & Retomar Vendas (Comandas em Espera)
+    Route::post('/vendas/pos/hold', [SalesPOSController::class, 'holdOrder'])->name('sales.pos.held.hold');
+    Route::get('/vendas/pos/held-orders', [SalesPOSController::class, 'listHeldOrders'])->name('sales.pos.held.list');
+    Route::post('/vendas/pos/held-orders/{id}/restore', [SalesPOSController::class, 'restoreHeldOrder'])->name('sales.pos.held.restore');
+    Route::delete('/vendas/pos/held-orders/{id}', [SalesPOSController::class, 'cancelHeldOrder'])->name('sales.pos.held.cancel');
+
+    // Fidelidade de Clientes
+    Route::get('/vendas/pos/customer/{id}/loyalty', [SalesPOSController::class, 'getCustomerLoyalty'])->name('sales.pos.customer.loyalty');
+    Route::post('/vendas/pos/loyalty/redeem', [SalesPOSController::class, 'redeemLoyaltyPoints'])->name('sales.pos.loyalty.redeem');
 });
+
+// Inventário Anual Normativo AGT
+Route::get('/logistica/inventario-anual', [AnnualInventoryExportController::class, 'index'])->name('inventory.annual');
+Route::get('/logistica/inventario-anual/xml', [AnnualInventoryExportController::class, 'exportXml'])->name('inventory.annual.export.xml');
+Route::get('/logistica/inventario-anual/csv', [AnnualInventoryExportController::class, 'exportCsv'])->name('inventory.annual.export.csv');
+
+// Declaração Periódica do IVA AGT
+Route::get('/relatorios/iva-declaracao-periodica', [IvaPeriodicDeclarationController::class, 'index'])->name('reports.iva.declaration');
+
+// Módulo Centralizado de Notificações
+Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+Route::get('/api/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread_count');
+Route::get('/api/notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
+Route::post('/api/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark_read');
+Route::post('/api/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read_all');
+Route::delete('/api/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
 // Vendas & Faturação
 Route::middleware(['can:sales.view'])->group(function () {

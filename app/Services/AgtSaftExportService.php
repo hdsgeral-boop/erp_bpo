@@ -271,6 +271,76 @@ class AgtSaftExportService
         $salesInvoices->addChild('TotalDebit', number_format($totalDebit, 2, '.', ''));
         $salesInvoices->addChild('TotalCredit', number_format($totalCredit, 2, '.', ''));
 
+        // ─── 4. GENERAL LEDGER ENTRIES (Contabilidade Anual AGT) ───
+        $journals = \App\Models\Journal::where('company_id', $companyId)
+            ->whereBetween('date', [$start, $end])
+            ->with('lines')
+            ->get();
+
+        if ($journals->count() > 0) {
+            $glEntries = $xml->addChild('GeneralLedgerEntries');
+            $glEntries->addChild('NumberOfEntries', (string)$journals->count());
+
+            $totalGlDebit = 0;
+            $totalGlCredit = 0;
+
+            $journalNode = $glEntries->addChild('Journal');
+            $journalNode->addChild('JournalID', 'J1');
+            $journalNode->addChild('Description', 'Diário Geral de Operações');
+
+            foreach ($journals as $index => $j) {
+                $trans = $journalNode->addChild('Transaction');
+                $trans->addChild('TransactionID', 'T' . ($index + 1));
+                $trans->addChild('Period', (string)Carbon::parse($j->date)->month);
+                $trans->addChild('TransactionDate', Carbon::parse($j->date)->format('Y-m-d'));
+                $trans->addChild('SourceID', (string)($j->created_by ?? 1));
+                $trans->addChild('Description', htmlspecialchars($j->description ?? 'Lançamento Contabilístico'));
+                $trans->addChild('DocArchivalNumber', htmlspecialchars($j->reference ?? ('DOC-' . $j->id)));
+                $trans->addChild('TransactionType', 'N');
+                $trans->addChild('GLPostingDate', Carbon::parse($j->date)->format('Y-m-d'));
+
+                $linesNode = $trans->addChild('Lines');
+                $lineIndex = 1;
+
+                if ($j->lines && $j->lines->count() > 0) {
+                    foreach ($j->lines as $line) {
+                        if ($line->debit > 0) {
+                            $dL = $linesNode->addChild('DebitLine');
+                            $dL->addChild('RecordID', (string)$lineIndex++);
+                            $dL->addChild('AccountID', htmlspecialchars($line->account_code ?? '71.1'));
+                            $dL->addChild('DebitAmount', number_format($line->debit, 2, '.', ''));
+                            $totalGlDebit += $line->debit;
+                        }
+                        if ($line->credit > 0) {
+                            $cL = $linesNode->addChild('CreditLine');
+                            $cL->addChild('RecordID', (string)$lineIndex++);
+                            $cL->addChild('AccountID', htmlspecialchars($line->account_code ?? '31.1'));
+                            $cL->addChild('CreditAmount', number_format($line->credit, 2, '.', ''));
+                            $totalGlCredit += $line->credit;
+                        }
+                    }
+                } else {
+                    $debitVal = floatval($j->total_debit > 0 ? $j->total_debit : 0);
+                    $creditVal = floatval($j->total_credit > 0 ? $j->total_credit : $debitVal);
+
+                    $dL = $linesNode->addChild('DebitLine');
+                    $dL->addChild('RecordID', '1');
+                    $dL->addChild('AccountID', '43.1');
+                    $dL->addChild('DebitAmount', number_format($debitVal, 2, '.', ''));
+                    $totalGlDebit += $debitVal;
+
+                    $cL = $linesNode->addChild('CreditLine');
+                    $cL->addChild('RecordID', '2');
+                    $cL->addChild('AccountID', '71.1');
+                    $cL->addChild('CreditAmount', number_format($creditVal, 2, '.', ''));
+                    $totalGlCredit += $creditVal;
+                }
+            }
+
+            $glEntries->addChild('TotalDebit', number_format($totalGlDebit, 2, '.', ''));
+            $glEntries->addChild('TotalCredit', number_format($totalGlCredit, 2, '.', ''));
+        }
+
         // Formatação limpa do XML
         $dom = dom_import_simplexml($xml)->ownerDocument;
         $dom->formatOutput = true;

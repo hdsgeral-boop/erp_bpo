@@ -13,6 +13,7 @@ class SaleItem extends Model
         'billed_qty' => 'decimal:2',
         'delivered_qty' => 'decimal:2',
         'unit_price' => 'decimal:2',
+        'unit_cost' => 'decimal:2',
         'tax_rate' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',

@@ -274,17 +274,20 @@ class CommercialDocumentController extends Controller
                 $totalSubtotal += $subtotal;
                 $totalTax += $taxAmount;
 
+                $product = Product::find($item['product_id']);
+                $unitCost = $product ? ($product->unit_cost ?? 0) : 0;
+
                 $processedItems[] = [
                     'product_id' => $item['product_id'],
                     'quantity' => $qty,
                     'unit_price' => $price,
+                    'unit_cost' => $unitCost,
                     'tax_amount' => $taxAmount,
                     'subtotal' => $subtotal
                 ];
 
                 // Baixa no stock se for Fatura (FT/FR/FS)
                 if (in_array($docType, ['FT', 'FR', 'FS'])) {
-                    $product = Product::find($item['product_id']);
                     if ($product && $product->is_inventory) {
                         $product->stock_qty = max(0, $product->stock_qty - $qty);
                         $product->save();

@@ -20,4 +20,9 @@ class PosSession extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function cashMovements()
+    {
+        return $this->hasMany(PosCashMovement::class, 'pos_session_id');
+    }
 }

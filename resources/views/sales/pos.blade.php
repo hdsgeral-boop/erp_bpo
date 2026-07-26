@@ -275,7 +275,21 @@
                 <i class="fas fa-desktop text-success me-1"></i> {{ $activeSession ? 'Caixa Aberta (' . ($activeSession->posRegister->name ?? 'POS-01') . ')' : 'Caixa Geral' }}
             </span>
         </div>
-        <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+            @if($activeSession)
+            <button type="button" class="btn btn-outline-warning btn-sm fw-bold shadow-sm" onclick="openHeldOrdersModal()">
+                <i class="fas fa-pause-circle me-1"></i> Comandas em Espera <span id="heldOrdersBadge" class="badge bg-danger ms-1">0</span>
+            </button>
+            <button type="button" class="btn btn-outline-warning btn-sm fw-bold shadow-sm" onclick="openCashMovementModal()">
+                <i class="fas fa-coins me-1"></i> Sangria / Reforço
+            </button>
+            <a href="{{ route('sales.pos.report_x', $activeSession->id) }}?auto_print=1" target="_blank" class="btn btn-outline-info btn-sm fw-bold shadow-sm">
+                <i class="fas fa-print me-1"></i> Relatório X
+            </a>
+            <button type="button" class="btn btn-outline-danger btn-sm fw-bold shadow-sm" onclick="openCloseSessionModal()">
+                <i class="fas fa-lock me-1"></i> Fechar Turno (Z)
+            </button>
+            @endif
             <span class="text-dark fw-bold">
                 <i class="fas fa-user-circle text-primary me-1"></i> {{ auth()->user()->name ?? 'Operador' }}
             </span>
@@ -407,6 +421,14 @@
                 <div class="total-row">
                     <span>TOTAL</span>
                     <span id="cartTotal">0,00 Kz</span>
+                </div>
+                <div class="d-flex gap-2 mb-2">
+                    <button type="button" class="btn btn-warning w-50 fw-bold py-2" onclick="openHoldOrderModal()" id="holdBtn" disabled style="border-radius: 10px;">
+                        <i class="fas fa-pause-circle me-1"></i> Suspender
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary w-50 fw-bold py-2" onclick="clearCart()" id="clearBtn" disabled style="border-radius: 10px;">
+                        <i class="fas fa-trash me-1"></i> Limpar
+                    </button>
                 </div>
                 <button class="btn btn-success btn-pay" onclick="openCheckoutModal()" id="payBtn" disabled>
                     <i class="fas fa-credit-card me-2"></i> Cobrar e Emitir (F9)
@@ -559,11 +581,141 @@
     </div>
 </div>
 
+<!-- Modal Sangria / Reforço -->
+<div class="modal fade" id="cashMovementModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header bg-dark text-white" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <h5 class="modal-title fw-bold"><i class="fas fa-coins me-2 text-warning"></i> Registo de Sangria / Reforço</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tipo de Operação</label>
+                    <select id="cashMovementType" class="form-select fw-bold">
+                        <option value="REFORCO">🟢 Reforço de Fundo de Maneio (+)</option>
+                        <option value="SANGRIA">🔴 Sangria de Caixa (-)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Valor (Kz)</label>
+                    <input type="number" id="cashMovementAmount" class="form-control form-control-lg fw-bold" placeholder="0.00" step="0.01" min="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Motivo / Observação</label>
+                    <input type="text" id="cashMovementReason" class="form-control" placeholder="Ex.: Reforço de trocos para a tarde">
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-3 bg-light">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4 fw-bold" onclick="submitCashMovement()">Salvar Movimento</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Fechar Turno / Caixa -->
+<div class="modal fade" id="closeSessionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header bg-danger text-white" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <h5 class="modal-title fw-bold"><i class="fas fa-lock me-2"></i> Fechamento de Turno de Caixa</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning border-0 small mb-3">
+                    <i class="fas fa-exclamation-triangle me-1"></i> Ao fechar o turno, a caixa será trancada e o <strong>Relatório Z</strong> será emitido automaticamente.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Valor Total Contado em Caixa (Dinheiro)</label>
+                    <input type="number" id="closingBalanceInput" class="form-control form-control-lg fw-bold text-end" placeholder="0.00" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-3 bg-light">
+                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="submitCloseSession()">Fechar & Gerar Relatório Z</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
     let cart = [];
     let activePaymentMethod = 'CASH';
     let currentTotalToPay = 0;
+
+    function openCloseSessionModal() {
+        const modal = new bootstrap.Modal(document.getElementById('closeSessionModal'));
+        modal.show();
+    }
+
+    function submitCloseSession() {
+        const closingBalance = parseFloat(document.getElementById('closingBalanceInput').value) || 0;
+
+        fetch("{{ route('vendas.pos.close') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ closing_balance: closingBalance })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                if (data.report_z_url) {
+                    window.open(data.report_z_url + '?auto_print=1', '_blank');
+                }
+                location.reload();
+            } else {
+                alert('Erro: ' + (data.message || 'Falha ao fechar turno.'));
+            }
+        })
+        .catch(err => alert('Erro de comunicação com o servidor.'));
+    }
+
+    function openCashMovementModal() {
+        const modal = new bootstrap.Modal(document.getElementById('cashMovementModal'));
+        modal.show();
+    }
+
+    function submitCashMovement() {
+        const type = document.getElementById('cashMovementType').value;
+        const amount = parseFloat(document.getElementById('cashMovementAmount').value);
+        const reason = document.getElementById('cashMovementReason').value;
+
+        if (!amount || amount <= 0) {
+            alert('Por favor introduza um valor válido.');
+            return;
+        }
+
+        fetch("{{ route('sales.pos.cash_movement') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ type, amount, reason })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                const modalEl = document.getElementById('cashMovementModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                document.getElementById('cashMovementAmount').value = '';
+                document.getElementById('cashMovementReason').value = '';
+            } else {
+                alert('Erro: ' + (data.message || 'Falha ao gravar movimento.'));
+            }
+        })
+        .catch(err => alert('Erro de comunicação com o servidor.'));
+    }
 
     function formatMoney(amount) {
         return new Intl.NumberFormat('pt-AO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount) + ' Kz';
@@ -642,6 +794,8 @@
     function renderCart() {
         const container = document.getElementById('cartItems');
         const payBtn = document.getElementById('payBtn');
+        const holdBtn = document.getElementById('holdBtn');
+        const clearBtn = document.getElementById('clearBtn');
         const totals = getCartTotals();
 
         if (cart.length === 0) {
@@ -655,10 +809,14 @@
             document.getElementById('summaryTax').textContent = '0,00 Kz';
             document.getElementById('cartTotal').textContent = '0,00 Kz';
             payBtn.disabled = true;
+            if (holdBtn) holdBtn.disabled = true;
+            if (clearBtn) clearBtn.disabled = true;
             return;
         }
 
         payBtn.disabled = false;
+        if (holdBtn) holdBtn.disabled = false;
+        if (clearBtn) clearBtn.disabled = false;
         container.innerHTML = '';
 
         cart.forEach(item => {
@@ -749,7 +907,7 @@
         const totals = getCartTotals();
         const amountPaid = parseFloat(document.getElementById('amountPaidInput').value) || totals.grandTotal;
 
-        fetch("{{ route('vendas.store') }}", {
+        fetch("{{ route('vendas.pos.store') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -823,7 +981,161 @@
         payBtn.disabled = cart.length === 0;
     }
 
+    function fetchHeldOrdersCount() {
+        fetch("{{ route('sales.pos.held.list') }}")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById('heldOrdersBadge');
+                    if (badge) badge.textContent = data.held_orders.length;
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    function openHoldOrderModal() {
+        if (cart.length === 0) return;
+        document.getElementById('holdReferenceInput').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('holdOrderModal'));
+        modal.show();
+    }
+
+    function submitHoldOrder() {
+        const refName = document.getElementById('holdReferenceInput').value.trim();
+        const totals = getCartTotals();
+
+        fetch("{{ route('sales.pos.held.hold') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                reference_name: refName,
+                customer_id: document.getElementById('customerId').value || null,
+                items: cart,
+                totals: totals
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const modalEl = document.getElementById('holdOrderModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+                cart = [];
+                renderCart();
+                fetchHeldOrdersCount();
+                alert(data.message);
+            } else {
+                alert(data.message || 'Erro ao suspender venda.');
+            }
+        });
+    }
+
+    function openHeldOrdersModal() {
+        const tbody = document.getElementById('heldOrdersTableBody');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>A carregar comandas...</td></tr>';
+        
+        const modal = new bootstrap.Modal(document.getElementById('heldOrdersModal'));
+        modal.show();
+
+        fetch("{{ route('sales.pos.held.list') }}")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.held_orders.length > 0) {
+                    let html = '';
+                    data.held_orders.forEach(o => {
+                        const dateStr = new Date(o.created_at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+                        const itemsCount = o.items_json ? o.items_json.length : 0;
+                        const totalKz = o.totals_json && o.totals_json.grandTotal ? formatMoney(o.totals_json.grandTotal) : '0,00 Kz';
+
+                        html += `
+                            <tr>
+                                <td><span class="badge bg-light text-dark font-monospace">${dateStr}</span></td>
+                                <td><strong class="text-dark">${o.reference_name || 'Comanda #' + o.id}</strong></td>
+                                <td><span class="badge bg-info text-dark">${itemsCount} artigos</span></td>
+                                <td class="text-end font-monospace fw-bold text-success">${totalKz}</td>
+                                <td class="text-center">
+                                    <button class="btn btn-success btn-sm me-1" onclick="restoreHeldOrder(${o.id})">
+                                        <i class="fas fa-play me-1"></i> Retomar
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelHeldOrder(${o.id})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted"><i class="fas fa-check-circle me-1"></i>Nenhuma comanda em espera no momento.</td></tr>';
+                }
+            });
+    }
+
+    function restoreHeldOrder(id) {
+        if (cart.length > 0 && !confirm('O carrinho atual contém artigos. Deseja substituir pelo conteúdo da comanda suspensa?')) {
+            return;
+        }
+
+        fetch(`/vendas/pos/held-orders/${id}/restore`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.held_order) {
+                cart = data.held_order.items_json || [];
+                if (data.held_order.customer_id) {
+                    document.getElementById('customerId').value = data.held_order.customer_id;
+                }
+                renderCart();
+                fetchHeldOrdersCount();
+                const modalEl = document.getElementById('heldOrdersModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            } else {
+                alert(data.message || 'Erro ao retomar comanda.');
+            }
+        });
+    }
+
+    function cancelHeldOrder(id) {
+        if (!confirm('Deseja eliminar esta comanda em espera?')) return;
+
+        fetch(`/vendas/pos/held-orders/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                openHeldOrdersModal();
+                fetchHeldOrdersCount();
+            }
+        });
+    }
+
+    function clearCart() {
+        if (cart.length === 0) return;
+        if (confirm('Deseja limpar todos os artigos do carrinho?')) {
+            cart = [];
+            renderCart();
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
+        fetchHeldOrdersCount();
+
         // Foco automático no leitor de código de barras / pesquisa
         const searchInput = document.getElementById('productSearch');
         if (searchInput) searchInput.focus();
@@ -869,5 +1181,62 @@
         }, 30000);
     });
 </script>
+
+<!-- Modal Suspender Venda (Hold) -->
+<div class="modal fade" id="holdOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-warning"><i class="fas fa-pause-circle me-2"></i> Suspender Venda (Comanda)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small">Atribua um nome ou referência para identificar esta comanda em espera (ex: Mesa 4, Cliente João):</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">Nome / Referência da Comanda</label>
+                    <input type="text" id="holdReferenceInput" class="form-control form-control-lg" placeholder="Ex: Cliente Mesa 2" style="border-radius: 12px;">
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning rounded-3 px-4 fw-bold" onclick="submitHoldOrder()">
+                    <i class="fas fa-save me-1"></i> Confirmar Suspender
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Comandas em Espera -->
+<div class="modal fade" id="heldOrdersModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-list-alt text-warning me-2"></i> Comandas em Espera (Vendas Suspensas)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="bg-light text-muted small">
+                            <tr>
+                                <th>Hora</th>
+                                <th>Referência</th>
+                                <th>Itens</th>
+                                <th class="text-end">Total</th>
+                                <th class="text-center">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="heldOrdersTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">A carregar comandas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endpush
 @endsection

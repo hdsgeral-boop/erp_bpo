@@ -88,6 +88,7 @@
                                 <a href="{{ route('logistica.inventario.index') }}" class="nav-item"><i class="fas fa-list-alt"></i> <span class="nav-label">Sessões de Inventário</span></a>
                                 <a href="{{ route('logistica.inventario.contagem', 0) }}" class="nav-item"><i class="fas fa-barcode"></i> <span class="nav-label">Efetuar Contagem</span></a>
                                 <a href="{{ route('logistica.inventario.review', 0) }}" class="nav-item"><i class="fas fa-balance-scale"></i> <span class="nav-label">Revisão e Regularização</span></a>
+                                <a href="{{ route('inventory.annual') }}" class="nav-item {{ request()->routeIs('inventory.annual*') ? 'active' : '' }}"><i class="fas fa-file-archive text-success"></i> <span class="nav-label">Inventário Anual (AGT)</span></a>
                             </div>
                         </div>
                     </div>
@@ -203,6 +204,7 @@
                     </div>
                     <div class="nav-group-items">
                         <a href="{{ route('contabilidade.relatorios') }}" class="nav-item"><i class="fas fa-chart-line text-info"></i> <span class="nav-label">Relatórios & Balanços</span></a>
+                        <a href="{{ route('reports.iva.declaration') }}" class="nav-item {{ request()->routeIs('reports.iva.declaration*') ? 'active' : '' }}"><i class="fas fa-calculator text-warning"></i> <span class="nav-label">Declaração Periódica IVA</span></a>
                         <a href="{{ route('contabilidade.chart_of_accounts.index') }}" class="nav-item"><i class="fas fa-list-ol"></i> <span class="nav-label">Plano de Contas PGC</span></a>
                         <a href="{{ route('contabilidade.journals.index') }}" class="nav-item"><i class="fas fa-book"></i> <span class="nav-label">Diários / Lançamentos</span></a>
                         <a href="{{ route('contabilidade.maps.index') }}" class="nav-item"><i class="fas fa-project-diagram"></i> <span class="nav-label">Mapeamentos</span></a>
@@ -308,8 +310,39 @@
                     </div>
                 </div>
 
-                <!-- Dropdown Utilizador Logado (Estilizado & Responsivo) -->
-                <div class="header-actions">
+                <!-- Dropdown Utilizador Logado e Notificações (Estilizado & Responsivo) -->
+                <div class="header-actions d-flex align-items-center gap-3">
+                    <!-- Dropdown Notification Center (Sino 🔔) -->
+                    <div class="dropdown" id="notificationDropdown">
+                        <button class="btn btn-light border-0 rounded-circle position-relative p-2 d-flex align-items-center justify-content-center shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 40px; height: 40px; background: #f8fafc;" title="Notificações do Sistema">
+                            <i class="fas fa-bell text-secondary fs-5"></i>
+                            <span id="unreadNotificationsBadge" class="position-absolute badge rounded-pill bg-danger" style="display: none; font-size: 0.65rem; top: 0; right: 0; transform: translate(25%, -25%);">
+                                0
+                            </span>
+                        </button>
+
+                        <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-0" style="width: 340px; border-radius: 16px; overflow: hidden; z-index: 1050;">
+                            <div class="p-3 bg-dark text-white d-flex align-items-center justify-content-between">
+                                <h6 class="fw-bold mb-0 text-white d-flex align-items-center gap-2">
+                                    <i class="fas fa-bell text-warning"></i> Notificações
+                                </h6>
+                                <button type="button" onclick="markAllNotificationsAsRead(event)" class="btn btn-sm btn-link text-white-50 text-decoration-none p-0" style="font-size: 0.75rem;">
+                                    <i class="fas fa-check-double me-1"></i> Ler todas
+                                </button>
+                            </div>
+
+                            <div id="dropdownNotificationsList" class="list-group list-group-flush overflow-auto" style="max-height: 320px;">
+                                <div class="text-center py-4 text-muted small">
+                                    <i class="fas fa-spinner fa-spin me-1"></i> A carregar notificações...
+                                </div>
+                            </div>
+
+                            <a href="{{ route('notifications.index') }}" class="dropdown-item text-center text-primary fw-bold py-2 bg-light border-top small" style="border-radius: 0 0 16px 16px;">
+                                Ver todas as notificações <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="dropdown">
                         <button class="btn border-0 bg-transparent p-1 d-flex align-items-center gap-3 shadow-none" type="button" id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="user-avatar-circle">
@@ -449,7 +482,97 @@
                 currentGroup.toggleClass('open');
                 currentItems.slideToggle(200);
             });
+
+            // Polling de Notificações para o Header
+            fetchHeaderNotifications();
+            setInterval(fetchHeaderNotifications, 30000);
         });
+
+        function fetchHeaderNotifications() {
+            fetch("{{ route('notifications.recent') }}", {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById('unreadNotificationsBadge');
+                    if (badge) {
+                        if (data.unread_count > 0) {
+                            badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+
+                    const list = document.getElementById('dropdownNotificationsList');
+                    if (list) {
+                        if (data.notifications.length === 0) {
+                            list.innerHTML = `
+                                <div class="text-center py-4 text-muted small">
+                                    <i class="fas fa-check-circle text-success me-1"></i> Nenhuma notificação recente.
+                                </div>
+                            `;
+                        } else {
+                            let html = '';
+                            data.notifications.forEach(n => {
+                                const bgClass = n.is_read ? 'bg-white' : 'bg-light';
+                                const iconClass = n.priority === 'CRITICAL' || n.type === 'ALERT' 
+                                    ? 'fas fa-exclamation-circle text-danger' 
+                                    : (n.priority === 'HIGH' || n.type === 'WARNING' ? 'fas fa-exclamation-triangle text-warning' : 'fas fa-info-circle text-primary');
+                                
+                                html += `
+                                    <a href="${n.action_url || '/notifications'}" onclick="markHeaderNotificationRead(event, ${n.id}, '${n.action_url || '/notifications'}')" class="list-group-item list-group-item-action ${bgClass} border-bottom p-3 text-decoration-none">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <i class="${iconClass} fs-5 mt-1"></i>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                                    <strong class="text-dark small text-truncate d-block" style="max-width: 180px;">${n.title}</strong>
+                                                    <span class="text-muted font-monospace" style="font-size: 0.65rem;">${n.time_ago}</span>
+                                                </div>
+                                                <p class="text-muted small mb-0 text-truncate" style="font-size: 0.75rem;">${n.message}</p>
+                                            </div>
+                                        </div>
+                                    </a>
+                                `;
+                            });
+                            list.innerHTML = html;
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function markHeaderNotificationRead(e, recipientId, url) {
+            e.preventDefault();
+            fetch(`/api/notifications/${recipientId}/read`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            }).then(() => {
+                window.location.href = url;
+            });
+        }
+
+        function markAllNotificationsAsRead(e) {
+            if (e) e.preventDefault();
+            fetch("{{ route('notifications.read_all') }}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    fetchHeaderNotifications();
+                }
+            });
+        }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
